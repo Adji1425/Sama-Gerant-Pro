@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.env
+*.sqlite3
+
+# Media et fichiers uploadés
+media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Node (si besoin)
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

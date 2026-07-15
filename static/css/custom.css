@@ -1,0 +1,33 @@
+/* Sama-Gérant Pro — Styles personnalisés */
+
+:root {
+  --navy: #1B263B;
+  --gold: #E0A458;
+  --rose: #C47B8A;
+  --mist: #D6E4EC;
+  --bg: #FEF9F6;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.btn-primary {
+  background-color: var(--navy);
+  border-color: var(--navy);
+}
+
+.btn-primary:hover {
+  background-color: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.navbar {
+  background-color: var(--navy) !important;
+}
