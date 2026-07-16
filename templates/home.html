@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Accueil — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="fw-bold display-5" style="color:#1B263B;">
+    🛍️ Sama-Gérant Pro
+  </h1>
+  <p class="text-muted">
+    Système de Gestion Commerciale avec Aide à la Décision
+  </p>
+  {% if not user.is_authenticated %}
+  <div class="mt-4 d-flex justify-content-center gap-3">
+    <a href="{% url 'users:register' %}"
+       class="btn fw-semibold px-4 py-2"
+       style="background-color:#1B263B;color:white;">
+      Créer un compte
+    </a>
+    <a href="{% url 'users:login' %}"
+       class="btn fw-semibold px-4 py-2"
+       style="background-color:#E0A458;color:#1B263B;">
+      Se connecter
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

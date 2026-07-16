@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Modifier mon profil{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 p-4">
+
+      <h4 class="fw-bold mb-4" style="color:#1B263B;">
+        <i class="bi bi-pencil-square me-2"></i>Modifier mon profil
+      </h4>
+
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="text-danger small">{{ field.errors }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if request.user.est_client %}
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">
+            Adresse de livraison
+          </label>
+          <input type="text" name="adresse_livraison"
+                 class="form-control"
+                 value="{{ request.user.client.adresse_livraison }}"
+                 placeholder="Votre adresse de livraison">
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn fw-semibold px-4"
+                  style="background-color:#1B263B;color:white;">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+          <a href="{% url 'users:profil' %}"
+             class="btn btn-outline-secondary">
+            Annuler
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
