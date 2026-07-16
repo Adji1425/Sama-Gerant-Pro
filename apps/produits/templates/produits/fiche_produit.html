@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}{{ produit.nom }} — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<!-- Fil d'ariane -->
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item">
+      <a href="{% url 'produits:catalogue' %}" style="color:#E0A458;">
+        Catalogue
+      </a>
+    </li>
+    {% if produit.categorie %}
+    <li class="breadcrumb-item">
+      <a href="{% url 'produits:catalogue' %}?categorie={{ produit.categorie.id }}"
+         style="color:#E0A458;">
+        {{ produit.categorie.nom }}
+      </a>
+    </li>
+    {% endif %}
+    <li class="breadcrumb-item active">{{ produit.nom }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+
+  <!-- Colonne gauche — Images -->
+  <div class="col-md-5">
+    {% if images %}
+      <!-- Image principale -->
+      <img src="{{ images.0.image.url }}"
+           class="img-fluid rounded shadow-sm mb-2 w-100"
+           style="height:350px;object-fit:cover;"
+           id="img-principale">
+      <!-- Miniatures -->
+      {% if images|length > 1 %}
+      <div class="d-flex gap-2 flex-wrap">
+        {% for img in images %}
+          <img src="{{ img.image.url }}"
+               class="rounded border"
+               style="height:70px;width:70px;object-fit:cover;
+                      cursor:pointer;transition:opacity 0.2s;"
+               onclick="document.getElementById('img-principale').src='{{ img.image.url }}'">
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="rounded bg-light d-flex align-items-center
+                  justify-content-center"
+           style="height:350px;">
+        <i class="bi bi-image text-muted fs-1"></i>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Colonne droite — Infos -->
+  <div class="col-md-7">
+
+    <!-- Catégorie -->
+    {% if produit.categorie %}
+      <span class="badge mb-2"
+            style="background-color:#D6E4EC;color:#1B263B;">
+        {{ produit.categorie.nom }}
+      </span>
+    {% endif %}
+
+    <!-- Nom -->
+    <h2 class="fw-bold" style="color:#1B263B;">{{ produit.nom }}</h2>
+
+    <!-- Note moyenne -->
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <div>
+        {% for i in "12345" %}
+          {% if forloop.counter <= note_moyenne %}
+            <i class="bi bi-star-fill" style="color:#E0A458;"></i>
+          {% else %}
+            <i class="bi bi-star" style="color:#E0A458;"></i>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <span class="text-muted small">
+        {{ note_moyenne }}/5 ({{ avis|length }} avis)
+      </span>
+    </div>
+
+    <!-- Prix -->
+    <div class="mb-3">
+      {% if offre and offre.est_active %}
+        <p class="mb-0 text-muted text-decoration-line-through">
+          {{ produit.prix_vente|floatformat:0 }} FCFA
+        </p>
+        <span class="fs-3 fw-bold" style="color:#C47B8A;">
+          {{ offre.prix_reduit|floatformat:0 }} FCFA
+        </span>
+        <span class="badge ms-2" style="background-color:#C47B8A;">
+          {{ offre.titre }} — -{{ offre.taux|floatformat:0 }}%
+        </span>
+      {% else %}
+        <span class="fs-3 fw-bold" style="color:#1B263B;">
+          {{ produit.prix_vente|floatformat:0 }} FCFA
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Stock -->
+    <div class="mb-3">
+      {% if produit.quantite > 0 %}
+        <span class="badge bg-success">
+          <i class="bi bi-check-circle me-1"></i>En stock
+          ({{ produit.quantite }} disponible{{ produit.quantite|pluralize }})
+        </span>
+      {% else %}
+        <span class="badge bg-danger">
+          <i class="bi bi-x-circle me-1"></i>Rupture de stock
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Description -->
+    <div class="mb-4">
+      <h6 class="fw-semibold" style="color:#1B263B;">Description</h6>
+      <p class="text-muted">
+        {{ produit.description|default:"Aucune description disponible." }}
+      </p>
+    </div>
+
+    <!-- Bouton Ajouter au panier -->
+    {% if produit.quantite > 0 %}
+      {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'commandes:ajouter_panier' produit.pk %}">
+          {% csrf_token %}
+          <div class="d-flex gap-2 align-items-center mb-3">
+            <input type="number" name="quantite" value="1" min="1"
+                   max="{{ produit.quantite }}"
+                   class="form-control" style="width:80px;">
+            <button type="submit" class="btn fw-semibold px-4"
+                    style="background-color:#1B263B;color:white;">
+              <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
+            </button>
+          </div>
+        </form>
+      {% else %}
+        <a href="{% url 'users:login' %}"
+           class="btn fw-semibold px-4"
+           style="background-color:#1B263B;color:white;">
+          <i class="bi bi-box-arrow-in-right me-2"></i>
+          Connectez-vous pour acheter
+        </a>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Section Avis -->
+<hr class="my-4">
+<div class="row">
+  <div class="col-md-8">
+    <h5 class="fw-bold mb-3" style="color:#1B263B;">
+      <i class="bi bi-chat-square-text me-2"></i>Avis clients
+    </h5>
+
+    {% if avis %}
+      {% for a in avis %}
+      <div class="card shadow-sm border-0 mb-3 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="fw-semibold small" style="color:#1B263B;">
+            {{ a.client.utilisateur.get_full_name }}
+          </span>
+          <span class="text-muted small">
+            {{ a.date_avis|date:"d/m/Y" }}
+          </span>
+        </div>
+        <!-- Étoiles -->
+        <div class="mb-1">
+          {% for i in "12345" %}
+            {% if forloop.counter <= a.note %}
+              <i class="bi bi-star-fill small" style="color:#E0A458;"></i>
+            {% else %}
+              <i class="bi bi-star small" style="color:#E0A458;"></i>
+            {% endif %}
+          {% endfor %}
+          {% if a.verifie_achat %}
+            <span class="badge ms-2 small"
+                  style="background-color:#D6E4EC;color:#1B263B;">
+              <i class="bi bi-patch-check me-1"></i>Achat vérifié
+            </span>
+          {% endif %}
+        </div>
+        {% if a.commentaire %}
+          <p class="text-muted small mb-0">{{ a.commentaire }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted small">
+        Aucun avis pour ce produit. Soyez le premier à donner votre avis !
+      </p>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

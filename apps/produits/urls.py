@@ -4,5 +4,6 @@ from . import views
 app_name = 'produits'
 
 urlpatterns = [
-    # Vous ajouterez vos routes ici plus tard
+    path('', views.catalogue, name='catalogue'),
+    path('produit/<int:pk>/', views.fiche_produit, name='fiche_produit'),
 ]
