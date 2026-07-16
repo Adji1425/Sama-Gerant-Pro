@@ -4,14 +4,16 @@ from apps.users.models import Commercant
 
 class Notification(models.Model):
     TYPE_CHOICES = [
-        ('stock_bas', 'Stock bas'),
-        ('stock_dormant', 'Stock dormant'),
-        ('evenement', 'Événement'),
-        ('commande', 'Nouvelle commande'),
-        ('saison', 'Alerte saison'),
+        ('stock_bas', '🔴 Stock bas'),
+        ('stock_dormant', '🟡 Stock dormant'),
+        ('evenement', '📅 Événement'),
+        ('commande', '🛒 Nouvelle commande'),
+        ('saison', '🌧️ Alerte saison'),
     ]
     commercant = models.ForeignKey(
-        Commercant, on_delete=models.CASCADE, related_name='notifications'
+        Commercant,
+        on_delete=models.CASCADE,
+        related_name='notifications'
     )
     titre = models.CharField(max_length=200)
     message = models.TextField()
@@ -21,6 +23,7 @@ class Notification(models.Model):
 
     class Meta:
         verbose_name = "Notification"
+        verbose_name_plural = "Notifications"
         ordering = ['-date_envoi']
 
     def __str__(self):
