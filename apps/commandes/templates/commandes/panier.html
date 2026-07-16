@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Mon Panier — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4" style="color:#1B263B;">
+  <i class="bi bi-cart3 me-2"></i>Mon Panier
+  <span class="badge ms-2"
+        style="background-color:#E0A458;color:#1B263B;">
+    {{ nombre_articles }} article{{ nombre_articles|pluralize }}
+  </span>
+</h4>
+
+{% if lignes %}
+<div class="row g-4">
+
+  <!-- Liste des articles -->
+  <div class="col-md-8">
+    {% for ligne in lignes %}
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-body">
+        <div class="row align-items-center">
+
+          <!-- Image -->
+          <div class="col-3 col-md-2">
+            {% if ligne.produit.image_principale %}
+              <img src="{{ ligne.produit.image_principale.image.url }}"
+                   class="img-fluid rounded"
+                   style="height:70px;object-fit:cover;">
+            {% else %}
+              <div class="bg-light rounded d-flex align-items-center
+                          justify-content-center"
+                   style="height:70px;">
+                <i class="bi bi-image text-muted"></i>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Nom + prix unitaire -->
+          <div class="col-5 col-md-5">
+            <h6 class="fw-semibold mb-1" style="color:#1B263B;">
+              {{ ligne.produit.nom }}
+            </h6>
+            <span class="text-muted small">
+              {{ ligne.prix_unitaire_snapshot|floatformat:0 }} FCFA / unité
+            </span>
+          </div>
+
+          <!-- Modifier quantité -->
+          <div class="col-4 col-md-3">
+            <form method="POST"
+                  action="{% url 'commandes:modifier_panier' ligne.id %}">
+              {% csrf_token %}
+              <div class="input-group input-group-sm">
+                <input type="number" name="quantite"
+                       value="{{ ligne.quantite }}" min="0"
+                       max="{{ ligne.produit.quantite }}"
+                       class="form-control text-center"
+                       style="max-width:65px;">
+                <button type="submit" class="btn btn-sm"
+                        style="background-color:#1B263B;color:white;">
+                  <i class="bi bi-check"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Sous-total + supprimer -->
+          <div class="col-12 col-md-2 text-end mt-2 mt-md-0">
+            <div class="fw-bold" style="color:#1B263B;">
+              {{ ligne.sous_total|floatformat:0 }} FCFA
+            </div>
+            <form method="POST"
+                  action="{% url 'commandes:supprimer_panier' ligne.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn btn-link text-danger p-0 small">
+                <i class="bi bi-trash"></i> Supprimer
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Récapitulatif total -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 p-4 sticky-top"
+         style="top:80px;">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">Récapitulatif</h5>
+
+      <div class="d-flex justify-content-between mb-2 text-muted small">
+        <span>Sous-total</span>
+        <span>{{ total|floatformat:0 }} FCFA</span>
+      </div>
+      <div class="d-flex justify-content-between mb-2 text-muted small">
+        <span>Livraison</span>
+        <span>À définir</span>
+      </div>
+
+      <hr>
+
+      <div class="d-flex justify-content-between fw-bold mb-4"
+           style="color:#1B263B;">
+        <span>Total</span>
+        <span>{{ total|floatformat:0 }} FCFA</span>
+      </div>
+
+      <a href="{% url 'commandes:valider_commande' %}"
+         class="btn w-100 fw-semibold py-2"
+         style="background-color:#1B263B;color:white;">
+        <i class="bi bi-bag-check me-2"></i>Valider la commande
+      </a>
+
+      <a href="{% url 'produits:catalogue' %}"
+         class="btn w-100 btn-outline-secondary mt-2 fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i>Continuer mes achats
+      </a>
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+<!-- Panier vide -->
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
+  <h5>Votre panier est vide</h5>
+  <p>Découvrez notre catalogue et ajoutez des produits !</p>
+  <a href="{% url 'produits:catalogue' %}"
+     class="btn fw-semibold px-4"
+     style="background-color:#1B263B;color:white;">
+    <i class="bi bi-grid me-2"></i>Voir le catalogue
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

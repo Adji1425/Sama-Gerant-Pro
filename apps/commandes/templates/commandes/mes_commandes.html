@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Mes commandes{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4" style="color:#1B263B;">
+  <i class="bi bi-bag me-2"></i>Mes commandes
+</h4>
+
+{% if commandes %}
+  {% for commande in commandes %}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <div class="row align-items-center">
+
+        <div class="col-md-2">
+          <span class="fw-bold" style="color:#1B263B;">
+            #{{ commande.id }}
+          </span>
+          <br>
+          <span class="text-muted small">
+            {{ commande.date_commande|date:"d/m/Y" }}
+          </span>
+        </div>
+
+        <div class="col-md-4">
+          <span class="text-muted small">
+            {% for detail in commande.details.all|slice:":2" %}
+              {{ detail.produit.nom }}
+              {% if not forloop.last %}, {% endif %}
+            {% endfor %}
+            {% if commande.details.count > 2 %}
+              ... +{{ commande.details.count|add:"-2" }} autres
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="col-md-2 fw-bold" style="color:#1B263B;">
+          {{ commande.montant_total|floatformat:0 }} FCFA
+        </div>
+
+        <div class="col-md-2">
+          {% if commande.statut == 'en_attente' %}
+            <span class="badge bg-warning text-dark">En attente</span>
+          {% elif commande.statut == 'en_preparation' %}
+            <span class="badge bg-info text-dark">En préparation</span>
+          {% elif commande.statut == 'livree' %}
+            <span class="badge bg-success">Livrée</span>
+          {% else %}
+            <span class="badge bg-danger">Annulée</span>
+          {% endif %}
+        </div>
+
+        <div class="col-md-2 text-end">
+          <a href="{% url 'commandes:detail_commande' commande.id %}"
+             class="btn btn-sm"
+             style="background-color:#1B263B;color:white;">
+            Voir
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-bag-x fs-1 d-block mb-3"></i>
+    <h5>Aucune commande pour l'instant</h5>
+    <a href="{% url 'produits:catalogue' %}"
+       class="btn fw-semibold mt-2"
+       style="background-color:#1B263B;color:white;">
+      Voir le catalogue
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}

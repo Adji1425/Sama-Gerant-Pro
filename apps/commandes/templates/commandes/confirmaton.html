@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Commande confirmée !{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+
+  <div class="mb-4">
+    <div class="rounded-circle mx-auto d-flex align-items-center
+                justify-content-center"
+         style="width:90px;height:90px;background-color:#D6E4EC;">
+      <i class="bi bi-check-circle fs-1" style="color:#2A6B45;"></i>
+    </div>
+  </div>
+
+  <h3 class="fw-bold" style="color:#1B263B;">
+    Commande confirmée !
+  </h3>
+  <p class="text-muted">
+    Votre commande <strong>#{{ commande.id }}</strong> a été transmise
+    au commerçant.
+  </p>
+
+  <div class="card shadow-sm border-0 mx-auto p-4 mt-4"
+       style="max-width:450px;">
+    <div class="d-flex justify-content-between mb-2 text-muted small">
+      <span>Numéro de commande</span>
+      <span class="fw-bold" style="color:#1B263B;">#{{ commande.id }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-2 text-muted small">
+      <span>Date</span>
+      <span>{{ commande.date_commande|date:"d/m/Y à H:i" }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-2 text-muted small">
+      <span>Montant total</span>
+      <span class="fw-bold" style="color:#1B263B;">
+        {{ commande.montant_total|floatformat:0 }} FCFA
+      </span>
+    </div>
+    <div class="d-flex justify-content-between text-muted small">
+      <span>Statut</span>
+      <span class="badge bg-warning text-dark">En attente</span>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-center gap-3">
+    <a href="{% url 'commandes:mes_commandes' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-list-ul me-2"></i>Mes commandes
+    </a>
+    <a href="{% url 'produits:catalogue' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#E0A458;color:#1B263B;">
+      <i class="bi bi-grid me-2"></i>Continuer mes achats
+    </a>
+  </div>
+
+</div>
+{% endblock %}

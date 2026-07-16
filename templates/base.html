@@ -39,6 +39,25 @@
                 <i class="bi bi-bell fs-5"></i>
               </a>
             </li>
+            <!-- Panier avec badge -->
+            <li class="nav-item">
+              <a class="nav-link text-white position-relative"
+                href="{% url 'commandes:voir_panier' %}">
+                <i class="bi bi-cart3 fs-5"></i>
+                {% if user.is_authenticated and user.est_client %}
+                  {% with nb=user.client.panier.nombre_articles %}
+                    {% if nb > 0 %}
+                      <span class="position-absolute top-0 start-100
+                                  translate-middle badge rounded-pill"
+                            style="background-color:#C47B8A;font-size:10px;">
+                        {{ nb }}
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                {% endif %}
+              </a>
+            </li>
+                      
             <!-- Profil -->
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle text-white d-flex align-items-center gap-2"

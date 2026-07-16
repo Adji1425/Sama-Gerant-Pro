@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Commande #{{ commande.id }}{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+  <a href="{% url 'commandes:mes_commandes' %}"
+     class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    Commande #{{ commande.id }}
+  </h4>
+  {% if commande.statut == 'en_attente' %}
+    <span class="badge bg-warning text-dark">En attente</span>
+  {% elif commande.statut == 'en_preparation' %}
+    <span class="badge bg-info text-dark">En préparation</span>
+  {% elif commande.statut == 'livree' %}
+    <span class="badge bg-success">Livrée</span>
+  {% else %}
+    <span class="badge bg-danger">Annulée</span>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+
+  <!-- Détails articles -->
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0 p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">Articles</h5>
+      {% for detail in details %}
+      <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+        {% if detail.produit and detail.produit.image_principale %}
+          <img src="{{ detail.produit.image_principale.image.url }}"
+               class="rounded" style="width:60px;height:60px;object-fit:cover;">
+        {% else %}
+          <div class="bg-light rounded d-flex align-items-center
+                      justify-content-center"
+               style="width:60px;height:60px;">
+            <i class="bi bi-image text-muted"></i>
+          </div>
+        {% endif %}
+        <div class="flex-grow-1">
+          <div class="fw-semibold" style="color:#1B263B;">
+            {{ detail.produit.nom|default:"Produit supprimé" }}
+          </div>
+          <div class="text-muted small">
+            {{ detail.prix_unitaire_vente|floatformat:0 }} FCFA
+            × {{ detail.quantite }}
+            {% if detail.offre %}
+              <span class="badge ms-1"
+                    style="background-color:#C47B8A;">
+                Offre appliquée
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="fw-bold" style="color:#1B263B;">
+          {{ detail.sous_total|floatformat:0 }} FCFA
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="d-flex justify-content-between fw-bold pt-2"
+           style="color:#1B263B;">
+        <span>Total</span>
+        <span>{{ commande.montant_total|floatformat:0 }} FCFA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infos livraison -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        Infos de livraison
+      </h5>
+      <ul class="list-unstyled text-muted small">
+        <li class="mb-2">
+          <i class="bi bi-calendar me-2"></i>
+          {{ commande.date_commande|date:"d/m/Y à H:i" }}
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-geo-alt me-2"></i>
+          {{ commande.adresse_livraison_reel }}
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-telephone me-2"></i>
+          {{ commande.telephone }}
+        </li>
+      </ul>
+
+      {% if commande.statut == 'livree' %}
+        {% if not commande.facture %}
+          <span class="text-muted small">Facture en cours de génération</span>
+        {% else %}
+          <a href="#" class="btn btn-sm w-100 mt-2"
+             style="background-color:#2A6B45;color:white;">
+            <i class="bi bi-download me-1"></i>Télécharger la facture
+          </a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

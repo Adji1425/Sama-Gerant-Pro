@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Confirmer la commande{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4" style="color:#1B263B;">
+  <i class="bi bi-bag-check me-2"></i>Confirmer ma commande
+</h4>
+
+<div class="row g-4">
+
+  <!-- Formulaire infos livraison -->
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        <i class="bi bi-geo-alt me-2"></i>Infos de livraison
+      </h5>
+
+      <form method="POST" action="{% url 'commandes:valider_commande' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">
+            Adresse de livraison
+          </label>
+          <input type="text" name="adresse_livraison"
+                 class="form-control"
+                 value="{{ client.adresse_livraison }}"
+                 placeholder="Votre adresse de livraison"
+                 required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Téléphone</label>
+          <input type="text" name="telephone"
+                 class="form-control"
+                 value="{{ request.user.telephone }}"
+                 placeholder="77 000 00 00"
+                 required>
+        </div>
+
+        <!-- Récapitulatif articles -->
+        <div class="mb-3">
+          <h6 class="fw-semibold mb-2" style="color:#1B263B;">
+            Articles ({{ lignes|length }})
+          </h6>
+          {% for ligne in lignes %}
+          <div class="d-flex justify-content-between
+                      text-muted small mb-1">
+            <span>{{ ligne.produit.nom }} × {{ ligne.quantite }}</span>
+            <span>{{ ligne.sous_total|floatformat:0 }} FCFA</span>
+          </div>
+          {% endfor %}
+          <hr>
+          <div class="d-flex justify-content-between fw-bold"
+               style="color:#1B263B;">
+            <span>Total</span>
+            <span>{{ total|floatformat:0 }} FCFA</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn w-100 fw-semibold py-2"
+                style="background-color:#1B263B;color:white;">
+          <i class="bi bi-check-circle me-2"></i>
+          Confirmer et passer la commande
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Info paiement -->
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 p-4"
+         style="background-color:#FEF9F6;">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        <i class="bi bi-info-circle me-2"></i>Informations
+      </h5>
+      <ul class="list-unstyled text-muted small">
+        <li class="mb-2">
+          <i class="bi bi-check-circle me-2" style="color:#2A6B45;"></i>
+          Votre commande sera traitée sous 24h
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-check-circle me-2" style="color:#2A6B45;"></i>
+          Vous recevrez une facture par email
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-check-circle me-2" style="color:#2A6B45;"></i>
+          Vous pouvez suivre votre commande depuis votre profil
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-check-circle me-2" style="color:#2A6B45;"></i>
+          Le paiement se fait à la livraison
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
