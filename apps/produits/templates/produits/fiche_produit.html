@@ -138,6 +138,13 @@
                     style="background-color:#1B263B;color:white;">
               <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
             </button>
+            {% if user.is_authenticated and user.est_client %}
+              <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
+                class="btn fw-semibold px-4 mt-2"
+                style="background-color:#D6E4EC;color:#1B263B;">
+                <i class="bi bi-chat-dots me-2"></i>Contacter le vendeur
+              </a>
+            {% endif %}
           </div>
         </form>
       {% else %}
