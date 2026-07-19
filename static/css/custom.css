@@ -31,3 +31,9 @@ body {
 .navbar {
   background-color: var(--navy) !important;
 }
+/* Force la navbar à rester ouverte sur grand écran */
+@media (min-width: 992px) {
+  .navbar-collapse {
+    display: flex !important;
+  }
+}

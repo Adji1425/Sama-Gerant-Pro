@@ -1,27 +1,371 @@
 {% extends 'base.html' %}
 {% block title %}Accueil — Sama-Gérant Pro{% endblock %}
 
-{% block content %}
-<div class="text-center py-5">
-  <h1 class="fw-bold display-5" style="color:#1B263B;">
-    🛍️ Sama-Gérant Pro
-  </h1>
-  <p class="text-muted lead">
-    Système de Gestion Commerciale avec Aide à la Décision
-  </p>
-  <div class="mt-4 d-flex justify-content-center gap-3">
-    <a href="{% url 'produits:catalogue' %}"
-       class="btn fw-semibold px-4 py-2"
-       style="background-color:#E0A458;color:#1B263B;">
-      <i class="bi bi-grid me-2"></i>Voir le catalogue
-    </a>
-    {% if not user.is_authenticated %}
-    <a href="{% url 'users:register' %}"
-       class="btn fw-semibold px-4 py-2"
-       style="background-color:#1B263B;color:white;">
-      Créer un compte
-    </a>
-    {% endif %}
+{% block full_content %}
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
+<section style="background-color:#1B263B;" class="py-5">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-md-6 text-white">
+        <span class="badge mb-3"
+              style="background-color:#E0A458;color:#1B263B;">
+          🇸🇳 Fait pour le Sénégal
+        </span>
+        <h1 class="fw-bold display-5 mb-3">
+          Gérez votre boutique<br>
+          <span style="color:#E0A458;">intelligemment</span>
+        </h1>
+        <p class="mb-4" style="color:#D6E4EC;">
+          Sama-Gérant Pro centralise vos ventes, votre stock et vos
+          décisions commerciales en un seul endroit.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="{% url 'produits:catalogue' %}"
+             class="btn fw-semibold px-4 py-2"
+             style="background-color:#E0A458;color:#1B263B;">
+            <i class="bi bi-grid me-2"></i>Voir le catalogue
+          </a>
+          {% if not user.is_authenticated %}
+          <a href="{% url 'users:register' %}"
+             class="btn btn-outline-light fw-semibold px-4 py-2">
+            Créer un compte
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-6 text-center">
+        <div class="rounded-3 p-4"
+             style="background-color:#2A3F60;">
+          <i class="bi bi-shop display-1"
+             style="color:#E0A458;"></i>
+          <p class="text-white mt-2 small">
+            Boutique numérique · Stock en temps réel · Aide à la décision
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
+
+<!-- ══ PRODUITS PAR CATÉGORIE ════════════════════════════════════════════════ -->
+<section class="py-5" style="background-color:#FEF9F6;">
+  <div class="container">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold" style="color:#1B263B;">Nos produits</h2>
+      <p class="text-muted">Découvrez notre sélection par catégorie</p>
+    </div>
+
+    {% for categorie, produits_cat in produits_par_categorie.items %}
+    {% if produits_cat %}
+    <div class="mb-5">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0" style="color:#1B263B;">
+          <span class="badge me-2"
+                style="background-color:#D6E4EC;color:#1B263B;">
+            {{ categorie }}
+          </span>
+        </h5>
+        <a href="{% url 'produits:catalogue' %}?categorie={{ produits_cat.0.categorie.id }}"
+           class="small text-decoration-none"
+           style="color:#E0A458;">
+          Voir tout <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="row row-cols-2 row-cols-md-4 g-3">
+        {% for produit in produits_cat|slice:":4" %}
+        <div class="col">
+          <div class="card h-100 border-0 shadow-sm hover-card">
+            {% if produit.image_principale %}
+              <img src="{{ produit.image_principale.image.url }}"
+                   class="card-img-top"
+                   style="height:180px;object-fit:cover;">
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center bg-light"
+                   style="height:180px;">
+                <i class="bi bi-image text-muted fs-2"></i>
+              </div>
+            {% endif %}
+            <div class="card-body p-2">
+              <p class="fw-semibold small mb-1 text-truncate"
+                 style="color:#1B263B;">{{ produit.nom }}</p>
+              <p class="fw-bold mb-2" style="color:#E0A458;">
+                {{ produit.prix_vente|floatformat:0 }} FCFA
+              </p>
+              <div class="d-flex gap-1">
+                <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                   class="btn btn-sm flex-grow-1"
+                   style="background-color:#1B263B;color:white;font-size:11px;">
+                  Voir
+                </a>
+                <!-- Panier visiteur ou client -->
+                <form method="POST"
+                      action="{% url 'commandes:ajouter_panier' produit.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantite" value="1">
+                  <button type="submit"
+                          class="btn btn-sm"
+                          style="background-color:#E0A458;color:#1B263B;">
+                    <i class="bi bi-cart-plus"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% empty %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-box fs-1 d-block mb-2"></i>
+      Aucun produit disponible pour le moment.
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ══ À PROPOS ══════════════════════════════════════════════════════════════ -->
+<section class="py-5" style="background-color:#1B263B;">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-md-6">
+        <h2 class="fw-bold text-white mb-3">À propos de Sama-Gérant Pro</h2>
+        <p style="color:#D6E4EC;">
+          Sama-Gérant Pro est une plateforme de gestion commerciale
+          conçue spécifiquement pour les commerçants du secteur informel
+          sénégalais.
+        </p>
+        <p style="color:#D6E4EC;">
+          Notre système intègre une aide à la décision intelligente qui
+          prend en compte les événements religieux (Tabaski, Magal, Korité)
+          et les saisons climatiques pour optimiser vos ventes.
+        </p>
+        <div class="row g-3 mt-2">
+          {% for stat in stats %}
+          <div class="col-6">
+            <div class="p-3 rounded text-center"
+                 style="background-color:#2A3F60;">
+              <div class="fs-3 fw-bold" style="color:#E0A458;">
+                {{ stat.valeur }}
+              </div>
+              <div class="small" style="color:#D6E4EC;">{{ stat.label }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="row g-3">
+          {% for feature in features %}
+          <div class="col-6">
+            <div class="p-3 rounded" style="background-color:#2A3F60;">
+              <div class="fs-2 mb-2">{{ feature.icon }}</div>
+              <div class="fw-semibold text-white small">{{ feature.titre }}</div>
+              <div class="text-muted small" style="font-size:11px;">
+                {{ feature.desc }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ AVIS CLIENTS ═══════════════════════════════════════════════════════════ -->
+{% if derniers_avis %}
+<section class="py-5" style="background-color:#FEF9F6;">
+  <div class="container">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold" style="color:#1B263B;">Ce que disent nos clients</h2>
+    </div>
+    <div class="row g-4">
+      {% for avis in derniers_avis %}
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100">
+          <div class="mb-2">
+            {% for i in "12345" %}
+              {% if forloop.counter <= avis.note %}
+                <i class="bi bi-star-fill" style="color:#E0A458;"></i>
+              {% else %}
+                <i class="bi bi-star" style="color:#E0A458;"></i>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <p class="text-muted small fst-italic mb-3">
+            "{{ avis.commentaire|default:"Très bon produit !" }}"
+          </p>
+          <div class="d-flex align-items-center gap-2 mt-auto">
+            <div class="rounded-circle d-flex align-items-center
+                        justify-content-center fw-bold"
+                 style="width:36px;height:36px;
+                        background:#D6E4EC;color:#1B263B;font-size:13px;">
+              {{ avis.client.utilisateur.first_name|first|upper }}
+            </div>
+            <div>
+              <div class="fw-semibold small" style="color:#1B263B;">
+                {{ avis.client.utilisateur.get_full_name }}
+              </div>
+              <div class="text-muted" style="font-size:11px;">
+                {{ avis.date_avis|date:"d/m/Y" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ LOCALISATION + CONTACT ════════════════════════════════════════════════ -->
+<section class="py-5" id="contact" style="background-color:#FEF9F6;">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Contact -->
+      <div class="col-md-6">
+        <h3 class="fw-bold mb-4" style="color:#1B263B;">
+          <i class="bi bi-envelope me-2"></i>Nous contacter
+        </h3>
+        <form method="POST" action="#">
+          {% csrf_token %}
+          <div class="mb-3">
+            <input type="text" class="form-control"
+                   placeholder="Votre nom" required>
+          </div>
+          <div class="mb-3">
+            <input type="email" class="form-control"
+                   placeholder="Votre email" required>
+          </div>
+          <div class="mb-3">
+            <textarea class="form-control" rows="4"
+                      placeholder="Votre message" required></textarea>
+          </div>
+          <button type="submit" class="btn fw-semibold px-4"
+                  style="background-color:#1B263B;color:white;">
+            <i class="bi bi-send me-2"></i>Envoyer
+          </button>
+        </form>
+      </div>
+
+      <!-- Localisation -->
+      <div class="col-md-6">
+        <h3 class="fw-bold mb-4" style="color:#1B263B;">
+          <i class="bi bi-geo-alt me-2"></i>Notre localisation
+        </h3>
+        <div class="card border-0 shadow-sm p-4 mb-3">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-3 d-flex align-items-start gap-3">
+              <i class="bi bi-building fs-5"
+                 style="color:#E0A458;"></i>
+              <div>
+                <div class="fw-semibold" style="color:#1B263B;">
+                  Université Cheikh Anta Diop
+                </div>
+                <div class="text-muted small">
+                  Faculté des Sciences et Techniques<br>
+                  Dakar, Sénégal
+                </div>
+              </div>
+            </li>
+            <li class="mb-3 d-flex align-items-start gap-3">
+              <i class="bi bi-envelope fs-5"
+                 style="color:#E0A458;"></i>
+              <div>
+                <div class="fw-semibold" style="color:#1B263B;">Email</div>
+                <div class="text-muted small">
+                  sama.gerant.pro@ucad.sn
+                </div>
+              </div>
+            </li>
+            <li class="d-flex align-items-start gap-3">
+              <i class="bi bi-telephone fs-5"
+                 style="color:#E0A458;"></i>
+              <div>
+                <div class="fw-semibold" style="color:#1B263B;">
+                  Téléphone
+                </div>
+                <div class="text-muted small">+221 77 000 00 00</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Carte Google Maps simple -->
+        <div class="rounded overflow-hidden shadow-sm">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.8!2d-17.4674!3d14.6937!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDQxJzM3LjMiTiAxN8KwMjgnMDIuNiJX!5e0!3m2!1sfr!2ssn!4v1234567890"
+            width="100%" height="200"
+            style="border:0;" allowfullscreen="" loading="lazy">
+          </iframe>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Footer inclus depuis base.html via block full_content -->
+<footer style="background-color:#1B263B;color:#D6E4EC;" class="py-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <h6 class="fw-bold text-white mb-2">🛍️ Sama-Gérant Pro</h6>
+        <p class="small" style="color:#D6E4EC;">
+          Système de gestion commerciale avec aide à la décision
+          pour les commerçants sénégalais.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h6 class="fw-bold text-white mb-2">Liens rapides</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-1">
+            <a href="{% url 'home' %}" class="text-decoration-none"
+               style="color:#D6E4EC;">Accueil</a>
+          </li>
+          <li class="mb-1">
+            <a href="{% url 'produits:catalogue' %}" class="text-decoration-none"
+               style="color:#D6E4EC;">Catalogue</a>
+          </li>
+          <li>
+            <a href="#contact" class="text-decoration-none"
+               style="color:#D6E4EC;">Contact</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h6 class="fw-bold text-white mb-2">
+          <i class="bi bi-geo-alt me-1"></i>Localisation
+        </h6>
+        <p class="small mb-0" style="color:#D6E4EC;">
+          UCAD — FST Dakar, Sénégal
+        </p>
+      </div>
+    </div>
+    <hr style="border-color:#2A3F60;">
+    <p class="text-center small mb-0" style="color:#7A8BA0;">
+      Sama-Gérant Pro &copy; 2025 — UCAD Licence 3 Informatique
+    </p>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hover-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .hover-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+  }
+</style>
 {% endblock %}

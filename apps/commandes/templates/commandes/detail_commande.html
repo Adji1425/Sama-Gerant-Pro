@@ -1,45 +1,153 @@
 {% extends 'base.html' %}
-{% block title %}Commande #{{ commande.id }}{% endblock %}
+{% block title %}Suivi commande #{{ commande.id }}{% endblock %}
 
 {% block content %}
 
+<!-- En-tête -->
 <div class="d-flex align-items-center gap-3 mb-4">
   <a href="{% url 'commandes:mes_commandes' %}"
      class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-arrow-left"></i>
   </a>
-  <h4 class="fw-bold mb-0" style="color:#1B263B;">
-    Commande #{{ commande.id }}
-  </h4>
-  {% if commande.statut == 'en_attente' %}
-    <span class="badge bg-warning text-dark">En attente</span>
-  {% elif commande.statut == 'en_preparation' %}
-    <span class="badge bg-info text-dark">En préparation</span>
-  {% elif commande.statut == 'livree' %}
-    <span class="badge bg-success">Livrée</span>
-  {% else %}
-    <span class="badge bg-danger">Annulée</span>
-  {% endif %}
+  <div>
+    <h4 class="fw-bold mb-0" style="color:#1B263B;">
+      Commande #{{ commande.id }}
+    </h4>
+    <small class="text-muted">
+      {{ commande.date_commande|date:"d/m/Y à H:i" }}
+    </small>
+  </div>
 </div>
 
-<div class="row g-4">
+<!-- ══ TRACKER STATUT ═══════════════════════════════════════════════════════ -->
+<div class="card border-0 shadow-sm mb-4 p-4">
 
-  <!-- Détails articles -->
-  <div class="col-md-8">
-    <div class="card shadow-sm border-0 p-4">
-      <h5 class="fw-bold mb-3" style="color:#1B263B;">Articles</h5>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0" style="color:#1B263B;">
+      <i class="bi bi-truck me-2"></i>Suivi de commande
+    </h5>
+    <!-- Badge statut mis à jour dynamiquement -->
+    <span id="badge-statut" class="badge fs-6 px-3 py-2">
+      {{ commande.get_statut_display }}
+    </span>
+  </div>
+
+  <!-- Barre de progression -->
+  {% if commande.statut != 'annulee' %}
+  <div class="position-relative mb-4" style="padding: 0 20px;">
+
+    <!-- Ligne de fond -->
+    <div class="position-absolute top-50 start-0 end-0"
+         style="height:4px;background:#E9ECEF;
+                margin:0 40px;transform:translateY(-50%);z-index:0;">
+    </div>
+
+    <!-- Ligne de progression -->
+    <div id="progress-line"
+         class="position-absolute top-50 start-0"
+         style="height:4px;background:#1B263B;
+                margin-left:40px;transform:translateY(-50%);
+                z-index:1;transition:width 0.6s ease;width:0%;">
+    </div>
+
+    <!-- Étapes -->
+    <div class="d-flex justify-content-between position-relative"
+         style="z-index:2;">
+
+      <!-- Étape 1 : En attente -->
+      <div class="text-center step-item" data-step="1">
+        <div class="rounded-circle d-flex align-items-center
+                    justify-content-center mx-auto mb-2 step-circle"
+             data-step="1"
+             style="width:48px;height:48px;border:3px solid #E9ECEF;
+                    background:white;transition:all 0.4s ease;">
+          <i class="bi bi-clock-fill" style="font-size:18px;"></i>
+        </div>
+        <div class="fw-semibold step-label" style="font-size:12px;color:#ADB5BD;">
+          En attente
+        </div>
+      </div>
+
+      <!-- Étape 2 : En préparation -->
+      <div class="text-center step-item" data-step="2">
+        <div class="rounded-circle d-flex align-items-center
+                    justify-content-center mx-auto mb-2 step-circle"
+             data-step="2"
+             style="width:48px;height:48px;border:3px solid #E9ECEF;
+                    background:white;transition:all 0.4s ease;">
+          <i class="bi bi-box-seam-fill" style="font-size:18px;"></i>
+        </div>
+        <div class="fw-semibold step-label" style="font-size:12px;color:#ADB5BD;">
+          En préparation
+        </div>
+      </div>
+
+      <!-- Étape 3 : Livrée -->
+      <div class="text-center step-item" data-step="3">
+        <div class="rounded-circle d-flex align-items-center
+                    justify-content-center mx-auto mb-2 step-circle"
+             data-step="3"
+             style="width:48px;height:48px;border:3px solid #E9ECEF;
+                    background:white;transition:all 0.4s ease;">
+          <i class="bi bi-check-circle-fill" style="font-size:18px;"></i>
+        </div>
+        <div class="fw-semibold step-label" style="font-size:12px;color:#ADB5BD;">
+          Livrée
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Commande annulée -->
+  <div class="alert border-0 d-flex align-items-center gap-3"
+       style="background-color:#FAF0F2;">
+    <i class="bi bi-x-circle-fill fs-3" style="color:#C47B8A;"></i>
+    <div>
+      <div class="fw-bold" style="color:#C47B8A;">Commande annulée</div>
+      <div class="text-muted small">
+        Cette commande a été annulée. Contactez le vendeur pour plus d'infos.
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Indicateur rafraîchissement -->
+  <div class="text-end">
+    <small class="text-muted" id="derniere-maj">
+      <i class="bi bi-arrow-repeat me-1"></i>
+      Mise à jour automatique toutes les 10 secondes
+    </small>
+  </div>
+</div>
+
+<!-- ══ DÉTAILS ARTICLES ══════════════════════════════════════════════════════ -->
+<div class="row g-4">
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        <i class="bi bi-bag me-2"></i>Articles commandés
+      </h5>
+
       {% for detail in details %}
-      <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+      <div class="d-flex align-items-center gap-3 mb-3 pb-3
+                  {% if not forloop.last %}border-bottom{% endif %}">
+
+        <!-- Image -->
         {% if detail.produit and detail.produit.image_principale %}
           <img src="{{ detail.produit.image_principale.image.url }}"
-               class="rounded" style="width:60px;height:60px;object-fit:cover;">
+               class="rounded shadow-sm"
+               style="width:65px;height:65px;object-fit:cover;flex-shrink:0;">
         {% else %}
-          <div class="bg-light rounded d-flex align-items-center
+          <div class="rounded bg-light d-flex align-items-center
                       justify-content-center"
-               style="width:60px;height:60px;">
+               style="width:65px;height:65px;flex-shrink:0;">
             <i class="bi bi-image text-muted"></i>
           </div>
         {% endif %}
+
+        <!-- Infos -->
         <div class="flex-grow-1">
           <div class="fw-semibold" style="color:#1B263B;">
             {{ detail.produit.nom|default:"Produit supprimé" }}
@@ -49,60 +157,245 @@
             × {{ detail.quantite }}
             {% if detail.offre %}
               <span class="badge ms-1"
-                    style="background-color:#C47B8A;">
-                Offre appliquée
+                    style="background-color:#FDF3E3;color:#E0A458;
+                           border:1px solid #E0A458;font-size:10px;">
+                Offre : -{{ detail.offre.taux|floatformat:0 }}%
               </span>
             {% endif %}
           </div>
         </div>
-        <div class="fw-bold" style="color:#1B263B;">
+
+        <!-- Sous-total -->
+        <div class="fw-bold text-end" style="color:#1B263B;flex-shrink:0;">
           {{ detail.sous_total|floatformat:0 }} FCFA
         </div>
+
       </div>
       {% endfor %}
 
-      <div class="d-flex justify-content-between fw-bold pt-2"
-           style="color:#1B263B;">
+      <!-- Total -->
+      <div class="d-flex justify-content-between fw-bold pt-2 mt-1 border-top"
+           style="color:#1B263B;font-size:1.1rem;">
         <span>Total</span>
         <span>{{ commande.montant_total|floatformat:0 }} FCFA</span>
       </div>
     </div>
   </div>
 
-  <!-- Infos livraison -->
-  <div class="col-md-4">
-    <div class="card shadow-sm border-0 p-4">
+  <!-- Infos livraison + actions -->
+  <div class="col-md-5">
+
+    <!-- Infos livraison -->
+    <div class="card border-0 shadow-sm p-4 mb-3">
       <h5 class="fw-bold mb-3" style="color:#1B263B;">
-        Infos de livraison
+        <i class="bi bi-geo-alt me-2"></i>Livraison
       </h5>
-      <ul class="list-unstyled text-muted small">
-        <li class="mb-2">
-          <i class="bi bi-calendar me-2"></i>
-          {{ commande.date_commande|date:"d/m/Y à H:i" }}
+      <ul class="list-unstyled mb-0 small">
+        <li class="d-flex gap-2 mb-2">
+          <i class="bi bi-calendar3 mt-1" style="color:#E0A458;"></i>
+          <div>
+            <div class="text-muted">Date de commande</div>
+            <div class="fw-semibold" style="color:#1B263B;">
+              {{ commande.date_commande|date:"d/m/Y à H:i" }}
+            </div>
+          </div>
         </li>
-        <li class="mb-2">
-          <i class="bi bi-geo-alt me-2"></i>
-          {{ commande.adresse_livraison_reel }}
+        <li class="d-flex gap-2 mb-2">
+          <i class="bi bi-geo-alt mt-1" style="color:#E0A458;"></i>
+          <div>
+            <div class="text-muted">Adresse</div>
+            <div class="fw-semibold" style="color:#1B263B;">
+              {{ commande.adresse_livraison_reel }}
+            </div>
+          </div>
         </li>
-        <li class="mb-2">
-          <i class="bi bi-telephone me-2"></i>
-          {{ commande.telephone }}
+        <li class="d-flex gap-2">
+          <i class="bi bi-telephone mt-1" style="color:#E0A458;"></i>
+          <div>
+            <div class="text-muted">Téléphone</div>
+            <div class="fw-semibold" style="color:#1B263B;">
+              {{ commande.telephone }}
+            </div>
+          </div>
         </li>
       </ul>
+    </div>
 
+    <!-- Actions -->
+    <div class="card border-0 shadow-sm p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">Actions</h5>
+
+      <!-- Contacter le vendeur -->
+      {% if commande.details.first.produit %}
+        <a href="{% url 'messagerie:demarrer' commande.details.first.produit.commercant.id %}"
+           class="btn w-100 mb-2 fw-semibold"
+           style="background-color:#1B263B;color:white;">
+          <i class="bi bi-chat-dots me-2"></i>Contacter le vendeur
+        </a>
+      {% endif %}
+
+      <!-- Facture si livrée -->
       {% if commande.statut == 'livree' %}
-        {% if not commande.facture %}
-          <span class="text-muted small">Facture en cours de génération</span>
-        {% else %}
-          <a href="#" class="btn btn-sm w-100 mt-2"
+        {% if commande.facture and commande.facture.pdf_url %}
+          <a href="{{ commande.facture.pdf_url.url }}"
+             target="_blank"
+             class="btn w-100 mb-2 fw-semibold"
              style="background-color:#2A6B45;color:white;">
-            <i class="bi bi-download me-1"></i>Télécharger la facture
+            <i class="bi bi-download me-2"></i>Télécharger la facture
           </a>
         {% endif %}
-      {% endif %}
-    </div>
-  </div>
 
+        <!-- Laisser un avis (si pas encore fait) -->
+        {% for detail in details %}
+          {% if detail.peut_noter %}
+            <a href="#avis-{{ detail.produit.id }}"
+               class="btn w-100 mb-2 fw-semibold"
+               style="background-color:#E0A458;color:#1B263B;">
+              <i class="bi bi-star me-2"></i>Laisser un avis
+            </a>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <!-- Retour catalogue -->
+      <a href="{% url 'produits:catalogue' %}"
+         class="btn w-100 btn-outline-secondary fw-semibold">
+        <i class="bi bi-grid me-2"></i>Continuer mes achats
+      </a>
+    </div>
+
+  </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const COMMANDE_ID  = {{ commande.id }};
+const STATUT_URL   = "{% url 'commandes:get_statut' commande.id %}";
+const STATUT_ACTUEL = "{{ commande.statut }}";
+
+// ── Config des étapes ────────────────────────────────────────────────────────
+const ETAPES = {
+  'en_attente':    { ordre: 1, couleur: '#E0A458', label: 'En attente' },
+  'en_preparation':{ ordre: 2, couleur: '#1B263B', label: 'En préparation' },
+  'livree':        { ordre: 3, couleur: '#2A6B45', label: 'Livrée ✓' },
+  'annulee':       { ordre: -1, couleur: '#C47B8A', label: 'Annulée' },
+};
+
+// ── Met à jour l'affichage du tracker ────────────────────────────────────────
+function mettreAJourTracker(statut) {
+  const config = ETAPES[statut] || ETAPES['en_attente'];
+  const ordre  = config.ordre;
+
+  // Badge statut
+  const badge = document.getElementById('badge-statut');
+  if (badge) {
+    badge.textContent = config.label;
+    badge.style.backgroundColor = config.couleur;
+    badge.style.color = statut === 'en_attente' ? '#1B263B' : 'white';
+  }
+
+  if (statut === 'annulee') return;
+
+  // Cercles des étapes
+  document.querySelectorAll('.step-circle').forEach(circle => {
+    const step = parseInt(circle.dataset.step);
+    const icon = circle.querySelector('i');
+
+    if (step < ordre) {
+      // Étape passée — vert avec check
+      circle.style.borderColor = '#2A6B45';
+      circle.style.backgroundColor = '#2A6B45';
+      if (icon) icon.style.color = 'white';
+    } else if (step === ordre) {
+      // Étape active — couleur primaire
+      circle.style.borderColor = config.couleur;
+      circle.style.backgroundColor = config.couleur;
+      if (icon) icon.style.color = statut === 'en_attente' ? '#1B263B' : 'white';
+    } else {
+      // Étape future — gris
+      circle.style.borderColor = '#E9ECEF';
+      circle.style.backgroundColor = 'white';
+      if (icon) icon.style.color = '#ADB5BD';
+    }
+  });
+
+  // Labels
+  document.querySelectorAll('.step-label').forEach(label => {
+    const step = parseInt(label.parentElement.dataset.step);
+    label.style.color = step <= ordre ? config.couleur : '#ADB5BD';
+    label.style.fontWeight = step === ordre ? 'bold' : 'normal';
+  });
+
+  // Barre de progression
+  const progressLine = document.getElementById('progress-line');
+  if (progressLine) {
+    // 0% → 50% → 100% selon l'étape (3 étapes)
+    const pourcentage = ordre === 1 ? 0 : ordre === 2 ? 50 : 100;
+    progressLine.style.width = `calc(${pourcentage}% - ${pourcentage === 0 ? 0 : 80}px)`;
+    progressLine.style.backgroundColor = config.couleur;
+  }
+}
+
+// ── Polling AJAX toutes les 10 secondes ──────────────────────────────────────
+function verifierStatut() {
+  fetch(STATUT_URL)
+    .then(res => res.json())
+    .then(data => {
+      mettreAJourTracker(data.statut);
+
+      // Mettre à jour l'heure de dernière MAJ
+      const maj = document.getElementById('derniere-maj');
+      if (maj) {
+        const now = new Date();
+        maj.innerHTML = `
+          <i class="bi bi-check-circle me-1" style="color:#2A6B45;"></i>
+          Dernière mise à jour : ${now.toLocaleTimeString('fr-FR')}
+        `;
+      }
+
+      // Si livré ou annulé → arrêter le polling
+      if (data.statut === 'livree' || data.statut === 'annulee') {
+        clearInterval(pollingInterval);
+      }
+    })
+    .catch(() => {
+      // Silencieux en cas d'erreur réseau
+    });
+}
+
+// Initialisation
+mettreAJourTracker(STATUT_ACTUEL);
+
+// Démarrer le polling seulement si la commande n'est pas terminée
+let pollingInterval = null;
+if (STATUT_ACTUEL !== 'livree' && STATUT_ACTUEL !== 'annulee') {
+  pollingInterval = setInterval(verifierStatut, 10000);
+}
+
+// Nettoyer en quittant
+window.addEventListener('beforeunload', () => {
+  if (pollingInterval) clearInterval(pollingInterval);
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .step-circle {
+    cursor: default;
+    user-select: none;
+  }
+
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(224, 164, 88, 0.4); }
+    70%  { box-shadow: 0 0 0 10px rgba(224, 164, 88, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(224, 164, 88, 0); }
+  }
+
+  .step-active-pulse {
+    animation: pulse 2s infinite;
+  }
+</style>
 {% endblock %}

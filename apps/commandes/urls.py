@@ -14,4 +14,6 @@ urlpatterns = [
     path('confirmation/<int:commande_id>/', views.confirmation, name='confirmation'),
     path('mes-commandes/', views.mes_commandes, name='mes_commandes'),
     path('commande/<int:commande_id>/', views.detail_commande, name='detail_commande'),
+     # AJAX — suivi statut en temps réel
+    path('commande/<int:commande_id>/statut/', views.get_statut_json, name='get_statut'),
 ]

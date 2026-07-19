@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Panier, LignePanier, Commande, DetailsCommande
 from apps.produits.models import Produit
-
+from django.http import JsonResponse
 
 # ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -297,3 +297,30 @@ def detail_commande(request, commande_id):
         'details': details,
     }
     return render(request, 'commandes/detail_commande.html', context)
+
+@login_required
+def get_statut_json(request, commande_id):
+    """
+    Endpoint AJAX — retourne le statut actuel de la commande.
+    Appelé toutes les 10 secondes depuis la page de suivi.
+    """
+    commande = get_object_or_404(
+        Commande,
+        pk=commande_id,
+        client=request.user.client
+    )
+
+    statuts_ordre = {
+        'en_attente': 1,
+        'en_preparation': 2,
+        'livree': 3,
+        'annulee': -1,
+    }
+
+    return JsonResponse({
+        'statut': commande.statut,
+        'statut_display': commande.get_statut_display(),
+        'ordre': statuts_ordre.get(commande.statut, 0),
+        'montant_total': commande.montant_total,
+        'date_commande': commande.date_commande.strftime('%d/%m/%Y à %H:%M'),
+    }) 
