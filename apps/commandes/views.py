@@ -14,26 +14,25 @@ def get_or_create_panier(client):
 
 
 # ── PANIER ───────────────────────────────────────────────────────────────────
-
 @login_required
 def voir_panier(request):
-    """Affiche le panier du client connecté"""
     if not hasattr(request.user, 'client'):
         messages.error(request, "Accès réservé aux clients.")
         return redirect('home')
 
     panier = get_or_create_panier(request.user.client)
-    lignes = panier.lignes.select_related('produit').all()
+    # Seulement les lignes PAS encore rattachées à une commande
+    lignes = panier.lignes.filter(
+        commande=None
+    ).select_related('produit').all()
 
     context = {
         'panier': panier,
         'lignes': lignes,
-        'total': panier.total(),
-        'nombre_articles': panier.nombre_articles(),
+        'total': sum(l.sous_total() for l in lignes),
+        'nombre_articles': sum(l.quantite for l in lignes),
     }
     return render(request, 'commandes/panier.html', context)
-
-
 @login_required
 def ajouter_panier(request, produit_id):
     """Ajoute un produit au panier"""
@@ -129,22 +128,16 @@ def supprimer_panier(request, ligne_id):
 
 
 # ── COMMANDE ─────────────────────────────────────────────────────────────────
-
 @login_required
 def valider_commande(request):
-    """
-    Valide le panier et crée la commande.
-    Copie LignePanier → DetailsCommande.
-    Décrémente le stock.
-    Vide le panier.
-    """
     if not hasattr(request.user, 'client'):
         messages.error(request, "Accès réservé aux clients.")
         return redirect('home')
 
     client = request.user.client
     panier = get_or_create_panier(client)
-    lignes = panier.lignes.all()
+    # Lignes du panier = celles sans commande associée
+    lignes = panier.lignes.filter(commande=None)
 
     if not lignes.exists():
         messages.error(request, "Votre panier est vide.")
@@ -152,12 +145,10 @@ def valider_commande(request):
 
     if request.method == 'POST':
         adresse = request.POST.get(
-            'adresse_livraison',
-            client.adresse_livraison
+            'adresse_livraison', client.adresse_livraison
         )
         telephone = request.POST.get(
-            'telephone',
-            request.user.telephone
+            'telephone', request.user.telephone
         )
 
         if not adresse or not telephone:
@@ -167,13 +158,12 @@ def valider_commande(request):
             )
             return redirect('commandes:voir_panier')
 
-        # Vérification finale des stocks
+        # Vérification stock
         for ligne in lignes:
-            if ligne.quantite > ligne.produit.quantite:
+            if ligne.produit and ligne.quantite > ligne.produit.quantite:
                 messages.error(
                     request,
-                    f"Stock insuffisant pour {ligne.produit.nom}. "
-                    f"Seulement {ligne.produit.quantite} disponible(s)."
+                    f"Stock insuffisant pour {ligne.produit.nom}."
                 )
                 return redirect('commandes:voir_panier')
 
@@ -185,33 +175,32 @@ def valider_commande(request):
             statut='en_attente',
         )
 
-        # Copier chaque LignePanier → DetailsCommande
+        # Lier chaque LignePanier à cette commande
+        # (au lieu de créer DetailsCommande)
         for ligne in lignes:
-            # Vérifier si une offre est active
+            # Vérifier offre active
             offre_active = None
-            if hasattr(ligne.produit, 'offre'):
-                if ligne.produit.offre.est_active():
-                    offre_active = ligne.produit.offre
+            if ligne.produit and hasattr(ligne.produit, 'offre'):
+                try:
+                    if ligne.produit.offre.est_active():
+                        offre_active = ligne.produit.offre
+                except:
+                    pass
 
-            DetailsCommande.objects.create(
-                commande=commande,
-                produit=ligne.produit,
-                offre=offre_active,
-                quantite=ligne.quantite,
-                prix_unitaire_vente=ligne.prix_unitaire_snapshot,
-            )
+            # Rattacher la ligne à la commande
+            ligne.commande = commande
+            ligne.offre = offre_active
+            ligne.save()
 
             # Décrémenter le stock
-            ligne.produit.quantite -= ligne.quantite
-            ligne.produit.save()
+            if ligne.produit:
+                ligne.produit.quantite -= ligne.quantite
+                ligne.produit.save()
 
-        # Calculer le montant total
+        # Calculer montant total
         commande.calculer_montant()
 
-        # Vider le panier
-        panier.vider()
-
-        # Générer une notification pour le commerçant
+        # Notifier le commerçant
         _notifier_commercant(commande)
 
         messages.success(
@@ -220,7 +209,6 @@ def valider_commande(request):
         )
         return redirect('commandes:confirmation', commande_id=commande.id)
 
-    # GET — page récapitulatif avant validation
     context = {
         'panier': panier,
         'lignes': lignes,
@@ -228,7 +216,6 @@ def valider_commande(request):
         'client': client,
     }
     return render(request, 'commandes/recap_commande.html', context)
-
 
 def _notifier_commercant(commande):
     """Crée une notification pour le commerçant dès qu'une commande arrive"""
@@ -268,36 +255,32 @@ def confirmation(request, commande_id):
     context = {'commande': commande}
     return render(request, 'commandes/confirmation.html', context)
 
-
 @login_required
 def mes_commandes(request):
-    """Historique des commandes du client"""
     if not hasattr(request.user, 'client'):
         return redirect('home')
 
     commandes = Commande.objects.filter(
         client=request.user.client
-    ).prefetch_related('details__produit')
+    ).prefetch_related('lignes__produit')
 
     context = {'commandes': commandes}
     return render(request, 'commandes/mes_commandes.html', context)
-
-
 @login_required
 def detail_commande(request, commande_id):
-    """Détail d'une commande spécifique"""
     commande = get_object_or_404(
         Commande,
         pk=commande_id,
         client=request.user.client
     )
-    details = commande.details.select_related('produit', 'offre').all()
+    # Les lignes de cette commande
+    details = commande.lignes.select_related('produit', 'offre').all()
+
     context = {
         'commande': commande,
         'details': details,
     }
     return render(request, 'commandes/detail_commande.html', context)
-
 @login_required
 def get_statut_json(request, commande_id):
     """
