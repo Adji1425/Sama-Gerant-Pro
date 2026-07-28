@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Panier, LignePanier, Commande, DetailsCommande
+from .models import Panier, LignePanier, Commande
 
 @admin.register(Commande)
 class CommandeAdmin(admin.ModelAdmin):
@@ -8,4 +8,3 @@ class CommandeAdmin(admin.ModelAdmin):
 
 admin.site.register(Panier)
 admin.site.register(LignePanier)
-admin.site.register(DetailsCommande)
