@@ -4,6 +4,7 @@ from django.contrib import messages
 from .models import Panier, LignePanier, Commande
 from apps.produits.models import Produit
 from django.http import JsonResponse
+from apps.facturation.models import Facture
 
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -288,3 +289,147 @@ def get_statut_json(request, commande_id):
         'montant_total': commande.montant_total,
         'date_commande': commande.date_commande.strftime('%d/%m/%Y à %H:%M'),
     })
+
+
+
+# Décorateur commerçant
+def commercant_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        if not hasattr(request.user, 'commercant'):
+            messages.error(request, "Accès réservé aux commerçants.")
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+
+@login_required
+def commandes_commercant(request):
+    """Liste des commandes reçues par le commerçant"""
+    if not hasattr(request.user, 'commercant'):
+        return redirect('home')
+
+    commercant = request.user.commercant
+    # Commandes contenant des produits de ce commerçant
+    commandes = Commande.objects.filter(
+        lignes__produit__commercant=commercant
+    ).distinct().prefetch_related(
+        'lignes__produit', 'client__utilisateur'
+    ).order_by('-date_commande')
+
+    # Filtrer par statut
+    statut_filtre = request.GET.get('statut', '')
+    if statut_filtre:
+        commandes = commandes.filter(statut=statut_filtre)
+
+    context = {
+        'commandes': commandes,
+        'statut_filtre': statut_filtre,
+        'total_en_attente': Commande.objects.filter(
+            lignes__produit__commercant=commercant,
+            statut='en_attente'
+        ).distinct().count(),
+        'total_en_preparation': Commande.objects.filter(
+            lignes__produit__commercant=commercant,
+            statut='en_preparation'
+        ).distinct().count(),
+    }
+    return render(request, 'commandes/commandes_commercant.html', context)
+
+
+@login_required
+def detail_commande_commercant(request, commande_id):
+    """Détail d'une commande côté commerçant"""
+    if not hasattr(request.user, 'commercant'):
+        return redirect('home')
+
+    commande = get_object_or_404(Commande, pk=commande_id)
+    lignes = commande.lignes.filter(
+        produit__commercant=request.user.commercant
+    ).select_related('produit', 'offre')
+
+    return render(request, 'commandes/detail_commande_commercant.html', {
+        'commande': commande,
+        'lignes': lignes,
+    })
+
+
+@login_required
+def changer_statut(request, commande_id):
+    """Changer le statut d'une commande"""
+    if not hasattr(request.user, 'commercant'):
+        return redirect('home')
+
+    if request.method == 'POST':
+        commande = get_object_or_404(Commande, pk=commande_id)
+        nouveau_statut = request.POST.get('statut')
+
+        statuts_valides = ['en_attente', 'en_preparation', 'livree', 'annulee']
+        if nouveau_statut in statuts_valides:
+            ancien_statut = commande.statut
+            commande.statut = nouveau_statut
+            commande.save()
+
+            # Notifier le client
+            try:
+                from apps.notifications.models import Notification
+                if hasattr(commande.client, 'utilisateur'):
+                    pass  # notifications client à implémenter si besoin
+            except Exception:
+                pass
+
+            # Générer facture si livrée
+            if nouveau_statut == 'livree' and ancien_statut != 'livree':
+                _generer_facture_auto(commande)
+
+            messages.success(
+                request,
+                f"✓ Statut de la commande #{commande.id} → "
+                f"{commande.get_statut_display()}"
+            )
+
+    return redirect('commandes:commandes_commercant')
+
+
+def _generer_facture_auto(commande):
+    """Génère automatiquement la facture quand commande livrée"""
+    try:
+        if not hasattr(commande, 'facture'):
+            Facture.objects.create(commande=commande)
+    except Exception:
+        pass
+
+
+@login_required
+def generer_facture(request, commande_id):
+    """Génère et affiche la facture PDF"""
+    if not hasattr(request.user, 'commercant'):
+        return redirect('home')
+
+    commande = get_object_or_404(Commande, pk=commande_id)
+
+    # Créer la facture si elle n'existe pas
+    facture, created = Facture.objects.get_or_create(commande=commande)
+
+    # Générer le PDF avec xhtml2pdf
+    from django.template.loader import get_template
+    from django.http import HttpResponse
+    try:
+        from xhtml2pdf import pisa
+        template = get_template('facturation/facture_pdf.html')
+        html = template.render({
+            'commande': commande,
+            'facture': facture,
+            'lignes': commande.lignes.select_related('produit', 'offre').all(),
+        })
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = (
+            f'attachment; filename="facture_{commande.id}.pdf"'
+        )
+        pisa.CreatePDF(html, dest=response)
+        return response
+    except Exception as e:
+        messages.error(request, f"Erreur génération PDF : {e}")
+        return redirect('commandes:commandes_commercant')
