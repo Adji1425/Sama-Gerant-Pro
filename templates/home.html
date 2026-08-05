@@ -1,217 +1,323 @@
 {% extends 'base.html' %}
-{% block title %}Accueil — Sama-Gérant Pro{% endblock %}
+{% block title %}Sama-Gérant Pro — Boutique en ligne au Sénégal{% endblock %}
 
 {% block full_content %}
 
 <!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
-<section style="background-color:#1B263B;" class="py-5">
+<section class="hero">
   <div class="container">
-    <div class="row align-items-center g-4">
-      <div class="col-md-6 text-white">
-        <span class="badge mb-3"
-              style="background-color:#E0A458;color:#1B263B;">
-          🇸🇳 Fait pour le Sénégal
-        </span>
-        <h1 class="fw-bold display-5 mb-3">
-          Gérez votre boutique<br>
-          <span style="color:#E0A458;">intelligemment</span>
-        </h1>
-        <p class="mb-4" style="color:#D6E4EC;">
-          Sama-Gérant Pro centralise vos ventes, votre stock et vos
-          décisions commerciales en un seul endroit.
-        </p>
-        <div class="d-flex gap-3 flex-wrap">
-          <a href="{% url 'produits:catalogue' %}"
-             class="btn fw-semibold px-4 py-2"
-             style="background-color:#E0A458;color:#1B263B;">
-            <i class="bi bi-grid me-2"></i>Voir le catalogue
-          </a>
-          {% if not user.is_authenticated %}
-          <a href="{% url 'users:register' %}"
-             class="btn btn-outline-light fw-semibold px-4 py-2">
-            Créer un compte
-          </a>
-          {% endif %}
-        </div>
-      </div>
-      <div class="col-md-6 text-center">
-        <div class="rounded-3 p-4"
-             style="background-color:#2A3F60;">
-          <i class="bi bi-shop display-1"
-             style="color:#E0A458;"></i>
-          <p class="text-white mt-2 small">
-            Boutique numérique · Stock en temps réel · Aide à la décision
-          </p>
-        </div>
-      </div>
+    <div class="hero-content fade-up">
+      <span class="hero-label">Sama-Gérant Pro</span>
+      <h1>Gérez votre boutique<br>intelligemment</h1>
+      <p>Découvrez nos produits de qualité, livrés rapidement<br>
+         partout au Sénégal.</p>
+      <a href="{% url 'produits:catalogue' %}" class="btn-hero">
+        DÉCOUVRIR &nbsp;→
+      </a>
     </div>
+  </div>
+  <!-- Dots carrousel décoratifs -->
+  <div class="hero-dots">
+    <div class="hero-dot active"></div>
+    <div class="hero-dot"></div>
   </div>
 </section>
 
-<!-- ══ PRODUITS PAR CATÉGORIE ════════════════════════════════════════════════ -->
-<section class="py-5" style="background-color:#FEF9F6;">
+<!-- ══ CATÉGORIES EN CERCLES ═════════════════════════════════════════════════ -->
+<section class="section-categories">
   <div class="container">
-    <div class="text-center mb-4">
-      <h2 class="fw-bold" style="color:#1B263B;">Nos produits</h2>
-      <p class="text-muted">Découvrez notre sélection par catégorie</p>
+    <div class="section-header">
+      <h2>Catégories</h2>
+      <a href="{% url 'produits:catalogue' %}" class="voir-tout">
+        VOIR TOUT &nbsp;›
+      </a>
     </div>
 
-    {% for categorie, produits_cat in produits_par_categorie.items %}
-    {% if produits_cat %}
-    <div class="mb-5">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="fw-bold mb-0" style="color:#1B263B;">
-          <span class="badge me-2"
-                style="background-color:#D6E4EC;color:#1B263B;">
-            {{ categorie }}
-          </span>
-        </h5>
-        <a href="{% url 'produits:catalogue' %}?categorie={{ produits_cat.0.categorie.id }}"
-           class="small text-decoration-none"
-           style="color:#E0A458;">
-          Voir tout <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-
-      <div class="row row-cols-2 row-cols-md-4 g-3">
-        {% for produit in produits_cat|slice:":4" %}
-        <div class="col">
-          <div class="card h-100 border-0 shadow-sm hover-card">
-            {% if produit.image_principale %}
-              <img src="{{ produit.image_principale.image.url }}"
-                   class="card-img-top"
-                   style="height:180px;object-fit:cover;">
+    <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-3 justify-content-center">
+      {% for categorie in categories %}
+      <div class="col d-flex justify-content-center">
+        <a href="{% url 'produits:catalogue' %}?categorie={{ categorie.id }}"
+           class="categorie-item text-decoration-none">
+          <div class="categorie-circle">
+            {% if categorie.image %}
+              <img src="{{ categorie.image.url }}" alt="{{ categorie.nom }}">
             {% else %}
-              <div class="d-flex align-items-center justify-content-center bg-light"
-                   style="height:180px;">
-                <i class="bi bi-image text-muted fs-2"></i>
+              <div class="categorie-circle-placeholder">
+                <i class="bi bi-grid"></i>
               </div>
             {% endif %}
-            <div class="card-body p-2">
-              <p class="fw-semibold small mb-1 text-truncate"
-                 style="color:#1B263B;">{{ produit.nom }}</p>
-              <p class="fw-bold mb-2" style="color:#E0A458;">
-                {{ produit.prix_vente|floatformat:0 }} FCFA
-              </p>
-              <div class="d-flex gap-1">
-                <a href="{% url 'produits:fiche_produit' produit.pk %}"
-                   class="btn btn-sm flex-grow-1"
-                   style="background-color:#1B263B;color:white;font-size:11px;">
-                  Voir
-                </a>
-                <!-- Panier visiteur ou client -->
-                <form method="POST"
-                      action="{% url 'commandes:ajouter_panier' produit.pk %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="quantite" value="1">
-                  <button type="submit"
-                          class="btn btn-sm"
-                          style="background-color:#E0A458;color:#1B263B;">
-                    <i class="bi bi-cart-plus"></i>
-                  </button>
-                </form>
-              </div>
-            </div>
           </div>
-        </div>
-        {% endfor %}
+          <span class="categorie-nom">{{ categorie.nom }}</span>
+        </a>
       </div>
+      {% empty %}
+      {% for icon, nom in categories_defaut %}
+      <div class="col d-flex justify-content-center">
+        <div class="categorie-item">
+          <div class="categorie-circle">
+            <div class="categorie-circle-placeholder">{{ icon }}</div>
+          </div>
+          <span class="categorie-nom">{{ nom }}</span>
+        </div>
+      </div>
+      {% endfor %}
+      {% endfor %}
     </div>
-    {% endif %}
-    {% empty %}
-    <div class="text-center text-muted py-4">
-      <i class="bi bi-box fs-1 d-block mb-2"></i>
-      Aucun produit disponible pour le moment.
-    </div>
-    {% endfor %}
   </div>
 </section>
 
-<!-- ══ À PROPOS ══════════════════════════════════════════════════════════════ -->
-<section class="py-5" style="background-color:#1B263B;">
+<!-- ══ BANNIÈRE SERVICES ══════════════════════════════════════════════════════ -->
+<section class="section-services">
   <div class="container">
-    <div class="row align-items-center g-4">
-      <div class="col-md-6">
-        <h2 class="fw-bold text-white mb-3">À propos de Sama-Gérant Pro</h2>
-        <p style="color:#D6E4EC;">
-          Sama-Gérant Pro est une plateforme de gestion commerciale
-          conçue spécifiquement pour les commerçants du secteur informel
-          sénégalais.
-        </p>
-        <p style="color:#D6E4EC;">
-          Notre système intègre une aide à la décision intelligente qui
-          prend en compte les événements religieux (Tabaski, Magal, Korité)
-          et les saisons climatiques pour optimiser vos ventes.
-        </p>
-        <div class="row g-3 mt-2">
-          {% for stat in stats %}
-          <div class="col-6">
-            <div class="p-3 rounded text-center"
-                 style="background-color:#2A3F60;">
-              <div class="fs-3 fw-bold" style="color:#E0A458;">
-                {{ stat.valeur }}
-              </div>
-              <div class="small" style="color:#D6E4EC;">{{ stat.label }}</div>
-            </div>
-          </div>
-          {% endfor %}
+    <div class="row g-3 justify-content-center">
+      <div class="col-auto">
+        <div class="service-item">
+          <i class="bi bi-truck"></i>
+          LIVRAISON RAPIDE
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="row g-3">
-          {% for feature in features %}
-          <div class="col-6">
-            <div class="p-3 rounded" style="background-color:#2A3F60;">
-              <div class="fs-2 mb-2">{{ feature.icon }}</div>
-              <div class="fw-semibold text-white small">{{ feature.titre }}</div>
-              <div class="text-muted small" style="font-size:11px;">
-                {{ feature.desc }}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
+      <div class="col-auto d-none d-md-flex">
+        <span style="color:var(--border);font-size:20px;">|</span>
+      </div>
+      <div class="col-auto">
+        <div class="service-item">
+          <i class="bi bi-shield-check"></i>
+          PAIEMENT SÉCURISÉ
+        </div>
+      </div>
+      <div class="col-auto d-none d-md-flex">
+        <span style="color:var(--border);font-size:20px;">|</span>
+      </div>
+      <div class="col-auto">
+        <div class="service-item">
+          <i class="bi bi-headset"></i>
+          SUPPORT CLIENT
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ AVIS CLIENTS ═══════════════════════════════════════════════════════════ -->
+<!-- ══ NOUVEAUTÉS ════════════════════════════════════════════════════════════ -->
+{% if nouveautes %}
+<section class="section-produits">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="section-label-small">FRAÎCHEMENT ARRIVÉ</span>
+        <h2>Nouveautés</h2>
+      </div>
+      <a href="{% url 'produits:catalogue' %}" class="voir-tout">
+        VOIR TOUT &nbsp;›
+      </a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+      {% for produit in nouveautes %}
+      <div class="col fade-up fade-up-{{ forloop.counter }}">
+        <div class="produit-card">
+          <div class="produit-card-img-wrap">
+            <!-- Badge NEW -->
+            <span class="produit-badge new">NEW</span>
+            <!-- Badge offre -->
+            {% if produit.offre and produit.offre.est_active %}
+              <span class="produit-badge promo"
+                    style="left:auto;right:12px;">
+                -{{ produit.offre.taux|floatformat:0 }}%
+              </span>
+            {% endif %}
+            <!-- Bouton favori -->
+            <button class="produit-fav">
+              <i class="bi bi-heart"></i>
+            </button>
+            <!-- Image -->
+            {% if produit.image_principale %}
+              <img src="{{ produit.image_principale.image.url }}"
+                   alt="{{ produit.nom }}"
+                   class="produit-card-img">
+            {% else %}
+              <div class="produit-card-img-placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+            {% endif %}
+            <!-- Overlay au hover -->
+            <div class="produit-card-overlay d-none d-md-flex">
+              <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                 class="btn-overlay-panier">
+                <i class="bi bi-cart-plus me-2"></i>Choisir
+              </a>
+              {% if user.is_authenticated and user.role == 'client' %}
+              <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
+                 class="btn-overlay-msg">
+                <i class="bi bi-chat-dots-fill"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="produit-card-body">
+            <p class="produit-card-nom">{{ produit.nom }}</p>
+            <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p>
+            <div class="d-flex align-items-center gap-2">
+              {% if produit.offre and produit.offre.est_active %}
+                <span class="produit-card-prix-barre">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+                <span class="produit-card-prix-remise">
+                  {{ produit.offre.prix_reduit|floatformat:0 }} F
+                </span>
+              {% elif produit.quantite == 0 %}
+                <span style="color:#E05555;font-size:13px;font-weight:600;">
+                  Rupture de stock
+                </span>
+              {% else %}
+                <span class="produit-card-prix">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ POPULAIRES ════════════════════════════════════════════════════════════ -->
+{% if populaires %}
+<section class="section-produits" style="background:var(--cream-light);">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="section-label-small">SÉLECTION</span>
+        <h2>Populaires</h2>
+      </div>
+      <a href="{% url 'produits:catalogue' %}" class="voir-tout">
+        VOIR TOUT &nbsp;›
+      </a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+      {% for produit in populaires %}
+      <div class="col">
+        <div class="produit-card">
+          <div class="produit-card-img-wrap">
+            {% if produit.offre and produit.offre.est_active %}
+              <span class="produit-badge promo">
+                -{{ produit.offre.taux|floatformat:0 }}%
+              </span>
+            {% endif %}
+            <button class="produit-fav"><i class="bi bi-heart"></i></button>
+            {% if produit.quantite == 0 %}
+              <div class="rupture-overlay">Rupture de stock</div>
+            {% endif %}
+            {% if produit.image_principale %}
+              <img src="{{ produit.image_principale.image.url }}"
+                   alt="{{ produit.nom }}"
+                   class="produit-card-img
+                   {% if produit.quantite == 0 %}img-grayscale{% endif %}">
+            {% else %}
+              <div class="produit-card-img-placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+            {% endif %}
+            <div class="produit-card-overlay d-none d-md-flex">
+              <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                 class="btn-overlay-panier">
+                <i class="bi bi-cart-plus me-2"></i>Choisir
+              </a>
+              {% if user.is_authenticated and user.role == 'client' %}
+              <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
+                 class="btn-overlay-msg">
+                <i class="bi bi-chat-dots-fill"></i>
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="produit-card-body">
+            <p class="produit-card-nom">{{ produit.nom }}</p>
+            <div class="d-flex align-items-center gap-2">
+              {% if produit.offre and produit.offre.est_active %}
+                <span class="produit-card-prix-barre">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+                <span class="produit-card-prix-remise">
+                  {{ produit.offre.prix_reduit|floatformat:0 }} F
+                </span>
+              {% elif produit.quantite == 0 %}
+                <span style="color:#E05555;font-size:13px;font-weight:600;">
+                  Rupture de stock
+                </span>
+                <span class="produit-card-prix"
+                      style="text-decoration:line-through;color:var(--muted);">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+              {% else %}
+                <span class="produit-card-prix">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ STATS ══════════════════════════════════════════════════════════════════ -->
+<section style="background:var(--cream-light);padding:40px 0;">
+  <div class="container">
+    <div class="row g-3">
+      {% for stat in stats %}
+      <div class="col-4">
+        <div class="stat-box">
+          <div class="stat-val">{{ stat.valeur }}</div>
+          <div class="stat-lbl">{{ stat.label }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ══ AVIS CLIENTS ══════════════════════════════════════════════════════════ -->
 {% if derniers_avis %}
-<section class="py-5" style="background-color:#FEF9F6;">
+<section class="section-avis">
   <div class="container">
-    <div class="text-center mb-4">
-      <h2 class="fw-bold" style="color:#1B263B;">Ce que disent nos clients</h2>
-    </div>
-    <div class="row g-4">
+    <h2 style="font-family:'Playfair Display',serif;font-size:2rem;
+               margin-bottom:28px;">Avis clients</h2>
+    <div class="row g-3">
       {% for avis in derniers_avis %}
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4 h-100">
-          <div class="mb-2">
+        <div class="avis-card">
+          <!-- Étoiles -->
+          <div class="stars">
             {% for i in "12345" %}
-              {% if forloop.counter <= avis.note %}
-                <i class="bi bi-star-fill" style="color:#E0A458;"></i>
-              {% else %}
-                <i class="bi bi-star" style="color:#E0A458;"></i>
-              {% endif %}
+              {% if forloop.counter <= avis.note %}★{% else %}☆{% endif %}
             {% endfor %}
           </div>
-          <p class="text-muted small fst-italic mb-3">
-            "{{ avis.commentaire|default:"Très bon produit !" }}"
-          </p>
+          <!-- Commentaire -->
+          <p class="avis-quote">"{{ avis.commentaire|default:"Très bon produit !" }}"</p>
+          <!-- Auteur -->
           <div class="d-flex align-items-center gap-2 mt-auto">
-            <div class="rounded-circle d-flex align-items-center
-                        justify-content-center fw-bold"
-                 style="width:36px;height:36px;
-                        background:#D6E4EC;color:#1B263B;font-size:13px;">
-              {{ avis.client.utilisateur.first_name|first|upper }}
-            </div>
+            {% if avis.client.utilisateur.photo_profile %}
+              <img src="{{ avis.client.utilisateur.photo_profile.url }}"
+                   style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
+            {% else %}
+              <div class="avis-avatar">
+                {{ avis.client.utilisateur.first_name|first|upper }}
+              </div>
+            {% endif %}
             <div>
-              <div class="fw-semibold small" style="color:#1B263B;">
+              <div style="font-size:14px;font-weight:600;color:var(--text);">
                 {{ avis.client.utilisateur.get_full_name }}
               </div>
-              <div class="text-muted" style="font-size:11px;">
-                {{ avis.date_avis|date:"d/m/Y" }}
+              <div style="font-size:12px;color:var(--muted);">
+                {{ avis.produit.nom }}
               </div>
             </div>
           </div>
@@ -223,105 +329,224 @@
 </section>
 {% endif %}
 
-<!-- ══ LOCALISATION + CONTACT ════════════════════════════════════════════════ -->
-<section class="py-5" id="contact" style="background-color:#FEF9F6;">
+<!-- ══ FOOTER ════════════════════════════════════════════════════════════════ -->
+<footer class="footer" id="contact">
   <div class="container">
-    <div class="row g-4">
-
+    <div class="row g-5">
+      <!-- Brand -->
+      <div class="col-md-4">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);
+                    letter-spacing:.1em;font-weight:600;margin-bottom:4px;">
+          SAMA-GÉRANT
+        </div>
+        <div class="footer-brand">PRO</div>
+        <p class="footer-desc">
+          Système de gestion commerciale avec aide à la décision
+          pour les commerçants sénégalais.
+        </p>
+      </div>
+      <!-- Navigation -->
+      <div class="col-6 col-md-2">
+        <div class="footer-col-label">NAVIGATION</div>
+        <a href="{% url 'home' %}">Accueil</a>
+        <a href="{% url 'produits:catalogue' %}">Catalogue</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'commandes:mes_commandes' %}">Mes commandes</a>
+          <a href="{% url 'messagerie:liste_conversations' %}">Messages</a>
+        {% else %}
+          <a href="{% url 'users:register' %}">Créer un compte</a>
+          <a href="{% url 'users:login' %}">Connexion</a>
+        {% endif %}
+      </div>
+      <!-- Services -->
+      <div class="col-6 col-md-2">
+        <div class="footer-col-label">SERVICES</div>
+        <a href="#">Livraison rapide</a>
+        <a href="#">Paiement sécurisé</a>
+        <a href="#">Support client</a>
+        <a href="#">Retours & échanges</a>
+      </div>
       <!-- Contact -->
-      <div class="col-md-6">
-        <h3 class="fw-bold mb-4" style="color:#1B263B;">
-          <i class="bi bi-envelope me-2"></i>Nous contacter
-        </h3>
-        <form method="POST" action="#">
-          {% csrf_token %}
-          <div class="mb-3">
-            <input type="text" class="form-control"
-                   placeholder="Votre nom" required>
-          </div>
-          <div class="mb-3">
-            <input type="email" class="form-control"
-                   placeholder="Votre email" required>
-          </div>
-          <div class="mb-3">
-            <textarea class="form-control" rows="4"
-                      placeholder="Votre message" required></textarea>
-          </div>
-          <button type="submit" class="btn fw-semibold px-4"
-                  style="background-color:#1B263B;color:white;">
-            <i class="bi bi-send me-2"></i>Envoyer
-          </button>
-        </form>
-      </div>
-
-      <!-- Localisation -->
-      <div class="col-md-6">
-        <h3 class="fw-bold mb-4" style="color:#1B263B;">
-          <i class="bi bi-geo-alt me-2"></i>Notre localisation
-        </h3>
-        <div class="card border-0 shadow-sm p-4 mb-3">
-          <ul class="list-unstyled mb-0">
-            <li class="mb-3 d-flex align-items-start gap-3">
-              <i class="bi bi-building fs-5"
-                 style="color:#E0A458;"></i>
-              <div>
-                <div class="fw-semibold" style="color:#1B263B;">
-                  Université Cheikh Anta Diop
-                </div>
-                <div class="text-muted small">
-                  Faculté des Sciences et Techniques<br>
-                  Dakar, Sénégal
-                </div>
-              </div>
-            </li>
-            <li class="mb-3 d-flex align-items-start gap-3">
-              <i class="bi bi-envelope fs-5"
-                 style="color:#E0A458;"></i>
-              <div>
-                <div class="fw-semibold" style="color:#1B263B;">Email</div>
-                <div class="text-muted small">
-                  sama.gerant.pro@ucad.sn
-                </div>
-              </div>
-            </li>
-            <li class="d-flex align-items-start gap-3">
-              <i class="bi bi-telephone fs-5"
-                 style="color:#E0A458;"></i>
-              <div>
-                <div class="fw-semibold" style="color:#1B263B;">
-                  Téléphone
-                </div>
-                <div class="text-muted small">+221 77 000 00 00</div>
-              </div>
-            </li>
-          </ul>
+      <div class="col-md-4">
+        <div class="footer-col-label">CONTACT</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.65);
+                    margin-bottom:8px;">
+          <i class="bi bi-geo-alt me-2" style="color:var(--gold);"></i>
+          UCAD — FST, Dakar, Sénégal
         </div>
-
-        <!-- Carte Google Maps simple -->
-        <div class="rounded overflow-hidden shadow-sm">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.8!2d-17.4674!3d14.6937!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDQxJzM3LjMiTiAxN8KwMjgnMDIuNiJX!5e0!3m2!1sfr!2ssn!4v1234567890"
-            width="100%" height="200"
-            style="border:0;" allowfullscreen="" loading="lazy">
-          </iframe>
+        <div style="font-size:14px;color:rgba(255,255,255,0.65);
+                    margin-bottom:8px;">
+          <i class="bi bi-envelope me-2" style="color:var(--gold);"></i>
+          sama.gerant@ucad.sn
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.65);
+                    margin-bottom:20px;">
+          <i class="bi bi-telephone me-2" style="color:var(--gold);"></i>
+          +221 77 000 00 00
+        </div>
+        <!-- Réseaux sociaux -->
+        <div class="d-flex gap-2">
+          <a href="#" class="footer-social-btn">
+            <i class="bi bi-instagram"></i>
+          </a>
+          <a href="#" class="footer-social-btn">
+            <i class="bi bi-tiktok"></i>
+          </a>
+          <a href="#" class="footer-social-btn">
+            <i class="bi bi-whatsapp"></i>
+          </a>
         </div>
       </div>
+    </div>
 
+    <hr class="footer-divider">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <p class="footer-bottom mb-0">
+        © 2025 Sama-Gérant Pro · UCAD Licence 3 Informatique
+      </p>
+      <p class="footer-bottom mb-0">
+        Fait avec ❤️ au Sénégal
+      </p>
     </div>
   </div>
-</section>
+</footer>
 
 {% endblock %}
 
 {% block extra_css %}
 <style>
-  .hover-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-  }
-  .hover-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
-  }
+/* ── Overlay produit au hover ────────────────────────────────── */
+.produit-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.08));
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.produit-card:hover .produit-card-overlay { opacity: 1; }
+
+.btn-overlay-panier {
+  flex: 1;
+  background: var(--white);
+  color: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-overlay-panier:hover {
+  background: var(--cream);
+  color: var(--text);
+}
+
+.btn-overlay-msg {
+  width: 40px;
+  height: 40px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 16px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.btn-overlay-msg:hover { background: #b8855c; color: var(--white); }
+
+/* ── Rupture de stock overlay ───────────────────────────────── */
+.rupture-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(224, 85, 85, 0.92);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 50px;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.img-grayscale {
+  filter: grayscale(60%);
+  opacity: 0.75;
+}
+
+/* ── Réseaux sociaux footer ─────────────────────────────────── */
+.footer-social-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.65);
+  font-size: 15px;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+}
+
+.footer-social-btn:hover {
+  background: var(--gold);
+  color: var(--white);
+}
+
+/* ── Stat box ───────────────────────────────────────────────── */
+.stat-box {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-lbl {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 6px;
+}
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Navbar devient solide au scroll */
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.navbar');
+  if (nav) {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }
+});
+</script>
 {% endblock %}
