@@ -35,7 +35,7 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
-    """Message envoyé dans une conversation — AJAX, pas WebSocket"""
+    """Message envoyé dans une conversation — diffusé en temps réel via WebSocket (Django Channels)"""
     conversation = models.ForeignKey(
         Conversation,
         on_delete=models.CASCADE,

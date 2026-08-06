@@ -42,10 +42,31 @@
             overflow-y:auto;
             background-color:#F8F9FA;
             scroll-behavior:smooth;">
-  <!-- Les messages sont chargés dynamiquement via AJAX -->
-  <div class="text-center text-muted small py-4" id="loading-msg">
-    <i class="bi bi-three-dots"></i> Chargement des messages...
-  </div>
+  {% for msg in historique %}
+    <div class="d-flex mb-2 {% if msg.expediteur_id == request.user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+      <div class="px-3 py-2 rounded-3"
+           style="max-width:70%;
+                  {% if msg.expediteur_id == request.user.id %}
+                    background-color:#1B263B;color:white;
+                  {% else %}
+                    background-color:white;color:#1B263B;border:1px solid #D6E4EC;
+                  {% endif %}">
+        <div style="white-space:pre-wrap;">{{ msg.contenu }}</div>
+        <div class="text-end" style="font-size:10px;opacity:.7;margin-top:2px;">
+          {{ msg.date_heure|date:"H:i" }}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="text-center text-muted small py-4">
+      Aucun message pour l'instant. Dites bonjour 👋
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Statut de connexion WebSocket -->
+<div id="ws-erreur" class="alert alert-warning small py-2 d-none" role="alert">
+  Connexion perdue, tentative de reconnexion...
 </div>
 
 <!-- Zone saisie -->
@@ -77,17 +98,9 @@
 {% load static %}
 <script src="{% static 'js/chat.js' %}"></script>
 <script>
-  // Initialiser le chat avec l'ID de conversation et le token CSRF
   document.addEventListener('DOMContentLoaded', function() {
-    const convId   = {{ conversation.id }};
-    const csrf     = '{{ csrf_token }}';
-    initChat(convId, csrf);
-
-    // Cacher le message de loading après init
-    setTimeout(() => {
-      const loading = document.getElementById('loading-msg');
-      if (loading) loading.style.display = 'none';
-    }, 1000);
+    const convId = {{ conversation.id }};
+    initChat(convId);
   });
 </script>
 {% endblock %}

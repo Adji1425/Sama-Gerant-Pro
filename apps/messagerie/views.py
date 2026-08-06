@@ -1,9 +1,5 @@
-import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.utils import timezone
 from .models import Conversation, Message
 from apps.users.models import Commercant
 
@@ -99,102 +95,13 @@ def chat(request, conv_id):
     else:
         interlocuteur = conversation.client.utilisateur
 
+    # Historique des messages, rendu directement côté serveur.
+    # Les nouveaux messages arriveront ensuite en direct via WebSocket.
+    historique = conversation.messages.select_related('expediteur').order_by('date_heure')
+
     context = {
         'conversation': conversation,
         'interlocuteur': interlocuteur,
+        'historique': historique,
     }
     return render(request, 'messagerie/chat.html', context)
-
-
-@login_required
-def get_messages_json(request, conv_id):
-    """
-    Endpoint AJAX — retourne les messages en JSON.
-    Appelé toutes les 2 secondes par le JS pour simuler le temps réel.
-    """
-    conversation = get_object_or_404(Conversation, pk=conv_id)
-    utilisateur = request.user
-
-    # Vérification participation
-    est_participant = (
-        (hasattr(utilisateur, 'client') and
-         conversation.client == utilisateur.client)
-        or
-        (hasattr(utilisateur, 'commercant') and
-         conversation.commercant == utilisateur.commercant)
-    )
-    if not est_participant:
-        return JsonResponse({'error': 'Accès refusé'}, status=403)
-
-    # Récupérer uniquement les nouveaux messages si ?depuis= est fourni
-    depuis_id = request.GET.get('depuis', 0)
-    messages_qs = Message.objects.filter(
-        conversation=conversation,
-        id__gt=depuis_id
-    ).select_related('expediteur').order_by('date_heure')
-
-    # Marquer comme lus
-    messages_qs.exclude(expediteur=utilisateur).update(lu=True)
-
-    messages_data = []
-    for msg in messages_qs:
-        messages_data.append({
-            'id': msg.id,
-            'contenu': msg.contenu,
-            'expediteur': msg.expediteur.get_full_name() or msg.expediteur.username,
-            'date_heure': msg.date_heure.strftime('%H:%M'),
-            'est_moi': msg.expediteur == utilisateur,
-            'lu': msg.lu,
-        })
-
-    return JsonResponse({
-        'messages': messages_data,
-        'total': messages_qs.count(),
-    })
-
-
-@login_required
-@require_POST
-def envoyer_message(request, conv_id):
-    """
-    Endpoint AJAX — reçoit et enregistre un message.
-    Appelé en POST par le JS quand l'utilisateur envoie un message.
-    """
-    conversation = get_object_or_404(Conversation, pk=conv_id)
-    utilisateur = request.user
-
-    est_participant = (
-        (hasattr(utilisateur, 'client') and
-         conversation.client == utilisateur.client)
-        or
-        (hasattr(utilisateur, 'commercant') and
-         conversation.commercant == utilisateur.commercant)
-    )
-    if not est_participant:
-        return JsonResponse({'error': 'Accès refusé'}, status=403)
-
-    try:
-        data = json.loads(request.body)
-        contenu = data.get('contenu', '').strip()
-    except json.JSONDecodeError:
-        contenu = request.POST.get('contenu', '').strip()
-
-    if not contenu:
-        return JsonResponse({'error': 'Message vide'}, status=400)
-
-    message = Message.objects.create(
-        conversation=conversation,
-        expediteur=utilisateur,
-        contenu=contenu,
-    )
-
-    return JsonResponse({
-        'success': True,
-        'message': {
-            'id': message.id,
-            'contenu': message.contenu,
-            'expediteur': utilisateur.get_full_name() or utilisateur.username,
-            'date_heure': message.date_heure.strftime('%H:%M'),
-            'est_moi': True,
-        }
-    })
