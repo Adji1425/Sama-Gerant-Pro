@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import InscriptionForm, ConnexionForm, ModifierProfilForm
+from .forms import (
+    InscriptionForm, ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
+)
 from .models import Client, Utilisateur
 
 
@@ -125,3 +127,22 @@ def modifier_profil(request):
         form = ModifierProfilForm(instance=request.user)
 
     return render(request, 'users/modifier_profil.html', {'form': form})
+
+
+@login_required
+def changer_mot_de_passe(request):
+    """Changement du mot de passe de l'utilisateur connecté"""
+    if request.method == 'POST':
+        form = ChangerMotDePasseForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            # Garde l'utilisateur connecté après le changement de mot de passe
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "Votre mot de passe a été modifié avec succès !")
+            return redirect('users:profil')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = ChangerMotDePasseForm(request.user)
+
+    return render(request, 'users/changer_mot_de_passe.html', {'form': form})

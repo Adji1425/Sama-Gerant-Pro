@@ -9,4 +9,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profil/', views.profil, name='profil'),
     path('profil/modifier/', views.modifier_profil, name='modifier_profil'),
+    path('profil/mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),
 ]

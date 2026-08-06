@@ -53,6 +53,10 @@
           <div class="mb-3">
             <label class="form-label fw-semibold small">Téléphone</label>
             {{ form.telephone }}
+            <div class="text-muted small mt-1">Exactement 9 chiffres, ex : 771234567</div>
+            {% if form.telephone.errors %}
+              <div class="text-danger small">{{ form.telephone.errors }}</div>
+            {% endif %}
           </div>
 
           <div class="mb-3">
@@ -63,6 +67,9 @@
           <div class="mb-3">
             <label class="form-label fw-semibold small">Mot de passe</label>
             {{ form.password1 }}
+            <div class="text-muted small mt-1">
+              8 caractères min., avec au moins un caractère spécial (! @ # $ % & * - _ .)
+            </div>
             {% if form.password1.errors %}
               <div class="text-danger small">{{ form.password1.errors }}</div>
             {% endif %}
