@@ -46,7 +46,7 @@
         <a class="nav-link" href="#">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Mes produits</a>
+        <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Mes produits</a>
       </li>
       {% endif %}
     </ul>
@@ -134,21 +134,29 @@
             </li>
             {% endif %}
 
+            <li>
+              <a class="dropdown-item"
+                 href="{% url 'messagerie:liste_conversations' %}">
+                <i class="bi bi-chat-dots me-2" style="color:var(--gold);"></i>
+                Messages
+              </a>
+            </li>
+
             {% if user.role == 'commercant' %}
             <li>
-              <a class="dropdown-item" href="#">
+              <a class="dropdown-item" href="{% url 'produits:gestion_produits' %}">
                 <i class="bi bi-speedometer2 me-2" style="color:var(--gold);"></i>
                 Dashboard
               </a>
             </li>
             <li>
-              <a class="dropdown-item" href="#">
+              <a class="dropdown-item" href="{% url 'produits:gestion_produits' %}">
                 <i class="bi bi-box-seam me-2" style="color:var(--gold);"></i>
                 Mes produits
               </a>
             </li>
             <li>
-              <a class="dropdown-item" href="#">
+              <a class="dropdown-item" href="{% url 'commandes:commandes_commercant' %}">
                 <i class="bi bi-receipt me-2" style="color:var(--gold);"></i>
                 Commandes reçues
               </a>
@@ -250,11 +258,27 @@
             {% endif %}
             {% if user.role == 'commercant' %}
             <li class="mb-1">
-              <a href="#"
+              <a href="{% url 'produits:gestion_produits' %}"
                  style="display:block;padding:10px 0;font-size:15px;
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
+              </a>
+            </li>
+            <li class="mb-1">
+              <a href="{% url 'produits:gestion_produits' %}"
+                 style="display:block;padding:10px 0;font-size:15px;
+                        font-weight:500;color:var(--text);
+                        border-bottom:1px solid var(--border);">
+                <i class="bi bi-box-seam me-2"></i>Mes produits
+              </a>
+            </li>
+            <li class="mb-1">
+              <a href="{% url 'commandes:commandes_commercant' %}"
+                 style="display:block;padding:10px 0;font-size:15px;
+                        font-weight:500;color:var(--text);
+                        border-bottom:1px solid var(--border);">
+                <i class="bi bi-receipt me-2"></i>Commandes reçues
               </a>
             </li>
             {% endif %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Commande #{{ commande.id }} — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-receipt me-2"></i>Commande #{{ commande.id }}
+  </h4>
+  <a href="{% url 'commandes:commandes_commercant' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Retour aux commandes
+  </a>
+</div>
+
+<div class="row g-4">
+
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="fw-semibold mb-3" style="color:#1B263B;">Articles</h6>
+
+      {% if lignes %}
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th class="text-end">Sous-total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ligne in lignes %}
+            <tr>
+              <td class="fw-semibold" style="color:#1B263B;">
+                {{ ligne.produit.nom|default:"Produit supprimé" }}
+              </td>
+              <td>{{ ligne.quantite }}</td>
+              <td>{{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA</td>
+              <td class="text-end fw-semibold">{{ ligne.sous_total|floatformat:0 }} FCFA</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted small mb-0">Aucun article de votre boutique dans cette commande.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-3 mb-3">
+      <h6 class="fw-semibold mb-2" style="color:#1B263B;">Client</h6>
+      <div class="small">
+        <div>{{ commande.client.utilisateur.get_full_name }}</div>
+        <div class="text-muted">{{ commande.client.utilisateur.telephone }}</div>
+        <div class="text-muted">{{ commande.adresse_livraison_reel }}</div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="fw-semibold mb-2" style="color:#1B263B;">Statut</h6>
+      <form method="POST" action="{% url 'commandes:changer_statut' commande.id %}">
+        {% csrf_token %}
+        <select name="statut" class="form-select form-select-sm mb-2">
+          {% for code, label in commande.STATUT_CHOICES %}
+            <option value="{{ code }}" {% if commande.statut == code %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm w-100 fw-semibold"
+                style="background-color:#1B263B;color:white;">
+          Mettre à jour
+        </button>
+      </form>
+
+      {% if commande.statut == 'livree' %}
+        <a href="{% url 'commandes:generer_facture' commande.id %}"
+           class="btn btn-sm w-100 fw-semibold mt-2 btn-outline-secondary">
+          <i class="bi bi-file-earmark-pdf me-1"></i>Facture PDF
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

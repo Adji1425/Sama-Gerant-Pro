@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Commandes reçues — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-receipt me-2"></i>Commandes reçues
+  </h4>
+</div>
+
+<!-- KPI rapides -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">En attente</div>
+      <div class="fs-3 fw-bold" style="color:#C47B8A;">{{ total_en_attente }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">En préparation</div>
+      <div class="fs-3 fw-bold" style="color:#E0A458;">{{ total_en_preparation }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Total affiché</div>
+      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ commandes|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres par statut -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+  <a href="{% url 'commandes:commandes_commercant' %}"
+     class="btn btn-sm {% if not statut_filtre %}fw-bold{% else %}btn-outline-secondary{% endif %}"
+     {% if not statut_filtre %}style="background-color:#1B263B;color:white;"{% endif %}>
+    Toutes
+  </a>
+  {% for code, label in commandes.model.STATUT_CHOICES %}
+    <a href="?statut={{ code }}"
+       class="btn btn-sm {% if statut_filtre == code %}fw-bold{% else %}btn-outline-secondary{% endif %}"
+       {% if statut_filtre == code %}style="background-color:#1B263B;color:white;"{% endif %}>
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if commandes %}
+  <div class="table-responsive">
+    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
+      <thead style="background-color:#F8F9FA;">
+        <tr>
+          <th>Commande</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for commande in commandes %}
+        <tr>
+          <td class="fw-semibold" style="color:#1B263B;">#{{ commande.id }}</td>
+          <td>{{ commande.client.utilisateur.get_full_name }}</td>
+          <td>{{ commande.date_commande|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if commande.statut == 'en_attente' %}
+              <span class="badge" style="background-color:#C47B8A;">En attente</span>
+            {% elif commande.statut == 'en_preparation' %}
+              <span class="badge" style="background-color:#E0A458;">En préparation</span>
+            {% elif commande.statut == 'livree' %}
+              <span class="badge" style="background-color:#2E7D32;">Livrée</span>
+            {% else %}
+              <span class="badge bg-secondary">Annulée</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-semibold">{{ commande.montant_total|floatformat:0 }} FCFA</td>
+          <td class="text-end">
+            <a href="{% url 'commandes:detail_commande_commercant' commande.id %}"
+               class="btn btn-sm fw-semibold"
+               style="background-color:#1B263B;color:white;">
+              <i class="bi bi-eye me-1"></i>Voir
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-receipt fs-1 d-block mb-3"></i>
+    <h5>Aucune commande {% if statut_filtre %}avec ce statut{% else %}pour l'instant{% endif %}</h5>
+  </div>
+{% endif %}
+
+{% endblock %}
