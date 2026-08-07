@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un approvisionnement — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 p-4">
+
+      <h4 class="fw-bold mb-4" style="color:#1B263B;">
+        <i class="bi bi-box-arrow-in-down me-2"></i>Ajouter un approvisionnement
+      </h4>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Produit</label>
+          {{ form.produit }}
+          {% if form.produit.errors %}<div class="text-danger small">{{ form.produit.errors }}</div>{% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{{ form.quantite.label }}</label>
+            {{ form.quantite }}
+            {% if form.quantite.errors %}<div class="text-danger small">{{ form.quantite.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{{ form.prix_achat_unitaire.label }}</label>
+            {{ form.prix_achat_unitaire }}
+            {% if form.prix_achat_unitaire.errors %}<div class="text-danger small">{{ form.prix_achat_unitaire.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">{{ form.fournisseur.label }}</label>
+          {{ form.fournisseur }}
+          {% if form.fournisseur.errors %}<div class="text-danger small">{{ form.fournisseur.errors }}</div>{% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Note</label>
+          {{ form.note }}
+          {% if form.note.errors %}<div class="text-danger small">{{ form.note.errors }}</div>{% endif %}
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn fw-semibold px-4"
+                  style="background-color:#1B263B;color:white;">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+          <a href="{% url 'produits:gestion_stock' %}"
+             class="btn btn-outline-secondary fw-semibold px-4">
+            Annuler
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

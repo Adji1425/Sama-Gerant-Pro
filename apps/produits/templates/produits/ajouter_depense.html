@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter une dépense — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 p-4">
+
+      <h4 class="fw-bold mb-4" style="color:#1B263B;">
+        <i class="bi bi-cash-stack me-2"></i>Ajouter une dépense
+      </h4>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{{ form.montant.label }}</label>
+            {{ form.montant }}
+            {% if form.montant.errors %}<div class="text-danger small">{{ form.montant.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Date</label>
+            {{ form.date }}
+            {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Type</label>
+          {{ form.type }}
+          {% if form.type.errors %}<div class="text-danger small">{{ form.type.errors }}</div>{% endif %}
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn fw-semibold px-4"
+                  style="background-color:#1B263B;color:white;">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+          <a href="{% url 'produits:gestion_depenses' %}"
+             class="btn btn-outline-secondary fw-semibold px-4">
+            Annuler
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

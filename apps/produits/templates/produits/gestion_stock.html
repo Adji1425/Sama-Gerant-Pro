@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Gestion du stock — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-boxes me-2"></i>Gestion du stock
+  </h4>
+  <a href="{% url 'produits:ajouter_appro' %}"
+     class="btn fw-semibold px-4"
+     style="background-color:#1B263B;color:white;">
+    <i class="bi bi-plus-lg me-1"></i>Ajouter un approvisionnement
+  </a>
+</div>
+
+<ul class="nav nav-pills mb-4 gap-2">
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_produits' %}">Produits</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" style="background-color:#1B263B;"
+       href="{% url 'produits:gestion_stock' %}">Stock</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_offres' %}">Offres</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_depenses' %}">Dépenses</a>
+  </li>
+</ul>
+
+{% if en_alerte %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    <strong>{{ en_alerte|length }}</strong> produit{{ en_alerte|length|pluralize }}
+    en stock bas — pensez à réapprovisionner.
+  </div>
+{% endif %}
+
+<div class="row g-4">
+
+  <!-- État des stocks -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="fw-semibold mb-3" style="color:#1B263B;">État des stocks</h6>
+
+      {% if produits %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Quantité</th>
+                <th>Seuil alerte</th>
+                <th></th>
+                <th class="text-end">Ajuster</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for produit in produits %}
+              <tr>
+                <td class="fw-semibold" style="color:#1B263B;">{{ produit.nom }}</td>
+                <td>{{ produit.quantite }}</td>
+                <td class="text-muted">{{ produit.seuil_alerte }}</td>
+                <td>
+                  {% if produit.est_en_alerte %}
+                    <span class="badge" style="background-color:#C47B8A;">Stock bas</span>
+                  {% else %}
+                    <span class="badge" style="background-color:#2E7D32;">OK</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <form method="POST"
+                        action="{% url 'produits:modifier_stock' produit.pk %}"
+                        class="d-flex justify-content-end gap-1">
+                    {% csrf_token %}
+                    <input type="number" name="quantite" value="{{ produit.quantite }}"
+                           class="form-control form-control-sm" style="width:80px;" min="0">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-check"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted small mb-0">Aucun produit actif pour l'instant.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Derniers approvisionnements -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm p-3">
+      <h6 class="fw-semibold mb-3" style="color:#1B263B;">
+        Derniers approvisionnements
+      </h6>
+
+      {% if approvisionnements %}
+        <ul class="list-unstyled mb-0">
+          {% for appro in approvisionnements %}
+            <li class="d-flex justify-content-between align-items-center py-2
+                       {% if not forloop.last %}border-bottom{% endif %}">
+              <div>
+                <div class="fw-semibold small" style="color:#1B263B;">
+                  {{ appro.produit.nom }}
+                </div>
+                <div class="text-muted" style="font-size:11px;">
+                  {{ appro.date_approvisionnement|date:"d/m/Y" }}
+                  {% if appro.fournisseur %} · {{ appro.fournisseur }}{% endif %}
+                </div>
+              </div>
+              <span class="badge" style="background-color:#D6E4EC;color:#1B263B;">
+                +{{ appro.quantite }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted small mb-0">Aucun approvisionnement enregistré.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

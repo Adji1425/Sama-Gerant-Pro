@@ -63,7 +63,7 @@ def login_view(request):
             )
             # Redirection selon le rôle
             if utilisateur.est_commercant():
-                return redirect('dashboard_commercant')
+                return redirect('produits:gestion_produits')
             elif utilisateur.est_admin():
                 return redirect('admin:index')
             else:

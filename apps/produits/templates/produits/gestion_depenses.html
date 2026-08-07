@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Gestion des dépenses — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-cash-stack me-2"></i>Dépenses
+  </h4>
+  <a href="{% url 'produits:ajouter_depense' %}"
+     class="btn fw-semibold px-4"
+     style="background-color:#1B263B;color:white;">
+    <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
+  </a>
+</div>
+
+<ul class="nav nav-pills mb-4 gap-2">
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_produits' %}">Produits</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_stock' %}">Stock</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'produits:gestion_offres' %}">Offres</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" style="background-color:#1B263B;"
+       href="{% url 'produits:gestion_depenses' %}">Dépenses</a>
+  </li>
+</ul>
+
+<div class="card border-0 shadow-sm p-3 mb-4" style="max-width:300px;">
+  <div class="text-muted small">Total des dépenses</div>
+  <div class="fs-3 fw-bold" style="color:#C47B8A;">{{ total|floatformat:0 }} FCFA</div>
+</div>
+
+{% if depenses %}
+  <div class="table-responsive">
+    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
+      <thead style="background-color:#F8F9FA;">
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th class="text-end">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for depense in depenses %}
+        <tr>
+          <td>{{ depense.date|date:"d/m/Y" }}</td>
+          <td class="fw-semibold" style="color:#1B263B;">{{ depense.type }}</td>
+          <td class="text-muted small">{{ depense.description|default:"—" }}</td>
+          <td class="text-end fw-semibold">{{ depense.montant|floatformat:0 }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-cash-stack fs-1 d-block mb-3"></i>
+    <h5>Aucune dépense enregistrée</h5>
+    <p>Suivez ici vos frais (transport, emballage, publicité...)</p>
+    <a href="{% url 'produits:ajouter_depense' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}
