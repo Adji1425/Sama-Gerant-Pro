@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Mes commandes{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4" style="color:#1B263B;">
+  <i class="bi bi-bag me-2"></i>Mes commandes
+</h4>
+
+{% if commandes %}
+  {% for commande in commandes %}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <div class="row align-items-center g-2">
+
+        <!-- Numéro + date -->
+        <div class="col-md-2">
+          <span class="fw-bold" style="color:#1B263B;">
+            #{{ commande.id }}
+          </span>
+          <br>
+          <span class="text-muted small">
+            {{ commande.date_commande|date:"d/m/Y" }}
+          </span>
+        </div>
+
+        <!-- Aperçu articles -->
+        <!-- ✅ CORRIGÉ : commande.lignes au lieu de commande.details -->
+        <div class="col-md-4">
+          <span class="text-muted small">
+            {% for ligne in commande.lignes.all|slice:":2" %}
+              {{ ligne.produit.nom|default:"Produit supprimé" }}
+              {% if not forloop.last %}, {% endif %}
+            {% endfor %}
+            {% if commande.lignes.count > 2 %}
+              <span class="text-muted">
+                ... +{{ commande.lignes.count|add:"-2" }} autre(s)
+              </span>
+            {% endif %}
+          </span>
+        </div>
+
+        <!-- Montant -->
+        <div class="col-md-2 fw-bold" style="color:#1B263B;">
+          {{ commande.montant_total|floatformat:0 }} FCFA
+        </div>
+
+        <!-- Statut -->
+        <div class="col-md-2">
+          {% if commande.statut == 'en_attente' %}
+            <span class="badge bg-warning text-dark px-3 py-2">
+              <i class="bi bi-clock me-1"></i>En attente
+            </span>
+          {% elif commande.statut == 'en_preparation' %}
+            <span class="badge bg-info text-dark px-3 py-2">
+              <i class="bi bi-box-seam me-1"></i>En préparation
+            </span>
+          {% elif commande.statut == 'livree' %}
+            <span class="badge bg-success px-3 py-2">
+              <i class="bi bi-check-circle me-1"></i>Livrée
+            </span>
+          {% else %}
+            <span class="badge bg-danger px-3 py-2">
+              <i class="bi bi-x-circle me-1"></i>Annulée
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Bouton voir -->
+        <div class="col-md-2 text-end">
+          <a href="{% url 'commandes:detail_commande' commande.id %}"
+             class="btn btn-sm fw-semibold"
+             style="background-color:#1B263B;color:white;">
+            <i class="bi bi-eye me-1"></i>Voir
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-bag-x fs-1 d-block mb-3" style="color:#D6E4EC;"></i>
+    <h5 style="color:#1B263B;">Aucune commande pour l'instant</h5>
+    <p>Découvrez nos produits et passez votre première commande !</p>
+    <a href="{% url 'produits:catalogue' %}"
+       class="btn fw-semibold mt-2 px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-grid me-2"></i>Voir le catalogue
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}

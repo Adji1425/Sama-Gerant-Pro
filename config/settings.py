@@ -11,12 +11,14 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     # Apps du projet
     'apps.users',
     'apps.produits',
@@ -61,6 +63,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Django Channels — messagerie en temps réel (WebSockets)
+# InMemoryChannelLayer : suffisant en développement (1 seul process).
+# En production avec plusieurs workers, remplacer par channels_redis :
+#   CHANNEL_LAYERS = {
+#       'default': {
+#           'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#           'CONFIG': {'hosts': [(os.getenv('REDIS_HOST', 'localhost'), 6379)]},
+#       }
+#   }
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 DATABASES = {
     'default': {

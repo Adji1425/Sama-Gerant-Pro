@@ -1,8 +1,8 @@
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Sum, Count
+from django.db.models import Sum
 
-# Saisons sénégalaises — pas de table BDD, constantes suffisent
+# Saisons sénégalaises — constantes, pas de table BDD
 SAISONS_SENEGAL = {
     "hivernage": {
         "debut": (6, 1),
@@ -29,10 +29,15 @@ def calculer_marge_nette(produit):
 
 
 def identifier_top_produits(commercant, limite=5):
-    from apps.commandes.models import DetailsCommande
+    # ✅ CORRIGÉ : LignePanier au lieu de DetailsCommande
+    from apps.commandes.models import LignePanier
     return (
-        DetailsCommande.objects
-        .filter(produit__commercant=commercant)
+        LignePanier.objects
+        .filter(
+            produit__commercant=commercant,
+            commande__isnull=False,          # Seulement les lignes validées
+            commande__statut='livree'
+        )
         .values('produit__id', 'produit__nom')
         .annotate(total_vendu=Sum('quantite'))
         .order_by('-total_vendu')[:limite]
@@ -40,8 +45,10 @@ def identifier_top_produits(commercant, limite=5):
 
 
 def identifier_stocks_dormants(commercant, jours=60):
+    # ✅ CORRIGÉ : LignePanier au lieu de DetailsCommande
     from apps.produits.models import Produit
-    from apps.commandes.models import DetailsCommande
+    from apps.commandes.models import LignePanier
+
     date_limite = timezone.now().date() - timedelta(days=jours)
     produits_actifs = Produit.objects.filter(
         commercant=commercant, statut='actif'
@@ -49,8 +56,11 @@ def identifier_stocks_dormants(commercant, jours=60):
     dormants = []
     for produit in produits_actifs:
         derniere_vente = (
-            DetailsCommande.objects
-            .filter(produit=produit)
+            LignePanier.objects
+            .filter(
+                produit=produit,
+                commande__isnull=False
+            )
             .order_by('-commande__date_commande')
             .first()
         )
@@ -62,17 +72,20 @@ def identifier_stocks_dormants(commercant, jours=60):
 
 def calculer_chiffre_affaires(commercant, periode_jours=30):
     from apps.commandes.models import Commande
+    from apps.users.models import Client
+
     date_debut = timezone.now() - timedelta(days=periode_jours)
+    # Trouver les clients du commerçant via leurs commandes
     commandes = Commande.objects.filter(
-        client__utilisateur__in=[],
+        lignes__produit__commercant=commercant,
         date_commande__gte=date_debut,
         statut='livree'
-    )
+    ).distinct()
     return sum(c.montant_total for c in commandes)
 
 
 def verifier_alertes_stock(commercant):
-    """Génère des notifications automatiques pour les stocks bas et dormants"""
+    """Génère des notifications pour les stocks bas et dormants"""
     from apps.produits.models import Produit
     from apps.notifications.models import Notification
 
@@ -85,10 +98,31 @@ def verifier_alertes_stock(commercant):
                 commercant=commercant,
                 titre=f"Stock bas : {produit.nom}",
                 defaults={
-                    'message': f"Le stock de '{produit.nom}' est à "
-                               f"{produit.quantite} unité(s). "
-                               f"Seuil d'alerte : {produit.seuil_alerte}.",
+                    'message': (
+                        f"Le stock de '{produit.nom}' est à "
+                        f"{produit.quantite} unité(s). "
+                        f"Seuil d'alerte : {produit.seuil_alerte}."
+                    ),
                     'type': 'stock_bas',
+                    'lu': False,
+                }
+            )
+
+        # Vérifier stocks dormants
+        dormants = identifier_stocks_dormants(
+            commercant, jours=produit.seuil_dormant
+        )
+        for p in dormants:
+            Notification.objects.get_or_create(
+                commercant=commercant,
+                titre=f"Stock dormant : {p.nom}",
+                defaults={
+                    'message': (
+                        f"'{p.nom}' n'a pas été vendu depuis plus de "
+                        f"{p.seuil_dormant} jours. "
+                        f"Pensez à faire une promotion !"
+                    ),
+                    'type': 'stock_dormant',
                     'lu': False,
                 }
             )

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Mon Profil — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+<div class="row">
+
+  <!-- Colonne gauche — infos profil -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 text-center p-4">
+
+      <!-- Photo de profil -->
+      {% if utilisateur.photo_profile %}
+        <img src="{{ utilisateur.photo_profile.url }}"
+             class="rounded-circle mx-auto mb-3"
+             width="100" height="100" style="object-fit:cover;">
+      {% else %}
+        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center
+                    justify-content-center fs-1 fw-bold"
+             style="width:100px;height:100px;
+                    background:#E0A458;color:#1B263B;">
+          {{ utilisateur.first_name|first|upper }}
+        </div>
+      {% endif %}
+
+      <h5 class="fw-bold mb-0" style="color:#1B263B;">
+        {{ utilisateur.get_full_name }}
+      </h5>
+      <span class="badge mt-1"
+            style="background-color:#1B263B;color:#E0A458;">
+        {{ utilisateur.get_role_display }}
+      </span>
+
+      <hr>
+
+      <ul class="list-unstyled text-start small text-muted">
+        <li class="mb-2">
+          <i class="bi bi-envelope me-2"></i>{{ utilisateur.email }}
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-telephone me-2"></i>
+          {{ utilisateur.telephone|default:"Non renseigné" }}
+        </li>
+        <li class="mb-2">
+          <i class="bi bi-geo-alt me-2"></i>
+          {{ utilisateur.adresse|default:"Non renseignée" }}
+        </li>
+        {% if client %}
+        <li class="mb-2">
+          <i class="bi bi-truck me-2"></i>
+          {{ client.adresse_livraison|default:"Non renseignée" }}
+        </li>
+        {% endif %}
+      </ul>
+
+      <a href="{% url 'users:modifier_profil' %}"
+         class="btn btn-sm w-100 fw-semibold"
+         style="background-color:#E0A458;color:#1B263B;">
+        <i class="bi bi-pencil me-1"></i>Modifier mon profil
+      </a>
+
+      <a href="{% url 'users:changer_mot_de_passe' %}"
+         class="btn btn-sm w-100 fw-semibold mt-2"
+         style="background-color:#1B263B;color:white;">
+        <i class="bi bi-shield-lock me-1"></i>Changer mon mot de passe
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Colonne droite — commandes récentes -->
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0 p-4">
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        <i class="bi bi-bag-check me-2"></i>Mes commandes récentes
+      </h5>
+
+      {% if client and client.commandes.all %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead style="background-color:#1B263B;color:white;">
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for commande in client.commandes.all|slice:":5" %}
+              <tr>
+                <td class="fw-bold">#{{ commande.id }}</td>
+                <td>{{ commande.date_commande|date:"d/m/Y" }}</td>
+                <td>{{ commande.montant_total|floatformat:0 }} FCFA</td>
+                <td>
+                  {% if commande.statut == 'en_attente' %}
+                    <span class="badge bg-warning text-dark">En attente</span>
+                  {% elif commande.statut == 'en_preparation' %}
+                    <span class="badge bg-info text-dark">En préparation</span>
+                  {% elif commande.statut == 'livree' %}
+                    <span class="badge bg-success">Livrée</span>
+                  {% else %}
+                    <span class="badge bg-danger">Annulée</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-bag fs-1 d-block mb-2"></i>
+          Vous n'avez pas encore passé de commande.
+          <br>
+          <a href="{% url 'produits:catalogue' %}"
+             class="btn btn-sm mt-2"
+             style="background-color:#1B263B;color:white;">
+            Voir le catalogue
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

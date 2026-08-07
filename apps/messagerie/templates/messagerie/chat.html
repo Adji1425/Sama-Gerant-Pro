@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Chat avec {{ interlocuteur.get_full_name }}{% endblock %}
+
+{% block content %}
+
+<!-- En-tête chat -->
+<div class="d-flex align-items-center gap-3 mb-3 p-3 rounded shadow-sm"
+     style="background-color:#1B263B;">
+
+  <a href="{% url 'messagerie:liste_conversations' %}"
+     class="text-white text-decoration-none">
+    <i class="bi bi-arrow-left fs-5"></i>
+  </a>
+
+  {% if interlocuteur.photo_profile %}
+    <img src="{{ interlocuteur.photo_profile.url }}"
+         class="rounded-circle"
+         style="width:42px;height:42px;object-fit:cover;">
+  {% else %}
+    <div class="rounded-circle d-flex align-items-center
+                justify-content-center fw-bold"
+         style="width:42px;height:42px;
+                background:#E0A458;color:#1B263B;font-size:16px;">
+      {{ interlocuteur.first_name|first|upper }}
+    </div>
+  {% endif %}
+
+  <div>
+    <div class="fw-bold text-white">
+      {{ interlocuteur.get_full_name }}
+    </div>
+    <div style="font-size:11px;color:#D6E4EC;">
+      <span id="statut-connexion">En ligne</span>
+    </div>
+  </div>
+</div>
+
+<!-- Zone messages -->
+<div id="messages-container"
+     class="rounded p-3 mb-3"
+     style="height:420px;
+            overflow-y:auto;
+            background-color:#F8F9FA;
+            scroll-behavior:smooth;">
+  {% for msg in historique %}
+    <div class="d-flex mb-2 {% if msg.expediteur_id == request.user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+      <div class="px-3 py-2 rounded-3"
+           style="max-width:70%;
+                  {% if msg.expediteur_id == request.user.id %}
+                    background-color:#1B263B;color:white;
+                  {% else %}
+                    background-color:white;color:#1B263B;border:1px solid #D6E4EC;
+                  {% endif %}">
+        <div style="white-space:pre-wrap;">{{ msg.contenu }}</div>
+        <div class="text-end" style="font-size:10px;opacity:.7;margin-top:2px;">
+          {{ msg.date_heure|date:"H:i" }}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="text-center text-muted small py-4">
+      Aucun message pour l'instant. Dites bonjour 👋
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Statut de connexion WebSocket -->
+<div id="ws-erreur" class="alert alert-warning small py-2 d-none" role="alert">
+  Connexion perdue, tentative de reconnexion...
+</div>
+
+<!-- Zone saisie -->
+<div class="d-flex gap-2 align-items-end">
+  <textarea id="message-input"
+            class="form-control"
+            placeholder="Écrire un message... (Entrée pour envoyer)"
+            rows="2"
+            style="resize:none;border-radius:12px;
+                   border-color:#D6E4EC;"></textarea>
+  <button id="btn-envoyer"
+          class="btn fw-semibold px-4 py-2 h-100"
+          style="background-color:#1B263B;
+                 color:white;
+                 border-radius:12px;
+                 white-space:nowrap;">
+    <i class="bi bi-send-fill"></i>
+  </button>
+</div>
+
+<div class="text-muted mt-1" style="font-size:11px;">
+  Appuyez sur <kbd>Entrée</kbd> pour envoyer
+  · <kbd>Shift+Entrée</kbd> pour un saut de ligne
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/chat.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const convId = {{ conversation.id }};
+    initChat(convId);
+  });
+</script>
+{% endblock %}

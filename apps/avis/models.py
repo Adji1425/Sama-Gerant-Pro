@@ -1,14 +1,9 @@
 from django.db import models
 from apps.users.models import Client
 from apps.produits.models import Produit
-from apps.commandes.models import DetailsCommande
-
+from apps.commandes.models import LignePanier
 
 class Avis(models.Model):
-    """
-    Avis laissé par un client sur un produit.
-    Uniquement si l'achat est vérifié via DetailsCommande.
-    """
     NOTE_CHOICES = [(i, f"{i} étoile{'s' if i > 1 else ''}") for i in range(1, 6)]
 
     client = models.ForeignKey(
@@ -21,9 +16,9 @@ class Avis(models.Model):
         on_delete=models.CASCADE,
         related_name='avis_set'
     )
-    # Lien vers l'achat pour vérification
-    details_commande = models.ForeignKey(
-        DetailsCommande,
+    # Remplace DetailsCommande par LignePanier
+    ligne_commande = models.ForeignKey(
+        LignePanier,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -32,15 +27,10 @@ class Avis(models.Model):
     note = models.IntegerField(choices=NOTE_CHOICES)
     commentaire = models.TextField(blank=True)
     date_avis = models.DateField(auto_now_add=True)
-    verifie_achat = models.BooleanField(
-        default=False,
-        help_text="True si le client a bien acheté ce produit"
-    )
+    verifie_achat = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Avis"
-        verbose_name_plural = "Avis"
-        # Un seul avis par client par produit
         unique_together = ('client', 'produit')
 
     def __str__(self):
