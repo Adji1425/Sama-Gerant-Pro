@@ -4,5 +4,6 @@ from . import views
 app_name = 'sad'
 
 urlpatterns = [
-    # Vous ajouterez vos routes ici plus tard
+    path('', views.dashboard, name='dashboard'),
+    path('notifications/<int:pk>/lue/', views.marquer_notification_lue, name='notification_lue'),
 ]

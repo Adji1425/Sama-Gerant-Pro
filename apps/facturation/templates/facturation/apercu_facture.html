@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Facture #{{ facture.commande.id }}{% endblock %}
+{% block content %}
+<h2>Facture #{{ facture.commande.id }}</h2>
+<p>Générée le {{ facture.date_facture }}</p>
+<div class="d-flex gap-2">
+    <a href="{% url 'facturation:telecharger_facture' facture.pk %}" class="btn btn-primary" target="_blank">Télécharger le PDF</a>
+    <a href="{% url 'facturation:envoyer_email' facture.pk %}" class="btn btn-outline-secondary">Envoyer par email au client</a>
+    <a href="{% url 'commandes:detail_commande' facture.commande.pk %}" class="btn btn-secondary">Retour à la commande</a>
+</div>
+{% endblock %}

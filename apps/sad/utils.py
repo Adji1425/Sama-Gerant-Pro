@@ -126,3 +126,45 @@ def verifier_alertes_stock(commercant):
                     'lu': False,
                 }
             )
+
+
+# --- Génération automatique des notifications (déclenchée à chaque visite du dashboard SAD) ---
+
+def generer_notifications_stock(commercant):
+    """Crée une Notification pour chaque produit en alerte de stock (évite les doublons non lus)."""
+    from apps.produits.models import Produit
+    from apps.notifications.models import Notification
+
+    for produit in Produit.objects.filter(commercant=commercant, statut='actif'):
+        if produit.est_en_alerte():
+            deja_notifie = Notification.objects.filter(
+                commercant=commercant, type='stock_bas', lu=False,
+                titre__icontains=produit.nom,
+            ).exists()
+            if not deja_notifie:
+                Notification.objects.create(
+                    commercant=commercant,
+                    titre=f"Stock bas : {produit.nom}",
+                    message=f"Il reste {produit.quantite} unité(s) de {produit.nom} (seuil : {produit.seuil_alerte}).",
+                    type='stock_bas',
+                )
+
+
+def generer_notifications_evenements(commercant, jours=21):
+    """Alerte prévisionnelle 15-30 jours avant un événement (Tabaski, Magal, Korité...)."""
+    from apps.notifications.models import Notification
+    from apps.evenements.models import EvenementSAD
+
+    for evenement in EvenementSAD.objects.all():
+        if evenement.est_proche(jours=jours):
+            deja_notifie = Notification.objects.filter(
+                commercant=commercant, type='evenement', lu=False,
+                titre__icontains=evenement.nom_evenement,
+            ).exists()
+            if not deja_notifie:
+                Notification.objects.create(
+                    commercant=commercant,
+                    titre=f"Événement à venir : {evenement.nom_evenement}",
+                    message=evenement.conseil_affiche,
+                    type='evenement',
+                )

@@ -1,0 +1,32 @@
+<html>
+<head>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
+h1 { color: #2c3e50; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+th { background-color: #f0f0f0; }
+.total { text-align: right; font-weight: bold; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>Facture #{{ commande.id }}</h1>
+<p><strong>{{ commercant.nom_boutique }}</strong></p>
+<p>Date : {{ facture.date_facture }}</p>
+<p>Client : {{ commande.client }}</p>
+<p>Adresse de livraison : {{ commande.adresse_livraison_reel }}</p>
+
+<table>
+    <tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th></tr>
+    {% for detail in commande.lignes.all %}
+    <tr>
+        <td>{{ detail.produit }}</td>
+        <td>{{ detail.quantite }}</td>
+        <td>{{ detail.prix_unitaire_vente }} FCFA</td>
+        <td>{{ detail.sous_total }} FCFA</td>
+    </tr>
+    {% endfor %}
+</table>
+<p class="total">Total : {{ commande.montant_total }} FCFA</p>
+</body>
+</html>

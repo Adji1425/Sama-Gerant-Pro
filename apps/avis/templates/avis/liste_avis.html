@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Avis — {{ produit.nom }}{% endblock %}
+{% block content %}
+<h2>Avis — {{ produit.nom }} ({{ produit.note_moyenne }}/5)</h2>
+<ul class="list-group">
+{% for a in avis %}
+    <li class="list-group-item">
+        <strong>{{ a.note }}/5</strong> — {{ a.client }}<br>
+        {{ a.commentaire }}
+        <br><small class="text-muted">{{ a.date_avis }}</small>
+    </li>
+{% empty %}
+    <li class="list-group-item text-muted">Aucun avis pour le moment.</li>
+{% endfor %}
+</ul>
+{% endblock %}

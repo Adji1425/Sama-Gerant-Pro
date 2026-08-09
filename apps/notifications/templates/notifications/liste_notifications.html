@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Notifications</h2>
+    <a href="{% url 'notifications:marquer_lues' %}" class="btn btn-outline-secondary">Tout marquer comme lu</a>
+</div>
+<ul class="list-group">
+{% for n in notifications %}
+    <li class="list-group-item {% if not n.lu %}list-group-item-warning{% endif %}">
+        <strong>{{ n.titre }}</strong> — {{ n.get_type_display }}<br>
+        {{ n.message }}<br>
+        <small class="text-muted">{{ n.date_envoi|date:"d/m/Y H:i" }}</small>
+    </li>
+{% empty %}
+    <li class="list-group-item text-muted">Aucune notification.</li>
+{% endfor %}
+</ul>
+{% endblock %}

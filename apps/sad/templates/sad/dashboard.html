@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<h2>Tableau de bord — Aide à la décision</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6>Chiffre d'affaires</h6>
+                <h3>{{ chiffre_affaires }} FCFA</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6>Marge nette totale</h6>
+                <h3>{{ marge_totale }} FCFA</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6>Produits en alerte</h6>
+                <h3>{{ produits_alerte|length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h6>Saison actuelle</h6>
+                <h3>{{ saison }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <h5>Évolution des ventes (30 derniers jours)</h5>
+        <div id="chart-ventes"></div>
+    </div>
+    <div class="col-md-4">
+        <h5>Top produits</h5>
+        <ul class="list-group">
+        {% for p in top_produits %}
+            <li class="list-group-item d-flex justify-content-between">
+                {{ p.produit__nom }} <span class="badge bg-primary">{{ p.total_vendu }}</span>
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">Pas encore de ventes.</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h5>Stocks dormants (&gt; 60 jours sans vente)</h5>
+        <ul class="list-group">
+        {% for p in stocks_dormants %}
+            <li class="list-group-item">{{ p.nom }} — {{ p.quantite }} en stock</li>
+        {% empty %}
+            <li class="list-group-item text-muted">Aucun stock dormant.</li>
+        {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <h5>Agenda des événements SAD</h5>
+        <ul class="list-group">
+        {% for e in evenements_proches %}
+            <li class="list-group-item">
+                <strong>{{ e.nom_evenement }}</strong> — {{ e.date_debut }}<br>
+                <small class="text-muted">{{ e.conseil_affiche }}</small>
+            </li>
+        {% empty %}
+            <li class="list-group-item text-muted">Aucun événement proche.</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h5>Notifications</h5>
+    <ul class="list-group">
+    {% for n in notifications %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div><strong>{{ n.titre }}</strong><br><small>{{ n.message }}</small></div>
+            <a href="{% url 'sad:notification_lue' n.pk %}" class="btn btn-sm btn-outline-secondary">Marquer lue</a>
+        </li>
+    {% empty %}
+        <li class="list-group-item text-muted">Aucune notification.</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    const ventesData = {{ ventes_par_jour_json|safe }};
+    const categories = ventesData.map(v => v.jour);
+    const totals = ventesData.map(v => v.total);
+
+    const options = {
+        chart: { type: 'line', height: 300 },
+        series: [{ name: 'Unités vendues', data: totals }],
+        xaxis: { categories: categories, type: 'datetime' },
+    };
+    const chart = new ApexCharts(document.querySelector("#chart-ventes"), options);
+    chart.render();
+</script>
+{% endblock %}
