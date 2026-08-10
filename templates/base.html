@@ -43,7 +43,7 @@
       </li>
       {% if user.is_authenticated and user.role == 'commercant' %}
       <li class="nav-item">
-        <a class="nav-link" href="#">Dashboard</a>
+        <a class="nav-link" href="{% url 'sad:dashboard' %}">Dashboard</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Mes produits</a>
