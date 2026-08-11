@@ -115,7 +115,9 @@ img { max-width: 100%; display: block; }
   position: relative;
   margin-right: 28px;
 }
-
+.nav-item{
+  margin-left: 5px;
+}
 .navbar-nav .nav-link::after {
   content: '';
   position: absolute;
@@ -144,6 +146,7 @@ img { max-width: 100%; display: block; }
   gap: 8px;
   min-width: 200px;
   transition: border-color 0.2s, box-shadow 0.2s;
+  margin-left: 70px;
 }
 
 .navbar-search:focus-within {
@@ -171,6 +174,7 @@ img { max-width: 100%; display: block; }
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .nav-icon-btn {
@@ -182,13 +186,47 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   color: var(--text);
   cursor: pointer;
   transition: background 0.2s;
-  font-size: 16px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.nav-icon-btn:hover { background: var(--gold-light); }
+.nav-icon-btn:hover { 
+  background: var(--gold); 
+  color: white !important;
+}
+
+/* Icône panier : fond permanent (pas juste au survol) pour bien ressortir
+   du navbar crème, même si l'espace se resserre sur petit écran. */
+.nav-icon-btn-cart:hover {
+  background: var(--gold) !important;
+  color: white !important;
+}
+
+/* Le bouton du dropdown profil contient avatar + nom : il ne doit PAS
+   hériter de la largeur fixe 38px de .nav-icon-btn, sinon le contenu
+   déborde et chevauche l'icône voisine (panier). */
+.nav-icon-btn.dropdown-toggle {
+  width: auto;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px 0 4px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Séparateur discret entre les icônes (messages/panier) et le profil */
+.navbar-icons-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
 
 /* Dropdown */
 .dropdown-menu {

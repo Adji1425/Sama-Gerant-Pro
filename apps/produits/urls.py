@@ -7,6 +7,9 @@ urlpatterns = [
     # Public
     path('', views.catalogue, name='catalogue'),
     path('produit/<int:pk>/', views.fiche_produit, name='fiche_produit'),
+    # Favoris (client)
+    path('favoris/', views.mes_favoris, name='mes_favoris'),
+    path('produit/<int:pk>/favori/', views.toggle_favori, name='toggle_favori'),
     # Commerçant
     path('dashboard/produits/', views.gestion_produits, name='gestion_produits'),
     path('dashboard/produit/ajouter/', views.ajouter_produit, name='ajouter_produit'),

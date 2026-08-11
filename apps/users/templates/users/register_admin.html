@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Inscrire un administrateur — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+
+    <div class="card shadow-sm border-0 mt-4">
+      <div class="card-body p-4">
+
+        <div class="text-center mb-4">
+          <h2 class="fw-bold" style="color:#1B263B;">
+            <i class="bi bi-person-plus me-2"></i>Inscrire un administrateur
+          </h2>
+          <p class="text-muted small">
+            Cette personne ne sera pas connectée automatiquement —
+            transmettez-lui son nom d'utilisateur et son mot de passe.
+          </p>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold small">Prénom</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}
+                <div class="text-danger small">{{ form.first_name.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label fw-semibold small">Nom</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}
+                <div class="text-danger small">{{ form.last_name.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Nom d'utilisateur</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small">{{ form.username.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <div class="text-danger small">{{ form.email.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Téléphone</label>
+            {{ form.telephone }}
+            <div class="text-muted small mt-1">Exactement 9 chiffres, ex : 771234567</div>
+            {% if form.telephone.errors %}
+              <div class="text-danger small">{{ form.telephone.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Mot de passe temporaire</label>
+            {{ form.password1 }}
+            <div class="text-muted small mt-1">
+              8 caractères min., avec au moins un caractère spécial (! @ # $ % & * - _ .)
+            </div>
+            {% if form.password1.errors %}
+              <div class="text-danger small">{{ form.password1.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">Confirmer le mot de passe</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+              <div class="text-danger small">{{ form.password2.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn fw-semibold px-4"
+                    style="background-color:#1B263B;color:white;">
+              <i class="bi bi-check-lg me-1"></i>Créer le compte
+            </button>
+            <a href="{% url 'users:admin_dashboard' %}"
+               class="btn btn-outline-secondary fw-semibold px-4">
+              Annuler
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

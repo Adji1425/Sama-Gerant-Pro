@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Espace Administrateur — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-shield-check me-2"></i>Espace Administrateur
+  </h4>
+  <a href="{% url 'users:register_admin' %}"
+     class="btn fw-semibold px-4"
+     style="background-color:#1B263B;color:white;">
+    <i class="bi bi-person-plus me-1"></i>Inscrire un administrateur
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Commerçants</div>
+      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ stats.total_commercants }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">dont actifs</div>
+      <div class="fs-3 fw-bold" style="color:#2E7D32;">{{ stats.commercants_actifs }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Clients</div>
+      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ stats.total_clients }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Administrateurs</div>
+      <div class="fs-3 fw-bold" style="color:#E0A458;">{{ stats.total_admins }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Recherche -->
+<form method="GET" class="mb-3" style="max-width:350px;">
+  <div class="input-group">
+    <input type="text" name="q" value="{{ recherche }}"
+           class="form-control" placeholder="Rechercher une boutique...">
+    <button type="submit" class="btn btn-outline-secondary">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>
+
+<h6 class="fw-semibold mb-3" style="color:#1B263B;">Tous les commerçants</h6>
+
+{% if commercants %}
+  <div class="table-responsive">
+    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
+      <thead style="background-color:#F8F9FA;">
+        <tr>
+          <th>Boutique</th>
+          <th>Propriétaire</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Inscrit le</th>
+          <th>Statut</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for commercant in commercants %}
+        <tr>
+          <td class="fw-semibold" style="color:#1B263B;">
+            {% if commercant.logo %}
+              <img src="{{ commercant.logo.url }}"
+                   style="width:28px;height:28px;object-fit:cover;border-radius:50%;"
+                   class="me-2">
+            {% endif %}
+            {{ commercant.nom_boutique }}
+          </td>
+          <td>{{ commercant.utilisateur.get_full_name }}</td>
+          <td class="text-muted small">{{ commercant.utilisateur.email }}</td>
+          <td>{{ commercant.utilisateur.telephone }}</td>
+          <td class="text-muted small">{{ commercant.utilisateur.date_joined|date:"d/m/Y" }}</td>
+          <td>
+            {% if commercant.utilisateur.is_active %}
+              <span class="badge" style="background-color:#2E7D32;">Actif</span>
+            {% else %}
+              <span class="badge bg-secondary">Bloqué</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <form method="POST"
+                  action="{% url 'users:toggle_actif_commercant' commercant.pk %}"
+                  onsubmit="return confirm('Confirmer cette action ?');">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn btn-sm {% if commercant.utilisateur.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                {% if commercant.utilisateur.is_active %}
+                  <i class="bi bi-slash-circle me-1"></i>Bloquer
+                {% else %}
+                  <i class="bi bi-check-circle me-1"></i>Débloquer
+                {% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-shop fs-1 d-block mb-3"></i>
+    <h5>{% if recherche %}Aucune boutique ne correspond à « {{ recherche }} »{% else %}Aucun commerçant pour l'instant{% endif %}</h5>
+  </div>
+{% endif %}
+
+{% endblock %}

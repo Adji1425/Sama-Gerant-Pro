@@ -3,9 +3,23 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import (
-    InscriptionForm, ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
+    InscriptionForm, InscriptionCommercantForm, InscriptionAdminForm,
+    ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
 )
-from .models import Client, Utilisateur
+from .models import Client, Commercant, Administrateur, Utilisateur
+
+
+# ── Décorateur administrateur ───────────────────────────────────────────────
+def admin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('users:login')
+        if not hasattr(request.user, 'administrateur'):
+            messages.error(request, "Accès réservé aux administrateurs.")
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
 
 
 def register(request):
@@ -45,6 +59,43 @@ def register(request):
         form = InscriptionForm()
 
     return render(request, 'users/register.html', {'form': form})
+
+
+def register_commercant(request):
+    """Inscription d'un nouveau commerçant"""
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = InscriptionCommercantForm(request.POST, request.FILES)
+        if form.is_valid():
+            utilisateur = form.save(commit=False)
+            utilisateur.role = 'commercant'
+            utilisateur.telephone = form.cleaned_data['telephone']
+            utilisateur.save()
+
+            Commercant.objects.create(
+                utilisateur=utilisateur,
+                nom_boutique=form.cleaned_data['nom_boutique'],
+                logo=form.cleaned_data.get('logo')
+            )
+
+            login(request, utilisateur)
+            messages.success(
+                request,
+                f"Bienvenue {utilisateur.first_name} ! "
+                f"Votre boutique « {form.cleaned_data['nom_boutique']} » a été créée avec succès."
+            )
+            return redirect('produits:gestion_produits')
+        else:
+            messages.error(
+                request,
+                "Veuillez corriger les erreurs dans le formulaire."
+            )
+    else:
+        form = InscriptionCommercantForm()
+
+    return render(request, 'users/register_commercant.html', {'form': form})
 
 
 def login_view(request):
@@ -146,3 +197,84 @@ def changer_mot_de_passe(request):
         form = ChangerMotDePasseForm(request.user)
 
     return render(request, 'users/changer_mot_de_passe.html', {'form': form})
+
+# ── Espace Administrateur ───────────────────────────────────────────────────
+
+@admin_required
+def admin_dashboard(request):
+    """Vue d'ensemble : tous les commerçants + statistiques globales"""
+    recherche = request.GET.get('q', '')
+
+    commercants = Commercant.objects.select_related('utilisateur').order_by(
+        '-utilisateur__date_joined'
+    )
+    if recherche:
+        commercants = commercants.filter(nom_boutique__icontains=recherche)
+
+    stats = {
+        'total_commercants': Commercant.objects.count(),
+        'total_clients': Client.objects.count(),
+        'total_admins': Administrateur.objects.count(),
+        'commercants_actifs': Commercant.objects.filter(
+            utilisateur__is_active=True
+        ).count(),
+    }
+
+    return render(request, 'users/admin_dashboard.html', {
+        'commercants': commercants,
+        'recherche': recherche,
+        'stats': stats,
+    })
+
+
+@admin_required
+def toggle_actif_commercant(request, pk):
+    """Bloque / débloque le compte d'un commerçant"""
+    commercant = Commercant.objects.select_related('utilisateur').filter(
+        pk=pk
+    ).first()
+    if commercant:
+        commercant.utilisateur.is_active = not commercant.utilisateur.is_active
+        commercant.utilisateur.save()
+        statut = "réactivé" if commercant.utilisateur.is_active else "bloqué"
+        messages.success(
+            request,
+            f"Le compte de « {commercant.nom_boutique} » a été {statut}."
+        )
+    return redirect('users:admin_dashboard')
+
+
+@admin_required
+def register_admin(request):
+    """
+    Un administrateur crée le compte d'un AUTRE administrateur
+    (ex: un autre étudiant de l'équipe qui doit gérer la plateforme).
+    Ne connecte PAS la personne créée : c'est un tiers qui se connectera
+    lui-même ensuite avec les identifiants transmis.
+    """
+    if request.method == 'POST':
+        form = InscriptionAdminForm(request.POST)
+        if form.is_valid():
+            utilisateur = form.save(commit=False)
+            utilisateur.role = 'admin'
+            utilisateur.telephone = form.cleaned_data['telephone']
+            utilisateur.is_staff = True
+            utilisateur.save()
+
+            Administrateur.objects.create(utilisateur=utilisateur)
+
+            messages.success(
+                request,
+                f"Le compte administrateur « {utilisateur.username} » a été créé. "
+                f"Transmettez-lui ses identifiants."
+            )
+            return redirect('users:admin_dashboard')
+        else:
+            messages.error(
+                request,
+                "Veuillez corriger les erreurs dans le formulaire."
+            )
+    else:
+        form = InscriptionAdminForm()
+
+    return render(request, 'users/register_admin.html', {'form': form})

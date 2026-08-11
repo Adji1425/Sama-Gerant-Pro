@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Produit, Categorie, ImageProd, OffreProduit, Depense, Approvisionnement
+from django.http import JsonResponse
+from .models import Produit, Categorie, ImageProd, OffreProduit, Depense, Approvisionnement, Favori
 from .forms import ProduitForm, OffreProduitForm, DepenseForm, ApprovisionnementForm
 
 
@@ -32,11 +33,19 @@ def catalogue(request):
     if categorie_id:
         produits = produits.filter(categorie__id=categorie_id)
 
+    favoris_ids = []
+    if request.user.is_authenticated and hasattr(request.user, 'client'):
+        favoris_ids = list(
+            Favori.objects.filter(client=request.user.client)
+            .values_list('produit_id', flat=True)
+        )
+
     return render(request, 'produits/catalogue.html', {
         'produits': produits,
         'categories': categories,
         'recherche': recherche,
         'categorie_selectionnee': categorie_id,
+        'favoris_ids': favoris_ids,
     })
 
 
@@ -61,6 +70,12 @@ def fiche_produit(request, pk):
         ).exists()
         peut_noter = a_achete and not avis_client
 
+    est_favori = False
+    if request.user.is_authenticated and hasattr(request.user, 'client'):
+        est_favori = Favori.objects.filter(
+            client=request.user.client, produit=produit
+        ).exists()
+
     return render(request, 'produits/fiche_produit.html', {
         'produit': produit,
         'images': images,
@@ -69,6 +84,7 @@ def fiche_produit(request, pk):
         'peut_noter': peut_noter,
         'note_moyenne': produit.note_moyenne(),
         'offre': getattr(produit, 'offre', None),
+        'est_favori': est_favori,
     })
 
 
@@ -307,3 +323,36 @@ def ajouter_depense(request):
         form = DepenseForm()
 
     return render(request, 'produits/ajouter_depense.html', {'form': form})
+
+# ── Favoris (liste de souhaits client) ──────────────────────────────────────
+
+@login_required
+def toggle_favori(request, pk):
+    """Ajoute/retire un produit des favoris. Réponse JSON pour l'appel AJAX."""
+    if not hasattr(request.user, 'client'):
+        return JsonResponse({'error': "Réservé aux clients."}, status=403)
+
+    produit = get_object_or_404(Produit, pk=pk)
+    favori = Favori.objects.filter(client=request.user.client, produit=produit)
+
+    if favori.exists():
+        favori.delete()
+        est_favori = False
+    else:
+        Favori.objects.create(client=request.user.client, produit=produit)
+        est_favori = True
+
+    return JsonResponse({'est_favori': est_favori})
+
+
+@login_required
+def mes_favoris(request):
+    if not hasattr(request.user, 'client'):
+        messages.error(request, "Réservé aux clients.")
+        return redirect('home')
+
+    favoris = Favori.objects.filter(
+        client=request.user.client
+    ).select_related('produit').prefetch_related('produit__images')
+
+    return render(request, 'produits/mes_favoris.html', {'favoris': favoris})

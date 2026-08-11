@@ -1,116 +1,266 @@
 {% extends 'base.html' %}
 {% block title %}Tableau de bord{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sad-header{margin-bottom:28px;}
+  .sad-header .section-label-small{margin-bottom:4px;}
+  .sad-header h2{margin:0 0 6px;}
+  .sad-header p{font-size:14px;}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;}
+  @media (max-width:991px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:575px){.kpi-grid{grid-template-columns:1fr;}}
+
+  .kpi-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);
+    padding:22px 24px;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s;}
+  .kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+
+  .kpi-card.kpi-primary{background:linear-gradient(135deg,#3D1F0D 0%,#5C2E10 100%);border-color:transparent;}
+  .kpi-card.kpi-alert{border-color:#EFC9CE;}
+
+  .kpi-icon{width:40px;height:40px;border-radius:50%;background:var(--gold-light);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:16px;}
+  .kpi-primary .kpi-icon{background:rgba(255,255,255,.12);color:var(--gold);}
+  .kpi-alert .kpi-icon{background:#FAF0F2;color:#C47B8A;}
+
+  .kpi-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:6px;}
+  .kpi-primary .kpi-label{color:rgba(255,255,255,.62);}
+
+  .kpi-value{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--text);
+    line-height:1.1;}
+  .kpi-primary .kpi-value{color:var(--white);}
+
+  .kpi-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+  .kpi-primary .kpi-sub{color:rgba(255,255,255,.5);}
+
+  .sad-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);
+    padding:26px;box-shadow:var(--shadow-sm);height:100%;}
+  .sad-card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .sad-card-title h5{font-family:'Playfair Display',serif;font-size:1.15rem;margin:0;color:var(--text);}
+  .sad-card-title small{font-size:12px;color:var(--muted);}
+
+  .sad-empty{font-size:13px;color:var(--muted);font-style:italic;padding:8px 0;}
+
+  .rank-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .rank-item:last-child{border-bottom:none;padding-bottom:0;}
+  .rank-item:first-child{padding-top:0;}
+  .rank-badge{width:26px;height:26px;border-radius:50%;background:var(--gold-light);color:var(--brown);
+    font-family:'Playfair Display',serif;font-weight:700;font-size:12px;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;}
+  .rank-name{flex:1;font-size:14px;font-weight:500;color:var(--text);}
+  .rank-qty{font-size:12px;font-weight:600;color:var(--gold);background:var(--gold-light);
+    padding:3px 10px;border-radius:20px;}
+
+  .info-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .info-row:last-child{border-bottom:none;padding-bottom:0;}
+  .info-row:first-child{padding-top:0;}
+  .info-icon{width:32px;height:32px;border-radius:50%;background:var(--cream);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+  .info-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;}
+  .info-sub{font-size:12px;color:var(--muted);line-height:1.5;}
+
+  .notif-item{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
+    padding:14px 16px;border-radius:var(--r-sm);background:var(--cream-light);
+    border-left:3px solid var(--gold);margin-bottom:10px;}
+  .notif-item:last-child{margin-bottom:0;}
+  .notif-title{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .notif-msg{font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .notif-mark{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--gold);white-space:nowrap;
+    display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px;}
+  .notif-mark:hover{color:var(--brown);}
+
+  #chart-ventes{margin:0 -6px;}
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Tableau de bord — Aide à la décision</h2>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <h6>Chiffre d'affaires</h6>
-                <h3>{{ chiffre_affaires }} FCFA</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h6>Marge nette totale</h6>
-                <h3>{{ marge_totale }} FCFA</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <h6>Produits en alerte</h6>
-                <h3>{{ produits_alerte|length }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-secondary">
-            <div class="card-body">
-                <h6>Saison actuelle</h6>
-                <h3>{{ saison }}</h3>
-            </div>
-        </div>
-    </div>
+<div class="sad-header fade-up">
+  <span class="section-label-small">Tableau de bord</span>
+  <h2>Bonjour {{ request.user.first_name }}, voici {{ request.user.commercant.nom_boutique|default:"votre boutique" }} en un coup d'œil</h2>
+  <p>Aperçu chiffré de votre activité, mis à jour à chaque visite.</p>
 </div>
 
-<div class="row">
-    <div class="col-md-8">
-        <h5>Évolution des ventes (30 derniers jours)</h5>
-        <div id="chart-ventes"></div>
+<!-- ══ KPI ═══════════════════════════════════════════════════════════════════ -->
+<div class="kpi-grid fade-up fade-up-1">
+  <div class="kpi-card kpi-primary">
+    <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
+    <div class="kpi-label">Chiffre d'affaires</div>
+    <div class="kpi-value">{{ chiffre_affaires|floatformat:0 }} FCFA</div>
+    <div class="kpi-sub">Commandes livrées — 30 derniers jours</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+    <div class="kpi-label">Marge nette totale</div>
+    <div class="kpi-value">{{ marge_totale|floatformat:0 }} FCFA</div>
+    <div class="kpi-sub">Sur vos produits actifs</div>
+  </div>
+
+  <div class="kpi-card {% if produits_alerte %}kpi-alert{% endif %}">
+    <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+    <div class="kpi-label">Produits en alerte</div>
+    <div class="kpi-value">{{ produits_alerte|length }}</div>
+    <div class="kpi-sub">
+      {% if produits_alerte %}Stock sous le seuil défini{% else %}Tout est sous contrôle{% endif %}
     </div>
-    <div class="col-md-4">
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon">
+      <i class="bi {% if saison == 'hivernage' %}bi-cloud-rain-heavy{% else %}bi-sun{% endif %}"></i>
+    </div>
+    <div class="kpi-label">Saison actuelle</div>
+    <div class="kpi-value" style="font-size:1.5rem;text-transform:capitalize;">
+      {{ saison|cut:"_"|default:saison }}
+    </div>
+    <div class="kpi-sub">
+      {% if saison == 'hivernage' %}Anticipez la demande liée à la pluie{% else %}Anticipez la demande de saison sèche{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ══ GRAPHIQUE + TOP PRODUITS ═════════════════════════════════════════════ -->
+<div class="row g-3 fade-up fade-up-2">
+  <div class="col-lg-8">
+    <div class="sad-card">
+      <div class="sad-card-title">
+        <h5>Évolution des ventes</h5>
+        <small>30 derniers jours</small>
+      </div>
+      <div id="chart-ventes"></div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="sad-card">
+      <div class="sad-card-title">
         <h5>Top produits</h5>
-        <ul class="list-group">
-        {% for p in top_produits %}
-            <li class="list-group-item d-flex justify-content-between">
-                {{ p.produit__nom }} <span class="badge bg-primary">{{ p.total_vendu }}</span>
-            </li>
-        {% empty %}
-            <li class="list-group-item text-muted">Pas encore de ventes.</li>
-        {% endfor %}
-        </ul>
+      </div>
+      {% for p in top_produits %}
+        <div class="rank-item">
+          <div class="rank-badge">{{ forloop.counter }}</div>
+          <div class="rank-name">{{ p.produit__nom }}</div>
+          <div class="rank-qty">{{ p.total_vendu }} vendus</div>
+        </div>
+      {% empty %}
+        <p class="sad-empty">Aucune vente enregistrée pour l'instant.</p>
+      {% endfor %}
     </div>
+  </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <h5>Stocks dormants (&gt; 60 jours sans vente)</h5>
-        <ul class="list-group">
-        {% for p in stocks_dormants %}
-            <li class="list-group-item">{{ p.nom }} — {{ p.quantite }} en stock</li>
-        {% empty %}
-            <li class="list-group-item text-muted">Aucun stock dormant.</li>
-        {% endfor %}
-        </ul>
+<!-- ══ STOCKS DORMANTS + AGENDA ═════════════════════════════════════════════ -->
+<div class="row g-3 mt-1 fade-up fade-up-3">
+  <div class="col-lg-6">
+    <div class="sad-card">
+      <div class="sad-card-title">
+        <h5>Stocks dormants</h5>
+        <small>&gt; 60 jours sans vente</small>
+      </div>
+      {% for p in stocks_dormants %}
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-box-seam"></i></div>
+          <div>
+            <div class="info-title">{{ p.nom }}</div>
+            <div class="info-sub">{{ p.quantite }} unité{{ p.quantite|pluralize }} en stock</div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="sad-empty">Aucun stock dormant, tout circule bien.</p>
+      {% endfor %}
     </div>
-    <div class="col-md-6">
-        <h5>Agenda des événements SAD</h5>
-        <ul class="list-group">
-        {% for e in evenements_proches %}
-            <li class="list-group-item">
-                <strong>{{ e.nom_evenement }}</strong> — {{ e.date_debut }}<br>
-                <small class="text-muted">{{ e.conseil_affiche }}</small>
-            </li>
-        {% empty %}
-            <li class="list-group-item text-muted">Aucun événement proche.</li>
-        {% endfor %}
-        </ul>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="sad-card">
+      <div class="sad-card-title">
+        <h5>Agenda des événements</h5>
+      </div>
+      {% for e in evenements_proches %}
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-calendar-event"></i></div>
+          <div>
+            <div class="info-title">{{ e.nom_evenement }} — {{ e.date_debut|date:"d M" }}</div>
+            <div class="info-sub">{{ e.conseil_affiche }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="sad-empty">Aucun événement à l'approche.</p>
+      {% endfor %}
     </div>
+  </div>
 </div>
 
-<div class="mt-4">
+<!-- ══ NOTIFICATIONS ═════════════════════════════════════════════════════════ -->
+<div class="sad-card mt-3 fade-up fade-up-3">
+  <div class="sad-card-title">
     <h5>Notifications</h5>
-    <ul class="list-group">
-    {% for n in notifications %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div><strong>{{ n.titre }}</strong><br><small>{{ n.message }}</small></div>
-            <a href="{% url 'sad:notification_lue' n.pk %}" class="btn btn-sm btn-outline-secondary">Marquer lue</a>
-        </li>
-    {% empty %}
-        <li class="list-group-item text-muted">Aucune notification.</li>
-    {% endfor %}
-    </ul>
+    <small>{{ notifications|length }} non lue{{ notifications|length|pluralize }}</small>
+  </div>
+  {% for n in notifications %}
+    <div class="notif-item">
+      <div>
+        <div class="notif-title">{{ n.titre }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+      </div>
+      <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
+        <i class="bi bi-check2"></i> Marquer lue
+      </a>
+    </div>
+  {% empty %}
+    <p class="sad-empty">Aucune notification pour le moment.</p>
+  {% endfor %}
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-    const ventesData = {{ ventes_par_jour_json|safe }};
-    const categories = ventesData.map(v => v.jour);
-    const totals = ventesData.map(v => v.total);
+  const ventesData = {{ ventes_par_jour_json|safe }};
+  const categories = ventesData.map(v => v.jour);
+  const totals = ventesData.map(v => v.total);
 
-    const options = {
-        chart: { type: 'line', height: 300 },
-        series: [{ name: 'Unités vendues', data: totals }],
-        xaxis: { categories: categories, type: 'datetime' },
-    };
-    const chart = new ApexCharts(document.querySelector("#chart-ventes"), options);
-    chart.render();
+  const options = {
+    chart: {
+      type: 'area',
+      height: 300,
+      toolbar: { show: false },
+      fontFamily: 'Inter, sans-serif',
+      foreColor: '#8A8A8A',
+    },
+    series: [{ name: 'Unités vendues', data: totals }],
+    xaxis: {
+      categories: categories,
+      type: 'datetime',
+      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
+      forceNiceScale: true,
+    },
+    colors: ['#C8956C'],
+    stroke: { curve: 'smooth', width: 2.5 },
+    fill: {
+      type: 'gradient',
+      gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 90, 100] },
+    },
+    grid: { borderColor: '#E8E2D8', strokeDashArray: 4 },
+    dataLabels: { enabled: false },
+    markers: { size: 4, colors: ['#C8956C'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 6 } },
+    tooltip: { theme: 'light', x: { format: 'dd MMM' } },
+    noData: {
+      text: 'Aucune vente sur cette période',
+      style: { color: '#8A8A8A', fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+    },
+  };
+
+  const chart = new ApexCharts(document.querySelector("#chart-ventes"), options);
+  chart.render();
 </script>
 {% endblock %}

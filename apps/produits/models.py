@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from apps.users.models import Commercant
+from apps.users.models import Commercant, Client
 
 
 class Categorie(models.Model):
@@ -184,3 +184,22 @@ class Approvisionnement(models.Model):
             if self.prix_achat_unitaire != self.produit.prix_achat:
                 self.produit.prix_achat = self.prix_achat_unitaire
             self.produit.save()
+
+class Favori(models.Model):
+    """Un produit mis en favori (liste de souhaits) par un client"""
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name='favoris'
+    )
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.CASCADE, related_name='favorise_par'
+    )
+    date_ajout = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Favori"
+        verbose_name_plural = "Favoris"
+        unique_together = ('client', 'produit')
+        ordering = ['-date_ajout']
+
+    def __str__(self):
+        return f"{self.client.utilisateur.username} ♥ {self.produit.nom}"

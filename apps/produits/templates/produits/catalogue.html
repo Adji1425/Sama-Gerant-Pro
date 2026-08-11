@@ -69,6 +69,19 @@
           </span>
         {% endif %}
 
+        <!-- Bouton favori -->
+        {% if user.is_authenticated and user.role == 'client' %}
+          <button type="button"
+                  class="btn-favori position-absolute top-0 start-0 m-2"
+                  data-produit-id="{{ produit.pk }}"
+                  style="z-index:1;width:34px;height:34px;border-radius:50%;
+                         border:none;background:white;box-shadow:0 1px 4px rgba(0,0,0,.15);
+                         display:flex;align-items:center;justify-content:center;">
+            <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"
+               style="color:#C47B8A;"></i>
+          </button>
+        {% endif %}
+
         <!-- Image -->
         <a href="{% url 'produits:fiche_produit' produit.pk %}">
           {% if produit.image_principale %}

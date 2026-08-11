@@ -151,6 +151,237 @@ class ConnexionForm(AuthenticationForm):
     )
 
 
+class InscriptionCommercantForm(UserCreationForm):
+    """Formulaire d'inscription pour un commerçant"""
+    first_name = forms.CharField(
+        max_length=50,
+        label="Prénom",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Votre prénom'
+        })
+    )
+    last_name = forms.CharField(
+        max_length=50,
+        label="Nom",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Votre nom'
+        })
+    )
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'votre@email.com'
+        })
+    )
+    telephone = forms.CharField(
+        max_length=9,
+        min_length=9,
+        label="Téléphone",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '9 chiffres, ex: 771234567',
+            'maxlength': '9'
+        })
+    )
+    nom_boutique = forms.CharField(
+        max_length=150,
+        label="Nom de la boutique",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ex : AnStore'
+        })
+    )
+    logo = forms.ImageField(
+        required=False,
+        label="Logo de la boutique (optionnel)",
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+    )
+    password1 = forms.CharField(
+        label="Mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': '8 caractères min. avec 1 caractère spécial'
+        })
+    )
+    password2 = forms.CharField(
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': '••••••••'
+        })
+    )
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            'first_name', 'last_name', 'username',
+            'email', 'telephone', 'password1', 'password2'
+        ]
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': "Nom d'utilisateur"
+            })
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if Utilisateur.objects.filter(username__iexact=username).exists():
+            raise ValidationError(
+                "Ce nom d'utilisateur est déjà utilisé. Choisissez-en un autre."
+            )
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Utilisateur.objects.filter(email__iexact=email).exists():
+            raise ValidationError(
+                "Un compte existe déjà avec cet email."
+            )
+        return email
+
+    def clean_telephone(self):
+        telephone = self.cleaned_data.get('telephone', '').strip()
+        if not telephone.isdigit():
+            raise ValidationError(
+                "Le numéro de téléphone ne doit contenir que des chiffres."
+            )
+        if len(telephone) != 9:
+            raise ValidationError(
+                "Le numéro de téléphone doit contenir exactement 9 chiffres."
+            )
+        return telephone
+
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1', '')
+
+        if len(password1) < 8:
+            raise ValidationError(
+                "Le mot de passe doit contenir au moins 8 caractères."
+            )
+        if not re.search(f"[{CARACTERES_SPECIAUX}]", password1):
+            raise ValidationError(
+                "Le mot de passe doit contenir au moins un caractère spécial "
+                "(ex: ! @ # $ % & * - _ .)."
+            )
+
+        validate_password(password1, self.instance)
+
+        return password1
+
+
+class InscriptionAdminForm(UserCreationForm):
+    """Formulaire utilisé par un administrateur pour créer un autre compte administrateur"""
+    first_name = forms.CharField(
+        max_length=50,
+        label="Prénom",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Prénom'
+        })
+    )
+    last_name = forms.CharField(
+        max_length=50,
+        label="Nom",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nom'
+        })
+    )
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'email@exemple.com'
+        })
+    )
+    telephone = forms.CharField(
+        max_length=9,
+        min_length=9,
+        label="Téléphone",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '9 chiffres, ex: 771234567',
+            'maxlength': '9'
+        })
+    )
+    password1 = forms.CharField(
+        label="Mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': '8 caractères min. avec 1 caractère spécial'
+        })
+    )
+    password2 = forms.CharField(
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': '••••••••'
+        })
+    )
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            'first_name', 'last_name', 'username',
+            'email', 'telephone', 'password1', 'password2'
+        ]
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': "Nom d'utilisateur"
+            })
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if Utilisateur.objects.filter(username__iexact=username).exists():
+            raise ValidationError(
+                "Ce nom d'utilisateur est déjà utilisé. Choisissez-en un autre."
+            )
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Utilisateur.objects.filter(email__iexact=email).exists():
+            raise ValidationError(
+                "Un compte existe déjà avec cet email."
+            )
+        return email
+
+    def clean_telephone(self):
+        telephone = self.cleaned_data.get('telephone', '').strip()
+        if not telephone.isdigit():
+            raise ValidationError(
+                "Le numéro de téléphone ne doit contenir que des chiffres."
+            )
+        if len(telephone) != 9:
+            raise ValidationError(
+                "Le numéro de téléphone doit contenir exactement 9 chiffres."
+            )
+        return telephone
+
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1', '')
+
+        if len(password1) < 8:
+            raise ValidationError(
+                "Le mot de passe doit contenir au moins 8 caractères."
+            )
+        if not re.search(f"[{CARACTERES_SPECIAUX}]", password1):
+            raise ValidationError(
+                "Le mot de passe doit contenir au moins un caractère spécial "
+                "(ex: ! @ # $ % & * - _ .)."
+            )
+
+        validate_password(password1, self.instance)
+
+        return password1
+
+
 class ChangerMotDePasseForm(forms.Form):
     """Formulaire de changement de mot de passe (utilisateur connecté)"""
     ancien_mot_de_passe = forms.CharField(

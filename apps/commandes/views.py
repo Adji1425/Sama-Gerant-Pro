@@ -261,9 +261,19 @@ def detail_commande(request, commande_id):
     # ✅ CORRIGÉ : commande.lignes
     details = commande.lignes.select_related('produit', 'offre').all()
 
+    avis_par_produit = {}
+    if commande.statut == 'livree':
+        from apps.avis.models import Avis
+        produit_ids = [d.produit_id for d in details if d.produit_id]
+        avis_par_produit = {
+            a.produit_id: a
+            for a in Avis.objects.filter(client=commande.client, produit_id__in=produit_ids)
+        }
+
     return render(request, 'commandes/detail_commande.html', {
         'commande': commande,
         'details': details,
+        'avis_par_produit': avis_par_produit,
     })
 
 

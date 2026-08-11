@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load commandes_extras %}
 {% block title %}Suivi commande #{{ commande.id }}{% endblock %}
 
 {% block content %}
@@ -159,6 +160,31 @@
         </div>
 
       </div>
+
+      {% if commande.statut == 'livree' and ligne.produit %}
+        {% with avis=avis_par_produit|dictattr:ligne.produit.id %}
+          {% if avis %}
+            <div class="d-flex align-items-center gap-2 mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %} mt-n2">
+              <span class="small text-muted">Votre avis :</span>
+              {% for i in "12345" %}
+                <i class="bi {% if forloop.counter <= avis.note %}bi-star-fill{% else %}bi-star{% endif %}"
+                   style="color:#E0A458;font-size:13px;"></i>
+              {% endfor %}
+              <a href="{% url 'avis:modifier_avis' avis.pk %}" class="small ms-1"
+                 style="color:#1B263B;">Modifier</a>
+            </div>
+          {% else %}
+            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %} mt-n2">
+              <a href="{% url 'avis:ajouter_avis' ligne.produit.id %}"
+                 class="btn btn-sm fw-semibold"
+                 style="background-color:#FDF3E3;color:#E0A458;border:1px solid #E0A458;">
+                <i class="bi bi-star me-1"></i>Noter ce produit
+              </a>
+            </div>
+          {% endif %}
+        {% endwith %}
+      {% endif %}
+
       {% endfor %}
 
       <div class="d-flex justify-content-between fw-bold pt-2 mt-1 border-top"

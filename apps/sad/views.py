@@ -14,8 +14,8 @@ from apps.evenements.models import EvenementSAD
 from apps.notifications.models import Notification
 from .utils import (
     calculer_marge_nette, identifier_top_produits, identifier_stocks_dormants,
-    get_saison_actuelle, SAISONS_SENEGAL, calculer_chiffre_affaires,
-    verifier_alertes_stock,
+    get_saison_actuelle, SAISONS_SENEGAL,
+    generer_notifications_stock, generer_notifications_evenements,
 )
 
 
@@ -25,21 +25,6 @@ def _commercant_required(request):
     return request.user.commercant
 
 
-def _generer_notifications_evenements(commercant, jours=21):
-    """Alerte prévisionnelle avant un événement (Tabaski, Magal, Korité...)."""
-    for evenement in EvenementSAD.objects.all():
-        if evenement.est_proche(jours=jours):
-            Notification.objects.get_or_create(
-                commercant=commercant,
-                titre=f"Événement à venir : {evenement.nom_evenement}",
-                defaults={
-                    'message': evenement.conseil_affiche,
-                    'type': 'evenement',
-                    'lu': False,
-                },
-            )
-
-
 @login_required
 def dashboard(request):
     commercant = _commercant_required(request)
@@ -47,12 +32,19 @@ def dashboard(request):
         return HttpResponseForbidden("Réservé aux commerçants.")
 
     # Génère les notifications avant d'afficher le tableau de bord
-    verifier_alertes_stock(commercant)
-    _generer_notifications_evenements(commercant)
+    generer_notifications_stock(commercant)
+    generer_notifications_evenements(commercant)
 
     produits = Produit.objects.filter(commercant=commercant, statut='actif')
 
-    chiffre_affaires = calculer_chiffre_affaires(commercant)
+    # ✅ CORRIGÉ : LignePanier au lieu de DetailsCommande
+    # commande__isnull=False -> uniquement les lignes rattachées à une vraie commande (pas le panier en cours)
+    lignes_vendues = LignePanier.objects.filter(
+        produit__commercant=commercant,
+        commande__isnull=False,
+        commande__statut__in=['en_preparation', 'livree'],
+    )
+    chiffre_affaires = sum(ligne.sous_total() for ligne in lignes_vendues)
     marge_totale = sum(calculer_marge_nette(p) for p in produits)
 
     top_produits = identifier_top_produits(commercant)

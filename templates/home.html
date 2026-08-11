@@ -16,11 +16,11 @@
       </a>
     </div>
   </div>
-  <!-- Dots carrousel décoratifs -->
+  <!-- Dots carrousel décoratifs
   <div class="hero-dots">
     <div class="hero-dot active"></div>
     <div class="hero-dot"></div>
-  </div>
+  </div> -->
 </section>
 
 <!-- ══ CATÉGORIES EN CERCLES ═════════════════════════════════════════════════ -->
@@ -127,8 +127,8 @@
               </span>
             {% endif %}
             <!-- Bouton favori -->
-            <button class="produit-fav">
-              <i class="bi bi-heart"></i>
+            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}">
+              <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
             </button>
             <!-- Image -->
             {% if produit.image_principale %}
@@ -208,7 +208,7 @@
                 -{{ produit.offre.taux|floatformat:0 }}%
               </span>
             {% endif %}
-            <button class="produit-fav"><i class="bi bi-heart"></i></button>
+            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"><i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i></button>
             {% if produit.quantite == 0 %}
               <div class="rupture-overlay">Rupture de stock</div>
             {% endif %}

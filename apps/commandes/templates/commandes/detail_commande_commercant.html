@@ -59,23 +59,33 @@
 
     <div class="card border-0 shadow-sm p-3">
       <h6 class="fw-semibold mb-2" style="color:#1B263B;">Statut</h6>
-      <form method="POST" action="{% url 'commandes:changer_statut' commande.id %}">
-        {% csrf_token %}
-        <select name="statut" class="form-select form-select-sm mb-2">
-          {% for code, label in commande.STATUT_CHOICES %}
-            <option value="{{ code }}" {% if commande.statut == code %}selected{% endif %}>
-              {{ label }}
-            </option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-sm w-100 fw-semibold"
-                style="background-color:#1B263B;color:white;">
-          Mettre à jour
-        </button>
-      </form>
+
+      {% if commande.statut == 'livree' or commande.statut == 'annulee' %}
+        <div class="alert {% if commande.statut == 'livree' %}alert-success{% else %}alert-secondary{% endif %} py-2 px-3 mb-0 small d-flex align-items-center gap-2">
+          <i class="bi {% if commande.statut == 'livree' %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+          <span>
+            Commande <strong>{{ commande.get_statut_display }}</strong> — statut définitif, non modifiable.
+          </span>
+        </div>
+      {% else %}
+        <form method="POST" action="{% url 'commandes:changer_statut' commande.id %}">
+          {% csrf_token %}
+          <select name="statut" class="form-select form-select-sm mb-2">
+            {% for code, label in commande.STATUT_CHOICES %}
+              <option value="{{ code }}" {% if commande.statut == code %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm w-100 fw-semibold"
+                  style="background-color:#1B263B;color:white;">
+            Mettre à jour
+          </button>
+        </form>
+      {% endif %}
 
       {% if commande.statut == 'livree' %}
-        <a href="{% url 'facturation:generer_facture' commande.id %}"
+        <a href="{% url 'commandes:generer_facture' commande.id %}"
            class="btn btn-sm w-100 fw-semibold mt-2 btn-outline-secondary">
           <i class="bi bi-file-earmark-pdf me-1"></i>Facture PDF
         </a>

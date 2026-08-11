@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
-from apps.produits.models import Produit, Categorie
+from apps.produits.models import Produit, Categorie, Favori
 from apps.avis.models import Avis
 
 
@@ -27,10 +27,10 @@ def home(request):
         'categorie', 'commercant'
     ).order_by('-nb_avis', '-date_creation')[:8]
 
-    # Derniers avis 4 étoiles et +
+    # Derniers avis 2 étoiles et +
     derniers_avis = Avis.objects.select_related(
         'client__utilisateur', 'produit'
-    ).filter(note__gte=4).order_by('-date_avis')[:3]
+    ).filter(note__gte=2).order_by('-date_avis')[:3]
 
     # Stats
     stats = [
@@ -62,6 +62,9 @@ def home(request):
         'populaires': populaires,
         'derniers_avis': derniers_avis,
         'stats': stats,
+        'favoris_ids': list(
+            Favori.objects.filter(client=request.user.client).values_list('produit_id', flat=True)
+        ) if request.user.is_authenticated and hasattr(request.user, 'client') else [],
     })
 
 

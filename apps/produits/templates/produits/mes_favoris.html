@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Mes favoris — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4" style="color:#1B263B;">
+  <i class="bi bi-heart-fill me-2" style="color:#C47B8A;"></i>Mes favoris
+</h4>
+
+{% if favoris %}
+  <div class="row row-cols-2 row-cols-md-4 g-3">
+    {% for favori in favoris %}
+    {% with produit=favori.produit %}
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0 position-relative">
+
+        <button type="button"
+                class="btn-favori position-absolute top-0 start-0 m-2"
+                data-produit-id="{{ produit.pk }}"
+                style="z-index:1;width:34px;height:34px;border-radius:50%;
+                       border:none;background:white;box-shadow:0 1px 4px rgba(0,0,0,.15);
+                       display:flex;align-items:center;justify-content:center;">
+          <i class="bi bi-heart-fill" style="color:#C47B8A;"></i>
+        </button>
+
+        <a href="{% url 'produits:fiche_produit' produit.pk %}">
+          {% if produit.image_principale %}
+            <img src="{{ produit.image_principale.image.url }}"
+                 class="card-img-top" style="height:180px;object-fit:cover;">
+          {% else %}
+            <div class="d-flex align-items-center justify-content-center bg-light"
+                 style="height:180px;">
+              <i class="bi bi-image text-muted fs-1"></i>
+            </div>
+          {% endif %}
+        </a>
+
+        <div class="card-body">
+          <h6 class="card-title fw-semibold mb-1" style="color:#1B263B;">
+            <a href="{% url 'produits:fiche_produit' produit.pk %}"
+               class="text-decoration-none" style="color:#1B263B;">
+              {{ produit.nom }}
+            </a>
+          </h6>
+          <div class="fw-bold" style="color:#C47B8A;">
+            {{ produit.prix_vente|floatformat:0 }} FCFA
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-heart fs-1 d-block mb-3"></i>
+    <h5>Aucun favori pour l'instant</h5>
+    <p>Cliquez sur le cœur d'un produit pour l'ajouter ici.</p>
+    <a href="{% url 'produits:catalogue' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      Parcourir le catalogue
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}
