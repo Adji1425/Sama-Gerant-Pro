@@ -7,11 +7,22 @@
   <h4 class="fw-bold mb-0" style="color:#1B263B;">
     <i class="bi bi-shield-check me-2"></i>Espace Administrateur
   </h4>
-  <a href="{% url 'users:register_admin' %}"
-     class="btn fw-semibold px-4"
-     style="background-color:#1B263B;color:white;">
-    <i class="bi bi-person-plus me-1"></i>Inscrire un administrateur
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'users:liste_clients' %}"
+       class="btn btn-outline-secondary fw-semibold px-4">
+      <i class="bi bi-people me-1"></i>Voir tous les clients
+    </a>
+    <a href="{% url 'users:creer_commercant' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#E0A458;color:white;">
+      <i class="bi bi-shop me-1"></i>Créer un commerçant
+    </a>
+    <a href="{% url 'users:register_admin' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-person-plus me-1"></i>Inscrire un administrateur
+    </a>
+  </div>
 </div>
 
 <!-- Stats -->

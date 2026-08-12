@@ -116,7 +116,7 @@ def login_view(request):
             if utilisateur.est_commercant():
                 return redirect('produits:gestion_produits')
             elif utilisateur.est_admin():
-                return redirect('admin:index')
+                return redirect('users:admin_dashboard')
             else:
                 return redirect('home')
         else:
@@ -278,3 +278,65 @@ def register_admin(request):
         form = InscriptionAdminForm()
 
     return render(request, 'users/register_admin.html', {'form': form})
+
+
+@admin_required
+def creer_commercant(request):
+    """
+    Un administrateur crée le compte d'un commerçant (ex: boutique
+    inscrite hors-ligne, ou recréation d'un compte).
+    Ne connecte PAS la personne créée : c'est un tiers qui se connectera
+    lui-même ensuite avec les identifiants transmis.
+    """
+    if request.method == 'POST':
+        form = InscriptionCommercantForm(request.POST, request.FILES)
+        if form.is_valid():
+            utilisateur = form.save(commit=False)
+            utilisateur.role = 'commercant'
+            utilisateur.telephone = form.cleaned_data['telephone']
+            utilisateur.save()
+
+            Commercant.objects.create(
+                utilisateur=utilisateur,
+                nom_boutique=form.cleaned_data['nom_boutique'],
+                logo=form.cleaned_data.get('logo')
+            )
+
+            messages.success(
+                request,
+                f"La boutique « {form.cleaned_data['nom_boutique']} » a été créée. "
+                f"Transmettez les identifiants à {utilisateur.first_name}."
+            )
+            return redirect('users:admin_dashboard')
+        else:
+            messages.error(
+                request,
+                "Veuillez corriger les erreurs dans le formulaire."
+            )
+    else:
+        form = InscriptionCommercantForm()
+
+    return render(request, 'users/creer_commercant.html', {'form': form})
+
+
+@admin_required
+def liste_clients(request):
+    """Vue d'ensemble : tous les clients de la plateforme"""
+    recherche = request.GET.get('q', '')
+
+    clients = Client.objects.select_related('utilisateur').order_by(
+        '-utilisateur__date_joined'
+    )
+    if recherche:
+        clients = clients.filter(
+            utilisateur__first_name__icontains=recherche
+        ) | clients.filter(
+            utilisateur__last_name__icontains=recherche
+        ) | clients.filter(
+            utilisateur__email__icontains=recherche
+        )
+
+    return render(request, 'users/liste_clients.html', {
+        'clients': clients,
+        'recherche': recherche,
+    })

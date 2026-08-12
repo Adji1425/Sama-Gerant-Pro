@@ -15,5 +15,7 @@ urlpatterns = [
     # Espace administrateur
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-dashboard/inscrire/', views.register_admin, name='register_admin'),
+    path('admin-dashboard/creer-commercant/', views.creer_commercant, name='creer_commercant'),
+    path('admin-dashboard/clients/', views.liste_clients, name='liste_clients'),
     path('admin-dashboard/commercant/<int:pk>/toggle/', views.toggle_actif_commercant, name='toggle_actif_commercant'),
 ]
