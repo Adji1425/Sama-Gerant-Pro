@@ -8,7 +8,17 @@ from apps.avis.models import Avis
 
 
 def home(request):
-    categories = Categorie.objects.all()
+    categories = Categorie.objects.all().prefetch_related('produits__images')
+
+    # Photo représentative : le 1er produit actif de la catégorie qui a une image
+    for categorie in categories:
+        categorie.photo = None
+        for produit in categorie.produits.all():
+            if produit.statut == 'actif':
+                img = produit.image_principale
+                if img:
+                    categorie.photo = img
+                    break
 
     # Nouveautés — 8 derniers produits actifs
     nouveautes = Produit.objects.filter(

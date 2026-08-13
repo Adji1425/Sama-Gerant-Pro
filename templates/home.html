@@ -39,8 +39,8 @@
         <a href="{% url 'produits:catalogue' %}?categorie={{ categorie.id }}"
            class="categorie-item text-decoration-none">
           <div class="categorie-circle">
-            {% if categorie.image %}
-              <img src="{{ categorie.image.url }}" alt="{{ categorie.nom }}">
+            {% if categorie.photo %}
+              <img src="{{ categorie.photo.image.url }}" alt="{{ categorie.nom }}">
             {% else %}
               <div class="categorie-circle-placeholder">
                 <i class="bi bi-grid"></i>
