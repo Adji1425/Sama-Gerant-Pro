@@ -41,6 +41,10 @@
             <h6 class="fw-semibold mb-1" style="color:#1B263B;">
               {{ ligne.produit.nom }}
             </h6>
+            <span class="d-block text-muted small">
+              <i class="bi bi-shop" style="font-size:10px;"></i>
+              {{ ligne.produit.commercant.nom_boutique }}
+            </span>
             <span class="text-muted small">
               {{ ligne.prix_unitaire_snapshot|floatformat:0 }} FCFA / unité
             </span>

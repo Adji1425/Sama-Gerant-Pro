@@ -30,6 +30,9 @@
           <span class="text-muted small">
             {% for ligne in commande.lignes.all|slice:":2" %}
               {{ ligne.produit.nom|default:"Produit supprimé" }}
+              {% if ligne.produit %}
+                <span style="font-size:11px;">({{ ligne.produit.commercant.nom_boutique }})</span>
+              {% endif %}
               {% if not forloop.last %}, {% endif %}
             {% endfor %}
             {% if commande.lignes.count > 2 %}

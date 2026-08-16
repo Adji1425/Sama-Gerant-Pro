@@ -1,5 +1,6 @@
 from django.db import models
 from apps.users.models import Utilisateur, Client, Commercant
+from apps.produits.models import Produit
 
 
 class Conversation(models.Model):
@@ -15,6 +16,14 @@ class Conversation(models.Model):
         related_name='conversations'
     )
     date_creation = models.DateTimeField(auto_now_add=True)
+    produit_contexte = models.ForeignKey(
+        Produit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conversations_associees',
+        help_text="Dernier produit à l'origine du contact — affiché en haut du chat."
+    )
 
     class Meta:
         verbose_name = "Conversation"
@@ -49,6 +58,14 @@ class Message(models.Model):
     contenu = models.TextField()
     date_heure = models.DateTimeField(auto_now_add=True)
     lu = models.BooleanField(default=False)
+    produit = models.ForeignKey(
+        Produit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='messages',
+        help_text="Produit concerné si ce message provient d'un clic 'Contacter le vendeur'."
+    )
 
     class Meta:
         verbose_name = "Message"

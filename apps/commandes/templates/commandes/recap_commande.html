@@ -47,7 +47,10 @@
           {% for ligne in lignes %}
           <div class="d-flex justify-content-between
                       text-muted small mb-1">
-            <span>{{ ligne.produit.nom }} × {{ ligne.quantite }}</span>
+            <span>
+              {{ ligne.produit.nom }} × {{ ligne.quantite }}
+              <span style="font-size:11px;">— {{ ligne.produit.commercant.nom_boutique }}</span>
+            </span>
             <span>{{ ligne.sous_total|floatformat:0 }} FCFA</span>
           </div>
           {% endfor %}

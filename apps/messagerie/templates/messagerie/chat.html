@@ -35,6 +35,30 @@
   </div>
 </div>
 
+<!-- Produit à l'origine du contact -->
+{% if conversation.produit_contexte %}
+  <a href="{% url 'produits:fiche_produit' conversation.produit_contexte.id %}"
+     class="d-flex align-items-center gap-3 mb-3 p-2 rounded shadow-sm text-decoration-none"
+     style="background-color:#FDF3E3;border:1px solid #E0A458;">
+    {% with photo=conversation.produit_contexte.image_principale %}
+      {% if photo %}
+        <img src="{{ photo.image.url }}"
+             style="width:48px;height:48px;object-fit:cover;border-radius:8px;">
+      {% endif %}
+    {% endwith %}
+    <div class="flex-grow-1">
+      <div style="font-size:11px;color:#B07A3E;font-weight:600;letter-spacing:.04em;text-transform:uppercase;">
+        À propos de ce produit
+      </div>
+      <div class="fw-semibold" style="color:#1B263B;">
+        {{ conversation.produit_contexte.nom }}
+        <span class="text-muted fw-normal">— {{ conversation.produit_contexte.prix_vente|floatformat:0 }} FCFA</span>
+      </div>
+    </div>
+    <i class="bi bi-box-arrow-up-right" style="color:#B07A3E;"></i>
+  </a>
+{% endif %}
+
 <!-- Zone messages -->
 <div id="messages-container"
      class="rounded p-3 mb-3"

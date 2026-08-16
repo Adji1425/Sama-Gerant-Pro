@@ -59,6 +59,12 @@
           {% endwith %}
         {% endif %}
 
+              {% if item.conv.produit_contexte %}
+                <div class="small mb-1" style="color:#B07A3E;">
+                  <i class="bi bi-box-seam me-1"></i>{{ item.conv.produit_contexte.nom }}
+                </div>
+              {% endif %}
+
               <!-- Dernier message -->
               {% if item.dernier_message %}
                 <div class="text-muted small text-truncate"

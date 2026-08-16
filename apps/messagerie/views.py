@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Conversation, Message
 from apps.users.models import Commercant
+from apps.produits.models import Produit
 
 
 @login_required
@@ -46,7 +47,8 @@ def liste_conversations(request):
 def demarrer_conversation(request, commercant_id):
     """
     Démarre ou récupère une conversation entre le client
-    connecté et un commerçant.
+    connecté et un commerçant. Si l'appel vient d'une fiche produit
+    (?produit=<id>), ce produit devient le contexte affiché dans le chat.
     """
     if not hasattr(request.user, 'client'):
         return redirect('home')
@@ -59,6 +61,15 @@ def demarrer_conversation(request, commercant_id):
         client=client,
         commercant=commercant,
     )
+
+    produit_id = request.GET.get('produit')
+    if produit_id:
+        produit = Produit.objects.filter(
+            pk=produit_id, commercant=commercant
+        ).first()
+        if produit:
+            conversation.produit_contexte = produit
+            conversation.save(update_fields=['produit_contexte'])
 
     return redirect('messagerie:chat', conv_id=conversation.id)
 

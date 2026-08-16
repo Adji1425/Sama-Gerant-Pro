@@ -156,7 +156,10 @@
           </div>
           <div class="produit-card-body">
             <p class="produit-card-nom">{{ produit.nom }}</p>
-            <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p>
+            <p class="produit-card-sous">
+              <i class="bi bi-shop" style="font-size:10px;"></i>
+              {{ produit.commercant.nom_boutique }}
+            </p>
             <div class="d-flex align-items-center gap-2">
               {% if produit.offre and produit.offre.est_active %}
                 <span class="produit-card-prix-barre">
@@ -237,6 +240,10 @@
           </div>
           <div class="produit-card-body">
             <p class="produit-card-nom">{{ produit.nom }}</p>
+            <p class="produit-card-sous">
+              <i class="bi bi-shop" style="font-size:10px;"></i>
+              {{ produit.commercant.nom_boutique }}
+            </p>
             <div class="d-flex align-items-center gap-2">
               {% if produit.offre and produit.offre.est_active %}
                 <span class="produit-card-prix-barre">
