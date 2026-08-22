@@ -42,7 +42,16 @@ def ajouter_panier(request, produit_id):
 
     if request.method == 'POST':
         produit = get_object_or_404(Produit, pk=produit_id, statut='actif')
-        quantite = int(request.POST.get('quantite', 1))
+
+        try:
+            quantite = int(request.POST.get('quantite', 1))
+        except (TypeError, ValueError):
+            messages.error(request, "Quantité invalide.")
+            return redirect('produits:fiche_produit', pk=produit_id)
+
+        if quantite < 1:
+            messages.error(request, "La quantité doit être d'au moins 1.")
+            return redirect('produits:fiche_produit', pk=produit_id)
 
         if quantite > produit.quantite:
             messages.error(
@@ -95,7 +104,12 @@ def modifier_panier(request, ligne_id):
     )
 
     if request.method == 'POST':
-        quantite = int(request.POST.get('quantite', 1))
+        try:
+            quantite = int(request.POST.get('quantite', 1))
+        except (TypeError, ValueError):
+            messages.error(request, "Quantité invalide.")
+            return redirect('commandes:voir_panier')
+
         if quantite < 1:
             ligne.delete()
             messages.info(request, "Article retiré du panier.")

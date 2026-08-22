@@ -35,7 +35,9 @@
           <div class="col-md-4">
             <label class="form-label fw-semibold small">Catégorie</label>
             {{ form.categorie }}
+            {{ form.nouvelle_categorie }}
             {% if form.categorie.errors %}<div class="text-danger small">{{ form.categorie.errors }}</div>{% endif %}
+            {% if form.nouvelle_categorie.errors %}<div class="text-danger small">{{ form.nouvelle_categorie.errors }}</div>{% endif %}
           </div>
 
           <div class="col-12">

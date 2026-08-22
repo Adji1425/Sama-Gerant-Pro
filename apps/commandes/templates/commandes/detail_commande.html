@@ -142,11 +142,6 @@
           <div class="fw-semibold" style="color:#1B263B;">
             {{ ligne.produit.nom|default:"Produit supprimé" }}
           </div>
-          {% if ligne.produit %}
-            <div class="text-muted" style="font-size:11px;">
-              <i class="bi bi-shop"></i> {{ ligne.produit.commercant.nom_boutique }}
-            </div>
-          {% endif %}
           <div class="text-muted small">
             {{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA
             × {{ ligne.quantite }}

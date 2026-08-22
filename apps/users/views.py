@@ -62,40 +62,17 @@ def register(request):
 
 
 def register_commercant(request):
-    """Inscription d'un nouveau commerçant"""
-    if request.user.is_authenticated:
-        return redirect('home')
-
-    if request.method == 'POST':
-        form = InscriptionCommercantForm(request.POST, request.FILES)
-        if form.is_valid():
-            utilisateur = form.save(commit=False)
-            utilisateur.role = 'commercant'
-            utilisateur.telephone = form.cleaned_data['telephone']
-            utilisateur.save()
-
-            Commercant.objects.create(
-                utilisateur=utilisateur,
-                nom_boutique=form.cleaned_data['nom_boutique'],
-                logo=form.cleaned_data.get('logo')
-            )
-
-            login(request, utilisateur)
-            messages.success(
-                request,
-                f"Bienvenue {utilisateur.first_name} ! "
-                f"Votre boutique « {form.cleaned_data['nom_boutique']} » a été créée avec succès."
-            )
-            return redirect('produits:gestion_produits')
-        else:
-            messages.error(
-                request,
-                "Veuillez corriger les erreurs dans le formulaire."
-            )
-    else:
-        form = InscriptionCommercantForm()
-
-    return render(request, 'users/register_commercant.html', {'form': form})
+    """
+    Inscription commerçant désactivée : la plateforme ne gère
+    qu'un seul commerçant, déjà créé. La création du compte
+    passe désormais uniquement par l'admin (users:creer_commercant).
+    """
+    messages.error(
+        request,
+        "L'inscription commerçant n'est pas disponible : "
+        "cette plateforme est réservée à un commerçant unique."
+    )
+    return redirect('home')
 
 
 def login_view(request):
@@ -202,27 +179,16 @@ def changer_mot_de_passe(request):
 
 @admin_required
 def admin_dashboard(request):
-    """Vue d'ensemble : tous les commerçants + statistiques globales"""
-    recherche = request.GET.get('q', '')
-
-    commercants = Commercant.objects.select_related('utilisateur').order_by(
-        '-utilisateur__date_joined'
-    )
-    if recherche:
-        commercants = commercants.filter(nom_boutique__icontains=recherche)
+    """Vue d'ensemble : le commerçant unique de la plateforme + statistiques"""
+    commercant = Commercant.objects.select_related('utilisateur').first()
 
     stats = {
-        'total_commercants': Commercant.objects.count(),
         'total_clients': Client.objects.count(),
         'total_admins': Administrateur.objects.count(),
-        'commercants_actifs': Commercant.objects.filter(
-            utilisateur__is_active=True
-        ).count(),
     }
 
     return render(request, 'users/admin_dashboard.html', {
-        'commercants': commercants,
-        'recherche': recherche,
+        'commercant': commercant,
         'stats': stats,
     })
 
@@ -283,11 +249,20 @@ def register_admin(request):
 @admin_required
 def creer_commercant(request):
     """
-    Un administrateur crée le compte d'un commerçant (ex: boutique
-    inscrite hors-ligne, ou recréation d'un compte).
+    Un administrateur crée le compte du commerçant.
     Ne connecte PAS la personne créée : c'est un tiers qui se connectera
     lui-même ensuite avec les identifiants transmis.
+    La plateforme ne gérant qu'un seul commerçant, cette page se
+    bloque dès qu'un commerçant existe déjà.
     """
+    if Commercant.objects.exists():
+        messages.error(
+            request,
+            "Un commerçant existe déjà sur cette plateforme. "
+            "Elle est réservée à un commerçant unique."
+        )
+        return redirect('users:admin_dashboard')
+
     if request.method == 'POST':
         form = InscriptionCommercantForm(request.POST, request.FILES)
         if form.is_valid():
