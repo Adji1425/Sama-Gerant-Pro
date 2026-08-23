@@ -491,7 +491,7 @@ img { max-width: 100%; display: block; }
 }
 
 .produit-card {
-  background: var(--cream);
+  background: var(--cream-light);
   border-radius: var(--r-md);
   overflow: hidden;
   position: relative;
@@ -761,38 +761,38 @@ img { max-width: 100%; display: block; }
    FOOTER
    ══════════════════════════════════════════════════════════════ */
 .footer {
-  background: #1A1A1A;
+  background: #191919;
   color: rgba(255,255,255,0.65);
-  padding: 60px 0 28px;
+  padding: 25px 0 20px;
 }
 
 .footer-brand {
   font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  color: var(--white);
+  font-size: 1.2rem;
+  color: var(--cream-light);
   font-weight: 700;
   margin-bottom: 14px;
 }
 
 .footer-desc {
   font-size: 13.5px;
-  line-height: 1.7;
+  line-height: 2;
   color: rgba(255,255,255,0.55);
   margin-bottom: 0;
 }
 
 .footer-col-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
+  color:  #775a3c;
   margin-bottom: 18px;
 }
 
 .footer a {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(255,255,255,0.65);
   margin-bottom: 10px;
   text-decoration: none;
@@ -802,9 +802,8 @@ img { max-width: 100%; display: block; }
 .footer a:hover { color: var(--gold); }
 
 .footer-divider {
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  margin: 36px 0 22px;
+  border: 0.7px solid rgb(159, 158, 158);
+  margin: 18px 0 18px;
 }
 
 .footer-bottom {

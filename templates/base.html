@@ -47,7 +47,7 @@
     
       {% if user.is_authenticated and user.role == 'commercant' %}
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'commandes:mes_commandes' %}">Commandes</a>
+        <a class="nav-link" href="{% url 'commandes:commandes_commercant' %}">Commandes</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Produits</a>
@@ -410,12 +410,12 @@
 {% endif %}
 
 <!-- ══ BULLE WHATSAPP FLOTTANTE (accueil uniquement) ═══════════════════════════ -->
-{% if commercant_boutique and request.resolver_match.url_name == 'home' %}
-  <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+{% if commercant_boutique and request.resolver_match.url_name == 'home' and user.role != 'admin' and user.role != 'commercant' %}
+  <a  href="{% url 'messagerie:liste_conversations' %}"
      target="_blank" rel="noopener"
-     class="whatsapp-float" title="Discuter sur WhatsApp">
-    <i class="bi bi-whatsapp"></i>
-    <span class="d-none d-md-inline">WhatsApp</span>
+     class="whatsapp-float" title="Demander au Commercant">
+    <i class="bi bi-chat-dots me-2"></i>
+    <span class="d-none d-md-inline">Demander au Commercant</span>
   </a>
 {% endif %}
 
