@@ -8,6 +8,7 @@ urlpatterns = [
     path('register/commercant/', views.register_commercant, name='register_commercant'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('compte/', views.compte, name='compte'),
     path('profil/', views.profil, name='profil'),
     path('profil/modifier/', views.modifier_profil, name='modifier_profil'),
     path('profil/mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),

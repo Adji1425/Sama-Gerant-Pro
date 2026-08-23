@@ -20,6 +20,26 @@ def commercant_required(view_func):
 
 
 # ── VUES PUBLIQUES ────────────────────────────────────────────────────────────
+def categories(request):
+    """Vue d'ensemble des catégories, avec une photo représentative
+    (premier produit actif avec image) et le nombre de produits."""
+    categories = Categorie.objects.all().prefetch_related('produits__images')
+
+    for cat in categories:
+        cat.nb_produits = cat.produits.filter(statut='actif').count()
+        cat.photo = None
+        for produit in cat.produits.all():
+            if produit.statut == 'actif':
+                img = produit.image_principale
+                if img:
+                    cat.photo = img
+                    break
+
+    return render(request, 'produits/categories.html', {
+        'categories': categories,
+    })
+
+
 def catalogue(request):
     produits = Produit.objects.filter(
         statut='actif'

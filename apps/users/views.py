@@ -130,6 +130,27 @@ def profil(request):
     return render(request, 'users/profil.html', context)
 
 
+def compte(request):
+    """
+    Page 'Mon compte' : hub central (panier, favoris, commandes,
+    livraison, paiement). Accessible même sans connexion, pour
+    afficher la carte de bienvenue + inviter à se connecter/s'inscrire.
+    """
+    nb_panier = 0
+    nb_favoris = 0
+
+    if request.user.is_authenticated and hasattr(request.user, 'client'):
+        client = request.user.client
+        if hasattr(client, 'panier'):
+            nb_panier = client.panier.lignes.filter(commande=None).count()
+        nb_favoris = client.favoris.count()
+
+    return render(request, 'users/compte.html', {
+        'nb_panier': nb_panier,
+        'nb_favoris': nb_favoris,
+    })
+
+
 @login_required
 def modifier_profil(request):
     """Modifier les infos du profil"""

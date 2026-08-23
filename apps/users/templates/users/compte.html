@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Mon compte — Sama-Gérant Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .compte-header{margin-bottom:24px;}
+  .compte-header .section-label-small{margin-bottom:4px;}
+
+  .compte-welcome{background:var(--white);border:1px solid var(--border);
+    border-radius:var(--r-md);box-shadow:var(--shadow-sm);padding:36px 28px;
+    text-align:center;margin-bottom:24px;}
+  .compte-welcome-avatar{width:72px;height:72px;border-radius:50%;
+    background:var(--cream);color:var(--gold);display:flex;align-items:center;
+    justify-content:center;font-size:30px;margin:0 auto 16px;overflow:hidden;}
+  .compte-welcome-avatar img{width:100%;height:100%;object-fit:cover;}
+  .compte-welcome h5{font-family:'Playfair Display',serif;font-size:1.3rem;
+    color:var(--text);margin-bottom:6px;}
+  .compte-welcome p{font-size:14px;color:var(--muted);margin-bottom:20px;}
+
+  .compte-list{background:var(--white);border:1px solid var(--border);
+    border-radius:var(--r-md);box-shadow:var(--shadow-sm);overflow:hidden;
+    margin-bottom:24px;}
+  .compte-row{display:flex;align-items:center;gap:14px;padding:16px 20px;
+    text-decoration:none;color:inherit;border-bottom:1px solid var(--border);
+    transition:background .2s;}
+  .compte-row:last-child{border-bottom:none;}
+  .compte-row:hover{background:var(--cream-light);color:inherit;}
+  .compte-row-icon{width:38px;height:38px;border-radius:50%;
+    background:var(--cream);color:var(--gold);display:flex;align-items:center;
+    justify-content:center;font-size:15px;flex-shrink:0;}
+  .compte-row-title{font-size:14.5px;font-weight:600;color:var(--text);}
+  .compte-row-sub{font-size:12.5px;color:var(--muted);}
+  .compte-row-chevron{color:var(--muted);font-size:16px;margin-left:auto;}
+
+  .compte-contact{background:linear-gradient(135deg,var(--brown) 0%,#5C2E10 100%);
+    border-radius:var(--r-md);padding:28px;color:var(--white);}
+  .compte-contact h6{font-family:'Playfair Display',serif;font-size:1.15rem;
+    margin-bottom:6px;}
+  .compte-contact p{font-size:13.5px;color:rgba(255,255,255,.7);margin-bottom:18px;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="compte-header fade-up">
+  <span class="section-label-small">Espace personnel</span>
+  <h2>Mon compte</h2>
+</div>
+
+{% if user.is_authenticated %}
+  <div class="compte-welcome fade-up fade-up-1">
+    <div class="compte-welcome-avatar">
+      {% if user.photo_profile %}
+        <img src="{{ user.photo_profile.url }}">
+      {% else %}
+        {{ user.first_name|first|upper }}
+      {% endif %}
+    </div>
+    <h5>{{ user.get_full_name }}</h5>
+    <p>{{ user.email }}</p>
+    <a href="{% url 'users:modifier_profil' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      Modifier mon profil
+    </a>
+  </div>
+{% else %}
+  <div class="compte-welcome fade-up fade-up-1">
+    <div class="compte-welcome-avatar">
+      <i class="bi bi-person"></i>
+    </div>
+    <h5>Bienvenue</h5>
+    <p>Connectez-vous pour accéder à vos commandes et gérer votre compte.</p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+      <a href="{% url 'users:login' %}"
+         class="btn fw-semibold px-4"
+         style="background-color:var(--gold);color:white;">
+        Se connecter
+      </a>
+      <a href="{% url 'users:register' %}"
+         class="btn btn-outline-secondary fw-semibold px-4">
+        S'inscrire
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<div class="compte-list fade-up fade-up-2">
+  <a href="{% url 'commandes:voir_panier' %}" class="compte-row">
+    <div class="compte-row-icon"><i class="bi bi-bag"></i></div>
+    <div>
+      <div class="compte-row-title">Mon panier</div>
+      <div class="compte-row-sub">{{ nb_panier }} article{{ nb_panier|pluralize }}</div>
+    </div>
+    <i class="bi bi-chevron-right compte-row-chevron"></i>
+  </a>
+
+  <a href="{% url 'produits:mes_favoris' %}" class="compte-row">
+    <div class="compte-row-icon"><i class="bi bi-heart"></i></div>
+    <div>
+      <div class="compte-row-title">Mes favoris</div>
+      <div class="compte-row-sub">{{ nb_favoris }} produit{{ nb_favoris|pluralize }}</div>
+    </div>
+    <i class="bi bi-chevron-right compte-row-chevron"></i>
+  </a>
+
+  {% if user.is_authenticated %}
+    <a href="{% url 'commandes:mes_commandes' %}" class="compte-row">
+      <div class="compte-row-icon"><i class="bi bi-receipt"></i></div>
+      <div>
+        <div class="compte-row-title">Mes commandes</div>
+        <div class="compte-row-sub">Suivi et historique</div>
+      </div>
+      <i class="bi bi-chevron-right compte-row-chevron"></i>
+    </a>
+  {% endif %}
+
+  <div class="compte-row" style="cursor:default;">
+    <div class="compte-row-icon"><i class="bi bi-truck"></i></div>
+    <div>
+      <div class="compte-row-title">Livraison</div>
+      <div class="compte-row-sub">Partout au Sénégal · 24–48h</div>
+    </div>
+  </div>
+
+  <div class="compte-row" style="cursor:default;">
+    <div class="compte-row-icon"><i class="bi bi-credit-card"></i></div>
+    <div>
+      <div class="compte-row-title">Paiement</div>
+      <div class="compte-row-sub">Wave · Orange Money</div>
+    </div>
+  </div>
+
+  {% if user.is_authenticated %}
+    <a href="{% url 'users:changer_mot_de_passe' %}" class="compte-row">
+      <div class="compte-row-icon"><i class="bi bi-shield-lock"></i></div>
+      <div>
+        <div class="compte-row-title">Mot de passe</div>
+        <div class="compte-row-sub">Modifier votre mot de passe</div>
+      </div>
+      <i class="bi bi-chevron-right compte-row-chevron"></i>
+    </a>
+
+    <a href="{% url 'users:logout' %}" class="compte-row">
+      <div class="compte-row-icon" style="background:#FAF0F2;color:#C47B8A;">
+        <i class="bi bi-box-arrow-right"></i>
+      </div>
+      <div>
+        <div class="compte-row-title" style="color:#C47B8A;">Déconnexion</div>
+      </div>
+    </a>
+  {% endif %}
+</div>
+
+{% if commercant_boutique %}
+<div class="compte-contact fade-up fade-up-3">
+  <h6>Une question ?</h6>
+  <p>Contactez-nous directement sur WhatsApp, nous répondons rapidement.</p>
+  <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+     target="_blank" rel="noopener"
+     class="btn fw-semibold px-4"
+     style="background-color:#25D366;color:white;">
+    <i class="bi bi-whatsapp me-1"></i>WhatsApp
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

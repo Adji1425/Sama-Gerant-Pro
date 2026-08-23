@@ -28,7 +28,7 @@
   <div class="container">
     <div class="section-header">
       <h2>Catégories</h2>
-      <a href="{% url 'produits:catalogue' %}" class="voir-tout">
+      <a href="{% url 'produits:categories' %}" class="voir-tout">
         VOIR TOUT &nbsp;›
       </a>
     </div>
@@ -237,7 +237,7 @@
           </div>
           <div class="produit-card-body">
             <p class="produit-card-nom">{{ produit.nom }}</p>
-            <!-- <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p> -->
+            <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p>
             <div class="d-flex align-items-center gap-2">
               {% if produit.offre and produit.offre.est_active %}
                 <span class="produit-card-prix-barre">
@@ -383,7 +383,11 @@
         <div style="font-size:14px;color:rgba(255,255,255,0.65);
                     margin-bottom:20px;">
           <i class="bi bi-telephone me-2" style="color:var(--gold);"></i>
-          +221 77 000 00 00
+          {% if commercant_boutique %}
+            +221 {{ commercant_boutique.utilisateur.telephone }}
+          {% else %}
+            +221 77 000 00 00
+          {% endif %}
         </div>
         <!-- Réseaux sociaux -->
         <div class="d-flex gap-2">
@@ -393,9 +397,16 @@
           <a href="#" class="footer-social-btn">
             <i class="bi bi-tiktok"></i>
           </a>
-          <a href="#" class="footer-social-btn">
-            <i class="bi bi-whatsapp"></i>
-          </a>
+          {% if commercant_boutique %}
+            <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+               target="_blank" rel="noopener" class="footer-social-btn">
+              <i class="bi bi-whatsapp"></i>
+            </a>
+          {% else %}
+            <a href="#" class="footer-social-btn">
+              <i class="bi bi-whatsapp"></i>
+            </a>
+          {% endif %}
         </div>
       </div>
     </div>

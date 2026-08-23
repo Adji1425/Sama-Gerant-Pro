@@ -37,25 +37,20 @@
         <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
            href="{% url 'home' %}">Accueil</a>
       </li>
+
+      {% if user.role != 'commercant' %}
       <li class="nav-item">
         <a class="nav-link {% if 'produits' in request.path %}active{% endif %}"
-           href="{% url 'produits:catalogue' %}">Catalogue</a>
+           href="{% url 'produits:categories' %}">Catégories</a>
       </li>
-      {% if user.role == 'client' %}
-      <li class="nav-item">
-        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
-           href="#">Contact
-           <!-- TODO: créer page contact -->
-        </a>
-      </li>
-      {% endif %}
-
+      {%endif%}
+    
       {% if user.is_authenticated and user.role == 'commercant' %}
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'sad:dashboard' %}">Dashboard</a>
+        <a class="nav-link" href="{% url 'commandes:mes_commandes' %}">Commandes</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Mes produits</a>
+        <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Produits</a>
       </li>
       {% endif %}
 
@@ -68,7 +63,7 @@
 
     <!-- Zone droite -->
     <div class="navbar-icons d-none d-lg-flex">
-
+    
       <!-- Barre de recherche -->
       <form method="GET" action="{% url 'produits:catalogue' %}">
         <div class="navbar-search">
@@ -79,30 +74,24 @@
       </form>
 
       {% if user.is_authenticated %}
-
-        <!-- Messagerie -->
-        <a href="{% url 'messagerie:liste_conversations' %}"
-           class="nav-icon-btn" title="Messages">
-          <i class="bi bi-chat-dots"></i>
-        </a>
-        <!-- Panier + favoris (client seulement) -->
-        {% if user.role == 'client' %}
+      {% if user.is_authenticated and user.role != 'commercant' and user.role != 'admin'  %}
+        <!-- Favoris (visiteur redirigé vers connexion si non client) -->
         <a href="{% url 'produits:mes_favoris' %}"
            class="nav-icon-btn" title="Mes favoris">
           <i class="bi bi-heart"></i>
         </a>
 
+        <!-- Panier (visiteur redirigé vers connexion si non client) -->
         <a href="{% url 'commandes:voir_panier' %}"
            class="nav-icon-btn nav-icon-btn-cart" title="Mon panier">
           <i class="bi bi-bag"></i>
         </a>
-        {% endif %}
+      {% endif %}
 
         <!-- Dropdown profil -->
         <div class="dropdown">
-          <button class="nav-icon-btn dropdown-toggle border-0 bg-transparent"
-                  data-bs-toggle="dropdown" aria-expanded="false"
-                  style="display:flex;align-items:center;gap:8px;">
+          <button class="nav-icon-btn dropdown-toggle no-caret border-0 bg-transparent"
+                  data-bs-toggle="dropdown" aria-expanded="false">
             {% if user.photo_profile %}
               <img src="{{ user.photo_profile.url }}"
                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
@@ -112,9 +101,6 @@
                 {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
               </div>
             {% endif %}
-            <span style="font-size:14px;font-weight:500;color:var(--text);">
-              {{ user.first_name }}
-            </span>
           </button>
 
           <ul class="dropdown-menu dropdown-menu-end">
@@ -135,6 +121,15 @@
                 {% else %}Administrateur{% endif %}
               </span>
             </li>
+      {% if user.is_authenticated and user.role != 'commercant' and user.role != 'admin' %}
+            <li>
+              <a class="dropdown-item" href="{% url 'users:compte' %}">
+                <i class="bi bi-person-vcard me-2" style="color:var(--gold);"></i>
+                Mon compte
+              </a>
+            </li>
+      {% endif %}
+
 
             <li>
               <a class="dropdown-item" href="{% url 'users:profil' %}">
@@ -159,7 +154,7 @@
               </a>
             </li>
             {% endif %}
-
+      {% if user.is_authenticated and user.role != 'admin' %}
             <li>
               <a class="dropdown-item"
                  href="{% url 'messagerie:liste_conversations' %}">
@@ -167,6 +162,7 @@
                 Messages
               </a>
             </li>
+      {%endif%}
 
             {% if user.role == 'commercant' %}
             <li>
@@ -212,18 +208,27 @@
 
       {% else %}
         <!-- Non connecté -->
-        <a href="{% url 'users:login' %}"
-           class="nav-icon-btn" title="Connexion">
+        <a href="{% url 'produits:mes_favoris' %}"
+           class="nav-icon-btn" title="Mes favoris">
+          <i class="bi bi-heart"></i>
+        </a>
+        <a href="{% url 'users:compte' %}"
+           class="nav-icon-btn" title="Mon compte">
           <i class="bi bi-person"></i>
         </a>
-        <a href="{% url 'users:register' %}"
-           style="background:var(--text);color:var(--white);
-                  border:none;border-radius:6px;padding:9px 18px;
-                  font-size:13px;font-weight:600;font-family:'Inter',sans-serif;
-                  cursor:pointer;transition:background 0.2s;
-                  text-decoration:none;display:inline-flex;align-items:center;">
-          S'inscrire
+        <a href="{% url 'commandes:voir_panier' %}"
+           class="nav-icon-btn nav-icon-btn-cart" title="Mon panier">
+          <i class="bi bi-bag"></i>
         </a>
+      {% endif %}
+
+      {% if commercant_boutique %}
+        <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+           target="_blank" rel="noopener"
+           class="navbar-whatsapp-btn" title="Discuter sur WhatsApp">
+          <i class="bi bi-whatsapp"></i>
+          <span>WhatsApp</span>
+        </a>      
       {% endif %}
 
     </div>
@@ -246,7 +251,25 @@
           </div>
         </form>
 
+        {% if commercant_boutique %}
+          <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+             target="_blank" rel="noopener"
+             class="navbar-whatsapp-btn d-flex justify-content-center mb-3"
+             style="width:100%;">
+            <i class="bi bi-whatsapp"></i>
+            <span>WhatsApp</span>
+          </a>
+        {% endif %}
+
         <ul class="list-unstyled mb-0">
+          <li class="mb-1">
+            <a href="{% url 'users:compte' %}"
+               style="display:block;padding:10px 0;font-size:15px;
+                      font-weight:600;color:var(--gold);
+                      border-bottom:1px solid var(--border);">
+              <i class="bi bi-person-vcard me-2"></i>Mon compte
+            </a>
+          </li>
           <li class="mb-1">
             <a href="{% url 'home' %}"
                style="display:block;padding:10px 0;font-size:15px;
@@ -256,11 +279,11 @@
             </a>
           </li>
           <li class="mb-1">
-            <a href="{% url 'produits:catalogue' %}"
+            <a href="{% url 'produits:categories' %}"
                style="display:block;padding:10px 0;font-size:15px;
                       font-weight:500;color:var(--text);
                       border-bottom:1px solid var(--border);">
-              Catalogue
+              Catégories
             </a>
           </li>
 
@@ -375,6 +398,7 @@
 </nav>
 
 <!-- ══ MESSAGES DJANGO ════════════════════════════════════════════════════════ -->
+{% if messages %}
 <div class="container mt-3">
   {% for message in messages %}
     <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
@@ -383,6 +407,17 @@
     </div>
   {% endfor %}
 </div>
+{% endif %}
+
+<!-- ══ BULLE WHATSAPP FLOTTANTE (accueil uniquement) ═══════════════════════════ -->
+{% if commercant_boutique and request.resolver_match.url_name == 'home' %}
+  <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+     target="_blank" rel="noopener"
+     class="whatsapp-float" title="Discuter sur WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+    <span class="d-none d-md-inline">WhatsApp</span>
+  </a>
+{% endif %}
 
 <!-- ══ CONTENU ═══════════════════════════════════════════════════════════════ -->
 {% block full_content %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Catégories — Sama-Gérant Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cat-header{margin-bottom:28px;}
+  .cat-header .section-label-small{margin-bottom:4px;}
+
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media (max-width:991px){.cat-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:575px){.cat-grid{grid-template-columns:1fr;}}
+
+  .cat-card{position:relative;display:block;height:280px;border-radius:var(--r-md);
+    overflow:hidden;text-decoration:none;box-shadow:var(--shadow-sm);
+    transition:transform .3s, box-shadow .3s;}
+  .cat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+
+  .cat-card-img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
+  .cat-card:hover .cat-card-img{transform:scale(1.06);}
+
+  .cat-card-placeholder{width:100%;height:100%;background:var(--cream);
+    display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:40px;}
+
+  .cat-card-overlay{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(61,31,13,0) 40%,rgba(61,31,13,.82) 100%);}
+
+  .cat-card-body{position:absolute;left:0;right:0;bottom:0;padding:18px 20px;color:var(--white);}
+  .cat-card-body h5{font-family:'Playfair Display',serif;font-size:1.2rem;margin:0 0 3px;
+    text-transform:capitalize;}
+  .cat-card-body span{font-size:12.5px;color:rgba(255,255,255,.75);}
+
+  .cat-empty{text-align:center;padding:70px 20px;color:var(--muted);}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="cat-header fade-up">
+  <span class="section-label-small">Collections</span>
+  <h2>Catégories</h2>
+  <p class="text-muted mb-0">Explorez tous nos produits par catégorie.</p>
+</div>
+
+{% if categories %}
+  <div class="cat-grid fade-up fade-up-1">
+    {% for cat in categories %}
+      <a href="{% url 'produits:catalogue' %}?categorie={{ cat.id }}" class="cat-card">
+        {% if cat.photo %}
+          <img src="{{ cat.photo.image.url }}" class="cat-card-img" alt="{{ cat.nom }}">
+        {% else %}
+          <div class="cat-card-placeholder"><i class="bi bi-grid"></i></div>
+        {% endif %}
+        <div class="cat-card-overlay"></div>
+        <div class="cat-card-body">
+          <h5>{{ cat.nom }}</h5>
+          <span>{{ cat.nb_produits }} produit{{ cat.nb_produits|pluralize }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="cat-empty">
+    <i class="bi bi-grid fs-1 d-block mb-3"></i>
+    Aucune catégorie pour l'instant.
+  </div>
+{% endif %}
+
+<div class="text-center mt-4 fade-up fade-up-2">
+  <a href="{% url 'produits:catalogue' %}"
+     class="btn fw-semibold px-4"
+     style="background-color:var(--gold);color:white;">
+    Voir tous les produits <i class="bi bi-arrow-right ms-1"></i>
+  </a>
+</div>
+
+{% endblock %}

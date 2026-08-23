@@ -6,6 +6,7 @@ app_name = 'produits'
 urlpatterns = [
     # Public
     path('', views.catalogue, name='catalogue'),
+    path('categories/', views.categories, name='categories'),
     path('produit/<int:pk>/', views.fiche_produit, name='fiche_produit'),
     # Favoris (client)
     path('favoris/', views.mes_favoris, name='mes_favoris'),
