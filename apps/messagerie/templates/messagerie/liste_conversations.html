@@ -3,110 +3,223 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-4" style="color:#1B263B;">
-  <i class="bi bi-chat-dots me-2"></i>Mes messages
-</h4>
+<div class="msg-page-header">
+  <span class="section-label-small">DISCUTEZ</span>
+  <h2 class="mb-0">Mes messages</h2>
+</div>
 
 {% if conversations_data %}
-  {% for item in conversations_data %}
-  <a href="{% url 'messagerie:chat' item.conv.id %}"
-     class="text-decoration-none">
-    <div class="card shadow-sm border-0 mb-3
-                {% if item.non_lus > 0 %}border-start border-3{% endif %}"
-         style="{% if item.non_lus > 0 %}border-color:#E0A458 !important;{% endif %}
-                transition: transform 0.15s;">
+  <div class="conv-list">
+    {% for item in conversations_data %}
+    <a href="{% url 'messagerie:chat' item.conv.id %}" class="conv-card {% if item.non_lus > 0 %}unread{% endif %}">
 
-      <div class="card-body d-flex align-items-center gap-3 py-3">
+      <!-- Avatar interlocuteur -->
+      {% if request.user.est_client %}
+        {% with interlo=item.conv.commercant.utilisateur %}
+          {% if interlo.photo_profile %}
+            <img src="{{ interlo.photo_profile.url }}" class="conv-avatar">
+          {% else %}
+            <div class="conv-avatar conv-avatar-placeholder">
+              {{ interlo.first_name|first|upper }}
+            </div>
+          {% endif %}
+          <div class="conv-body">
+            <div class="conv-nom">{{ item.conv.commercant.nom_boutique }}</div>
+        {% endwith %}
+      {% else %}
+        {% with interlo=item.conv.client.utilisateur %}
+          {% if interlo.photo_profile %}
+            <img src="{{ interlo.photo_profile.url }}" class="conv-avatar">
+          {% else %}
+            <div class="conv-avatar conv-avatar-placeholder alt">
+              {{ interlo.first_name|first|upper }}
+            </div>
+          {% endif %}
+          <div class="conv-body">
+            <div class="conv-nom">{{ interlo.get_full_name }}</div>
+        {% endwith %}
+      {% endif %}
 
-        <!-- Avatar interlocuteur -->
-        {% if request.user.est_client %}
-          {% with interlo=item.conv.commercant.utilisateur %}
-            {% if interlo.photo_profile %}
-              <img src="{{ interlo.photo_profile.url }}"
-                   class="rounded-circle"
-                   style="width:50px;height:50px;object-fit:cover;">
-            {% else %}
-              <div class="rounded-circle d-flex align-items-center
-                          justify-content-center fw-bold"
-                   style="width:50px;height:50px;
-                          background:#D6E4EC;color:#1B263B;font-size:18px;">
-                {{ interlo.first_name|first|upper }}
+            {% if item.conv.produit_contexte %}
+              <div class="conv-produit">
+                <i class="bi bi-box-seam-fill"></i>{{ item.conv.produit_contexte.nom }}
               </div>
             {% endif %}
-            <div class="flex-grow-1">
-              <div class="fw-semibold" style="color:#1B263B;">
-                {{ item.conv.commercant.nom_boutique }}
+
+            <!-- Dernier message -->
+            {% if item.dernier_message %}
+              <div class="conv-dernier-msg">
+                {% if item.dernier_message.expediteur == request.user %}
+                  <span class="conv-vous">Vous :</span>
+                {% endif %}
+                {{ item.dernier_message.contenu }}
               </div>
-          {% endwith %}
-        {% else %}
-          {% with interlo=item.conv.client.utilisateur %}
-            {% if interlo.photo_profile %}
-              <img src="{{ interlo.photo_profile.url }}"
-                   class="rounded-circle"
-                   style="width:50px;height:50px;object-fit:cover;">
             {% else %}
-              <div class="rounded-circle d-flex align-items-center
-                          justify-content-center fw-bold"
-                   style="width:50px;height:50px;
-                          background:#FDF3E3;color:#1B263B;font-size:18px;">
-                {{ interlo.first_name|first|upper }}
+              <div class="conv-dernier-msg conv-vide">
+                Démarrer la conversation...
               </div>
             {% endif %}
-            <div class="flex-grow-1">
-              <div class="fw-semibold" style="color:#1B263B;">
-                {{ interlo.get_full_name }}
-              </div>
-          {% endwith %}
+          </div>
+
+      <!-- Heure + badge non lus -->
+      <div class="conv-meta">
+        {% if item.dernier_message %}
+          <div class="conv-heure">
+            {{ item.dernier_message.date_heure|date:"H:i" }}
+          </div>
         {% endif %}
-
-              {% if item.conv.produit_contexte %}
-                <div class="small mb-1" style="color:#B07A3E;">
-                  <i class="bi bi-box-seam me-1"></i>{{ item.conv.produit_contexte.nom }}
-                </div>
-              {% endif %}
-
-              <!-- Dernier message -->
-              {% if item.dernier_message %}
-                <div class="text-muted small text-truncate"
-                     style="max-width:300px;">
-                  {% if item.dernier_message.expediteur == request.user %}
-                    <span style="color:#E0A458;">Vous :</span>
-                  {% endif %}
-                  {{ item.dernier_message.contenu }}
-                </div>
-              {% else %}
-                <div class="text-muted small">
-                  Démarrer la conversation...
-                </div>
-              {% endif %}
-            </div>
-
-        <!-- Heure + badge non lus -->
-        <div class="text-end">
-          {% if item.dernier_message %}
-            <div class="text-muted" style="font-size:11px;">
-              {{ item.dernier_message.date_heure|date:"H:i" }}
-            </div>
-          {% endif %}
-          {% if item.non_lus > 0 %}
-            <span class="badge rounded-pill mt-1"
-                  style="background-color:#E0A458;color:#1B263B;">
-              {{ item.non_lus }}
-            </span>
-          {% endif %}
-        </div>
-
+        {% if item.non_lus > 0 %}
+          <span class="conv-badge">{{ item.non_lus }}</span>
+        {% endif %}
       </div>
-    </div>
-  </a>
-  {% endfor %}
+
+    </a>
+    {% endfor %}
+  </div>
 
 {% else %}
-  <div class="text-center py-5 text-muted">
-    <i class="bi bi-chat-square fs-1 d-block mb-3"></i>
+  <div class="conv-empty">
+    <i class="bi bi-chat-square-text"></i>
     <h5>Aucune conversation</h5>
     <p>Visitez la boutique d'un commerçant pour démarrer un échange.</p>
   </div>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════
+   MESSAGERIE — liste des conversations
+   ══════════════════════════════════════════════════════════════ */
+.msg-page-header { margin-bottom: 28px; }
+.msg-page-header h2 { font-size: 1.9rem; }
+
+.conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conv-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  text-decoration: none;
+  transition: box-shadow 0.22s, transform 0.22s, border-color 0.22s;
+}
+
+.conv-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--gold);
+}
+
+.conv-card.unread {
+  border-left: 3px solid var(--gold);
+  background: var(--cream-light);
+}
+
+.conv-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.conv-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold-light);
+  color: var(--brown);
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.conv-avatar-placeholder.alt {
+  background: #FDF3E3;
+  color: var(--brown);
+}
+
+.conv-body { flex: 1; min-width: 0; }
+
+.conv-nom {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.conv-produit {
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.conv-dernier-msg {
+  font-size: 13.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 380px;
+}
+
+.conv-dernier-msg.conv-vide { font-style: italic; }
+.conv-vous { color: var(--gold); font-weight: 600; }
+
+.conv-meta {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.conv-heure { font-size: 11px; color: var(--muted); }
+
+.conv-badge {
+  background: var(--gold);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+/* État vide */
+.conv-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+}
+
+.conv-empty i { font-size: 2.6rem; display: block; margin-bottom: 16px; color: var(--gold); }
+.conv-empty h5 { font-family: 'Playfair Display', serif; color: var(--text); margin-bottom: 8px; }
+.conv-empty p { margin: 0; }
+
+@media (max-width: 575px) {
+  .conv-dernier-msg { max-width: 160px; }
+  .conv-card { padding: 14px; gap: 12px; }
+  .conv-avatar { width: 44px; height: 44px; }
+}
+</style>
 {% endblock %}

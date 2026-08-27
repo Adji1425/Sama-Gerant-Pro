@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Configuration climatique — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-cloud-sun me-2"></i>Configuration climatique (SAD)
+  </h4>
+  <div class="d-flex gap-2">
+    <a href="{% url 'sad:creer_climat' %}"
+       class="btn fw-semibold px-4" style="background-color:#E0A458;color:white;">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter une saison
+    </a>
+    <a href="{% url 'users:admin_dashboard' %}" class="btn btn-outline-secondary fw-semibold px-4">
+      <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+  </div>
+</div>
+
+<p class="text-muted small mb-4">
+  Ces périodes déterminent la « saison actuelle » affichée sur le tableau de
+  bord du commerçant et les conseils associés (§5.3.2 du cahier des
+  charges). Elles remplacent l'ancien découpage codé en dur dans le code :
+  modifiez-les ici sans intervention technique.
+</p>
+
+{% if climats %}
+  <div class="table-responsive">
+    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
+      <thead style="background-color:#F8F9FA;">
+        <tr>
+          <th>Saison</th>
+          <th>Période</th>
+          <th>Conseil affiché</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for climat in climats %}
+        <tr>
+          <td class="fw-semibold" style="color:#1B263B;">
+            <i class="bi {{ climat.icone }} me-1"></i>{{ climat.nom }}
+            <div class="text-muted small">{{ climat.code }}</div>
+          </td>
+          <td>{{ climat.jour_debut }}/{{ climat.mois_debut }} → {{ climat.jour_fin }}/{{ climat.mois_fin }}</td>
+          <td class="text-muted small">{{ climat.conseil|truncatechars:60 }}</td>
+          <td>
+            {% if climat.actif %}
+              <span class="badge" style="background-color:#2E7D32;">Active</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-nowrap">
+            <a href="{% url 'sad:modifier_climat' climat.pk %}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'sad:supprimer_climat' climat.pk %}"
+               class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-cloud-sun fs-1 d-block mb-3"></i>
+    <h5>Aucune saison configurée pour l'instant</h5>
+  </div>
+{% endif %}
+
+{% endblock %}

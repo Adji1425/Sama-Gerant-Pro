@@ -62,30 +62,23 @@ function initChat(conversationId) {
 
   function afficherMessage(data) {
     const estMoi = data.est_moi;
+
+    // Retire le message "Aucun message pour l'instant..." s'il est présent
+    const vide = messagesContainer.querySelector('.chat-vide');
+    if (vide) vide.remove();
+
     const wrapper = document.createElement('div');
-    wrapper.className = 'd-flex mb-2 ' + (estMoi ? 'justify-content-end' : 'justify-content-start');
+    wrapper.className = 'chat-msg-row ' + (estMoi ? 'moi' : 'autre');
 
     const bulle = document.createElement('div');
-    bulle.className = 'px-3 py-2 rounded-3';
-    bulle.style.maxWidth = '70%';
-    if (estMoi) {
-      bulle.style.backgroundColor = '#1B263B';
-      bulle.style.color = 'white';
-    } else {
-      bulle.style.backgroundColor = 'white';
-      bulle.style.color = '#1B263B';
-      bulle.style.border = '1px solid #D6E4EC';
-    }
+    bulle.className = 'chat-bulle ' + (estMoi ? 'moi' : 'autre');
 
     const contenu = document.createElement('div');
-    contenu.style.whiteSpace = 'pre-wrap';
+    contenu.className = 'chat-bulle-texte';
     contenu.textContent = data.contenu;
 
     const heure = document.createElement('div');
-    heure.className = 'text-end';
-    heure.style.fontSize = '10px';
-    heure.style.opacity = '0.7';
-    heure.style.marginTop = '2px';
+    heure.className = 'chat-bulle-heure';
     heure.textContent = data.date_heure;
 
     bulle.appendChild(contenu);

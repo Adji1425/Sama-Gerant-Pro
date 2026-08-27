@@ -1,126 +1,248 @@
 {% extends 'base.html' %}
 {% block title %}Mon Profil — Sama-Gérant Pro{% endblock %}
 
+{% block extra_css %}
+<style>
+  .profil-header{margin-bottom:24px;}
+  .profil-header .section-label-small{margin-bottom:4px;}
+
+  .profil-card{background:var(--white);border:1px solid var(--border);
+    border-radius:var(--r-md);box-shadow:var(--shadow-sm);padding:32px 28px;
+    text-align:center;}
+
+  .profil-avatar{width:100px;height:100px;border-radius:50%;margin:0 auto 18px;
+    overflow:hidden;border:3px solid var(--cream);}
+  .profil-avatar img{width:100%;height:100%;object-fit:cover;}
+  .profil-avatar-fallback{width:100%;height:100%;display:flex;align-items:center;
+    justify-content:center;background:var(--cream);color:var(--gold);
+    font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;}
+
+  .profil-card h5{font-family:'Playfair Display',serif;font-size:1.35rem;
+    color:var(--text);margin-bottom:8px;}
+
+  .profil-badge{display:inline-block;background:var(--gold-light);color:var(--brown-mid);
+    font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:5px 16px;border-radius:20px;margin-bottom:20px;}
+
+  .profil-infos{text-align:left;list-style:none;padding:0;margin:0 0 22px;
+    border-top:1px solid var(--border);padding-top:18px;}
+  .profil-infos li{display:flex;align-items:center;gap:10px;font-size:14px;
+    color:var(--muted);margin-bottom:10px;}
+  .profil-infos li:last-child{margin-bottom:0;}
+  .profil-infos i{color:var(--gold);font-size:15px;width:16px;text-align:center;}
+
+  .profil-btn{display:block;width:100%;text-align:center;padding:11px;
+    border-radius:var(--r-sm);font-size:14px;font-weight:600;text-decoration:none;
+    transition:opacity .2s;}
+  .profil-btn:hover{opacity:.9;}
+  .profil-btn-primary{background:var(--gold);color:var(--white);margin-bottom:10px;}
+  .profil-btn-dark{background:var(--brown);color:var(--white);}
+
+  .profil-section{background:var(--white);border:1px solid var(--border);
+    border-radius:var(--r-md);box-shadow:var(--shadow-sm);padding:28px;height:100%;}
+  .profil-section-title{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:20px;}
+  .profil-section-title h5{font-family:'Playfair Display',serif;font-size:1.2rem;
+    color:var(--text);margin:0;}
+  .profil-section-title a{font-size:13px;font-weight:600;color:var(--gold);
+    text-decoration:none;}
+
+  .profil-table{width:100%;border-collapse:collapse;}
+  .profil-table th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--muted);padding:0 0 12px;border-bottom:1px solid var(--border);}
+  .profil-table td{padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;
+    color:var(--text);vertical-align:middle;}
+  .profil-table tr:last-child td{border-bottom:none;}
+
+  .profil-status{display:inline-block;padding:4px 12px;border-radius:20px;
+    font-size:12px;font-weight:600;}
+  .profil-status-attente{background:#FDF3E3;color:#B07A3E;}
+  .profil-status-preparation{background:#E3EEF7;color:#3E7CB0;}
+  .profil-status-livree{background:#E4F3E7;color:#3E8F53;}
+  .profil-status-annulee{background:#FAF0F2;color:#C47B8A;}
+
+  .profil-empty{text-align:center;padding:36px 20px;color:var(--muted);}
+
+  .profil-quick-link{display:flex;align-items:center;gap:14px;padding:16px 18px;
+    border:1px solid var(--border);border-radius:var(--r-sm);text-decoration:none;
+    color:inherit;transition:background .2s, transform .2s;margin-bottom:12px;}
+  .profil-quick-link:last-child{margin-bottom:0;}
+  .profil-quick-link:hover{background:var(--cream-light);transform:translateX(3px);color:inherit;}
+  .profil-quick-icon{width:44px;height:44px;border-radius:50%;background:var(--cream);
+    color:var(--gold);display:flex;align-items:center;justify-content:center;
+    font-size:18px;flex-shrink:0;}
+  .profil-quick-title{font-weight:600;font-size:14.5px;color:var(--text);}
+  .profil-quick-sub{font-size:12.5px;color:var(--muted);}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
+
+<div class="profil-header fade-up">
+  <span class="section-label-small">Espace personnel</span>
+  <h2>Mon profil</h2>
+</div>
+
+<div class="row g-4">
 
   <!-- Colonne gauche — infos profil -->
   <div class="col-md-4">
-    <div class="card shadow-sm border-0 text-center p-4">
+    <div class="profil-card fade-up fade-up-1">
 
-      <!-- Photo de profil -->
-      {% if utilisateur.photo_profile %}
-        <img src="{{ utilisateur.photo_profile.url }}"
-             class="rounded-circle mx-auto mb-3"
-             width="100" height="100" style="object-fit:cover;">
-      {% else %}
-        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center
-                    justify-content-center fs-1 fw-bold"
-             style="width:100px;height:100px;
-                    background:#E0A458;color:#1B263B;">
-          {{ utilisateur.first_name|first|upper }}
-        </div>
-      {% endif %}
+      <div class="profil-avatar">
+        {% if utilisateur.photo_profile %}
+          <img src="{{ utilisateur.photo_profile.url }}">
+        {% else %}
+          <div class="profil-avatar-fallback">{{ utilisateur.first_name|first|upper }}</div>
+        {% endif %}
+      </div>
 
-      <h5 class="fw-bold mb-0" style="color:#1B263B;">
-        {{ utilisateur.get_full_name }}
-      </h5>
-      <span class="badge mt-1"
-            style="background-color:#1B263B;color:#E0A458;">
-        {{ utilisateur.get_role_display }}
-      </span>
+      <h5>{{ utilisateur.get_full_name }}</h5>
+      <span class="profil-badge">{{ utilisateur.get_role_display }}</span>
 
-      <hr>
-
-      <ul class="list-unstyled text-start small text-muted">
-        <li class="mb-2">
-          <i class="bi bi-envelope me-2"></i>{{ utilisateur.email }}
-        </li>
-        <li class="mb-2">
-          <i class="bi bi-telephone me-2"></i>
-          {{ utilisateur.telephone|default:"Non renseigné" }}
-        </li>
-        <li class="mb-2">
-          <i class="bi bi-geo-alt me-2"></i>
-          {{ utilisateur.adresse|default:"Non renseignée" }}
-        </li>
+      <ul class="profil-infos">
+        <li><i class="bi bi-envelope"></i>{{ utilisateur.email }}</li>
+        <li><i class="bi bi-telephone"></i>{{ utilisateur.telephone|default:"Non renseigné" }}</li>
+        <li><i class="bi bi-geo-alt"></i>{{ utilisateur.adresse|default:"Non renseignée" }}</li>
         {% if client %}
-        <li class="mb-2">
-          <i class="bi bi-truck me-2"></i>
-          {{ client.adresse_livraison|default:"Non renseignée" }}
-        </li>
+          <li><i class="bi bi-truck"></i>{{ client.adresse_livraison|default:"Non renseignée" }}</li>
         {% endif %}
       </ul>
 
-      <a href="{% url 'users:modifier_profil' %}"
-         class="btn btn-sm w-100 fw-semibold"
-         style="background-color:#E0A458;color:#1B263B;">
+      <a href="{% url 'users:modifier_profil' %}" class="profil-btn profil-btn-primary">
         <i class="bi bi-pencil me-1"></i>Modifier mon profil
       </a>
-
-      <a href="{% url 'users:changer_mot_de_passe' %}"
-         class="btn btn-sm w-100 fw-semibold mt-2"
-         style="background-color:#1B263B;color:white;">
+      <a href="{% url 'users:changer_mot_de_passe' %}" class="profil-btn profil-btn-dark">
         <i class="bi bi-shield-lock me-1"></i>Changer mon mot de passe
       </a>
 
     </div>
   </div>
 
-  <!-- Colonne droite — commandes récentes -->
+  <!-- Colonne droite — contenu selon le rôle -->
   <div class="col-md-8">
-    <div class="card shadow-sm border-0 p-4">
-      <h5 class="fw-bold mb-3" style="color:#1B263B;">
-        <i class="bi bi-bag-check me-2"></i>Mes commandes récentes
-      </h5>
 
-      {% if client and client.commandes.all %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead style="background-color:#1B263B;color:white;">
-              <tr>
-                <th>#</th>
-                <th>Date</th>
-                <th>Montant</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for commande in client.commandes.all|slice:":5" %}
-              <tr>
-                <td class="fw-bold">#{{ commande.id }}</td>
-                <td>{{ commande.date_commande|date:"d/m/Y" }}</td>
-                <td>{{ commande.montant_total|floatformat:0 }} FCFA</td>
-                <td>
-                  {% if commande.statut == 'en_attente' %}
-                    <span class="badge bg-warning text-dark">En attente</span>
-                  {% elif commande.statut == 'en_preparation' %}
-                    <span class="badge bg-info text-dark">En préparation</span>
-                  {% elif commande.statut == 'livree' %}
-                    <span class="badge bg-success">Livrée</span>
-                  {% else %}
-                    <span class="badge bg-danger">Annulée</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    {% if utilisateur.role == 'client' %}
+      <!-- ═══ CLIENT : commandes récentes ═══ -->
+      <div class="profil-section fade-up fade-up-2">
+        <div class="profil-section-title">
+          <h5><i class="bi bi-bag-check me-2" style="color:var(--gold);"></i>Mes commandes récentes</h5>
+          {% if nb_commandes > 5 %}
+            <a href="{% url 'commandes:mes_commandes' %}">
+              Voir tout ({{ nb_commandes }}) <i class="bi bi-arrow-right"></i>
+            </a>
+          {% endif %}
         </div>
-      {% else %}
-        <div class="text-center py-4 text-muted">
-          <i class="bi bi-bag fs-1 d-block mb-2"></i>
-          Vous n'avez pas encore passé de commande.
-          <br>
-          <a href="{% url 'produits:catalogue' %}"
-             class="btn btn-sm mt-2"
-             style="background-color:#1B263B;color:white;">
-            Voir le catalogue
-          </a>
-        </div>
-      {% endif %}
 
-    </div>
+        {% if commandes_recentes %}
+          <div class="table-responsive">
+            <table class="profil-table">
+              <thead>
+                <tr><th>#</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for commande in commandes_recentes %}
+                <tr>
+                  <td class="fw-semibold">#{{ commande.id }}</td>
+                  <td>{{ commande.date_commande|date:"d/m/Y" }}</td>
+                  <td>{{ commande.montant_total|floatformat:0 }} FCFA</td>
+                  <td>
+                    {% if commande.statut == 'en_attente' %}
+                      <span class="profil-status profil-status-attente">En attente</span>
+                    {% elif commande.statut == 'en_preparation' %}
+                      <span class="profil-status profil-status-preparation">En préparation</span>
+                    {% elif commande.statut == 'livree' %}
+                      <span class="profil-status profil-status-livree">Livrée</span>
+                    {% else %}
+                      <span class="profil-status profil-status-annulee">Annulée</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'commandes:detail_commande' commande.id %}"
+                       class="small text-decoration-none" style="color:var(--gold);font-weight:600;">
+                      Voir <i class="bi bi-chevron-right"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="profil-empty">
+            <i class="bi bi-bag fs-1 d-block mb-2" style="color:var(--border);"></i>
+            Vous n'avez pas encore passé de commande.
+            <br>
+            <a href="{% url 'produits:catalogue' %}" class="profil-btn profil-btn-dark mt-3"
+               style="display:inline-block;width:auto;padding:10px 24px;">
+              Voir le catalogue
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+    {% elif utilisateur.role == 'commercant' %}
+      <!-- ═══ COMMERÇANT : accès rapide à la gestion de sa boutique ═══ -->
+      <div class="profil-section fade-up fade-up-2">
+        <div class="profil-section-title">
+          <h5><i class="bi bi-shop me-2" style="color:var(--gold);"></i>Ma boutique</h5>
+        </div>
+
+        <a href="{% url 'sad:dashboard' %}" class="profil-quick-link">
+          <div class="profil-quick-icon"><i class="bi bi-speedometer2"></i></div>
+          <div>
+            <div class="profil-quick-title">Tableau de bord</div>
+            <div class="profil-quick-sub">Chiffre d'affaires, alertes, ventes</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+        <a href="{% url 'produits:gestion_produits' %}" class="profil-quick-link">
+          <div class="profil-quick-icon"><i class="bi bi-box-seam"></i></div>
+          <div>
+            <div class="profil-quick-title">Mes produits</div>
+            <div class="profil-quick-sub">Ajouter, modifier, gérer le stock</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+        <a href="{% url 'commandes:commandes_commercant' %}" class="profil-quick-link">
+          <div class="profil-quick-icon"><i class="bi bi-receipt"></i></div>
+          <div>
+            <div class="profil-quick-title">Commandes reçues</div>
+            <div class="profil-quick-sub">Suivre et traiter les commandes clients</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+         <a href="{% url 'messagerie:liste_conversations' %}" class="profil-quick-link">
+          <div class="profil-quick-icon"><i class="bi bi-chat-left-text" ></i></div>
+          <div>
+            <div class="profil-quick-title">Messages</div>
+            <div class="profil-quick-sub">Voir les kestions des clients</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+        
+      </div>
+
+    {% elif utilisateur.role == 'admin' %}
+      <!-- ═══ ADMIN : accès rapide à l'administration ═══ -->
+      <div class="profil-section fade-up fade-up-2">
+        <div class="profil-section-title">
+          <h5><i class="bi bi-shield-check me-2" style="color:var(--gold);"></i>Administration</h5>
+        </div>
+
+        <a href="{% url 'users:admin_dashboard' %}" class="profil-quick-link">
+          <div class="profil-quick-icon"><i class="bi bi-speedometer2"></i></div>
+          <div>
+            <div class="profil-quick-title">Dashboard Admin</div>
+            <div class="profil-quick-sub">Clients, commerçant, statistiques</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+      </div>
+    {% endif %}
+
   </div>
 
 </div>

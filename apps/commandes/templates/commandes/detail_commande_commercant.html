@@ -7,19 +7,19 @@
   <h4 class="fw-bold mb-0" style="color:#1B263B;">
     <i class="bi bi-receipt me-2"></i>Commande #{{ commande.id }}
   </h4>
-  <a href="{% url 'commandes:commandes_commercant' %}" class="btn btn-sm btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i>Retour aux commandes
+  <a href="{% url 'commandes:commandes_commercant' %}" class="btn-back-pill">
+    <i class="bi bi-arrow-left"></i>Retour aux commandes
   </a>
 </div>
 
 <div class="row g-4">
 
   <div class="col-lg-8">
-    <div class="card border-0 shadow-sm p-3">
-      <h6 class="fw-semibold mb-3" style="color:#1B263B;">Articles</h6>
+    <div class="detail-panel">
+      <div class="detail-panel-title"><i class="bi bi-bag-check"></i>Articles</div>
 
       {% if lignes %}
-        <table class="table table-sm align-middle">
+        <table class="dash-table">
           <thead>
             <tr>
               <th>Produit</th>
@@ -31,9 +31,7 @@
           <tbody>
             {% for ligne in lignes %}
             <tr>
-              <td class="fw-semibold" style="color:#1B263B;">
-                {{ ligne.produit.nom|default:"Produit supprimé" }}
-              </td>
+              <td>{{ ligne.produit.nom|default:"Produit supprimé" }}</td>
               <td>{{ ligne.quantite }}</td>
               <td>{{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA</td>
               <td class="text-end fw-semibold">{{ ligne.sous_total|floatformat:0 }} FCFA</td>
@@ -48,21 +46,23 @@
   </div>
 
   <div class="col-lg-4">
-    <div class="card border-0 shadow-sm p-3 mb-3">
-      <h6 class="fw-semibold mb-2" style="color:#1B263B;">Client</h6>
-      <div class="small">
-        <div>{{ commande.client.utilisateur.get_full_name }}</div>
-        <div class="text-muted">{{ commande.client.utilisateur.telephone }}</div>
-        <div class="text-muted">{{ commande.adresse_livraison_reel }}</div>
+    <div class="detail-panel mb-3">
+      <div class="detail-panel-title"><i class="bi bi-person"></i>Client</div>
+      <div class="client-info-line">{{ commande.client.utilisateur.get_full_name }}</div>
+      <div class="client-info-line"><i class="bi bi-telephone"></i>{{ commande.client.utilisateur.telephone }}</div>
+      <div class="client-info-line"><i class="bi bi-geo-alt"></i>{{ commande.adresse_livraison_reel }}
+        {% if commande.region %}— {{ commande.commune }}, {{ commande.region.nom }}{% endif %}
       </div>
     </div>
 
-    <div class="card border-0 shadow-sm p-3">
-      <h6 class="fw-semibold mb-2" style="color:#1B263B;">Statut</h6>
+    <div class="detail-panel">
+      <div class="detail-panel-title"><i class="bi bi-info-circle"></i>Statut</div>
 
       {% if commande.statut == 'livree' or commande.statut == 'annulee' %}
-        <div class="alert {% if commande.statut == 'livree' %}alert-success{% else %}alert-secondary{% endif %} py-2 px-3 mb-0 small d-flex align-items-center gap-2">
-          <i class="bi {% if commande.statut == 'livree' %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+        <div class="status-final-box {% if commande.statut == 'livree' %}is-livree{% else %}is-annulee{% endif %}">
+          <span class="status-final-icon">
+            <i class="bi {% if commande.statut == 'livree' %}bi-check-lg{% else %}bi-x-lg{% endif %}"></i>
+          </span>
           <span>
             Commande <strong>{{ commande.get_statut_display }}</strong> — statut définitif, non modifiable.
           </span>
@@ -70,15 +70,14 @@
       {% else %}
         <form method="POST" action="{% url 'commandes:changer_statut' commande.id %}">
           {% csrf_token %}
-          <select name="statut" class="form-select form-select-sm mb-2">
+          <select name="statut" class="status-update-select">
             {% for code, label in commande.STATUT_CHOICES %}
               <option value="{{ code }}" {% if commande.statut == code %}selected{% endif %}>
                 {{ label }}
               </option>
             {% endfor %}
           </select>
-          <button type="submit" class="btn btn-sm w-100 fw-semibold"
-                  style="background-color:#1B263B;color:white;">
+          <button type="submit" class="btn-status-update">
             Mettre à jour
           </button>
         </form>
@@ -86,8 +85,8 @@
 
       {% if commande.statut == 'livree' %}
         <a href="{% url 'commandes:generer_facture' commande.id %}"
-           class="btn btn-sm w-100 fw-semibold mt-2 btn-outline-secondary">
-          <i class="bi bi-file-earmark-pdf me-1"></i>Facture PDF
+           class="btn-facture-pdf">
+          <i class="bi bi-file-earmark-pdf"></i>Facture PDF
         </a>
       {% endif %}
     </div>

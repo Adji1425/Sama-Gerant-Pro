@@ -3,13 +3,19 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-4" style="color:#1B263B;">
-  <i class="bi bi-cart3 me-2"></i>Mon Panier
-  <span class="badge ms-2"
-        style="background-color:#E0A458;color:#1B263B;">
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div class="page-header-icon" style="background:var(--gold-light);color:var(--brown);">
+    <i class="bi bi-cart3"></i>
+  </div>
+  <div>
+    <h4 class="fw-bold mb-0" style="font-family:'Playfair Display',serif;color:var(--text);">
+      Mon panier
+    </h4>
+  </div>
+  <span class="badge-count-pill">
     {{ nombre_articles }} article{{ nombre_articles|pluralize }}
   </span>
-</h4>
+</div>
 
 {% if lignes %}
 <div class="row g-4">
@@ -17,70 +23,60 @@
   <!-- Liste des articles -->
   <div class="col-md-8">
     {% for ligne in lignes %}
-    <div class="card shadow-sm border-0 mb-3">
-      <div class="card-body">
-        <div class="row align-items-center">
+    <div class="panier-item">
+      <div class="row align-items-center g-3">
 
-          <!-- Image -->
-          <div class="col-3 col-md-2">
-            {% if ligne.produit.image_principale %}
-              <img src="{{ ligne.produit.image_principale.image.url }}"
-                   class="img-fluid rounded"
-                   style="height:70px;object-fit:cover;">
-            {% else %}
-              <div class="bg-light rounded d-flex align-items-center
-                          justify-content-center"
-                   style="height:70px;">
-                <i class="bi bi-image text-muted"></i>
-              </div>
-            {% endif %}
-          </div>
-
-          <!-- Nom + prix unitaire -->
-          <div class="col-5 col-md-5">
-            <h6 class="fw-semibold mb-1" style="color:#1B263B;">
-              {{ ligne.produit.nom }}
-            </h6>
-            <span class="text-muted small">
-              {{ ligne.prix_unitaire_snapshot|floatformat:0 }} FCFA / unité
-            </span>
-          </div>
-
-          <!-- Modifier quantité -->
-          <div class="col-4 col-md-3">
-            <form method="POST"
-                  action="{% url 'commandes:modifier_panier' ligne.id %}">
-              {% csrf_token %}
-              <div class="input-group input-group-sm">
-                <input type="number" name="quantite"
-                       value="{{ ligne.quantite }}" min="0"
-                       max="{{ ligne.produit.quantite }}"
-                       class="form-control text-center"
-                       style="max-width:65px;">
-                <button type="submit" class="btn btn-sm"
-                        style="background-color:#1B263B;color:white;">
-                  <i class="bi bi-check"></i>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Sous-total + supprimer -->
-          <div class="col-12 col-md-2 text-end mt-2 mt-md-0">
-            <div class="fw-bold" style="color:#1B263B;">
-              {{ ligne.sous_total|floatformat:0 }} FCFA
+        <!-- Image -->
+        <div class="col-3 col-md-2">
+          {% if ligne.produit.image_principale %}
+            <img src="{{ ligne.produit.image_principale.image.url }}" class="panier-item-img">
+          {% else %}
+            <div class="panier-item-img d-flex align-items-center justify-content-center">
+              <i class="bi bi-image text-muted"></i>
             </div>
-            <form method="POST"
-                  action="{% url 'commandes:supprimer_panier' ligne.id %}">
-              {% csrf_token %}
-              <button type="submit"
-                      class="btn btn-link text-danger p-0 small">
-                <i class="bi bi-trash"></i> Supprimer
-              </button>
-            </form>
-          </div>
-
+          {% endif %}
         </div>
+
+        <!-- Nom + prix unitaire -->
+        <div class="col-9 col-md-4">
+          <h6 class="fw-semibold mb-1" style="color:var(--text);">
+            {{ ligne.produit.nom }}
+          </h6>
+          <span class="text-muted small">
+            {{ ligne.prix_unitaire_snapshot|floatformat:0 }} FCFA / unité
+          </span>
+        </div>
+
+        <!-- Modifier quantité -->
+        <div class="col-6 col-md-3">
+          <form method="POST" action="{% url 'commandes:modifier_panier' ligne.id %}">
+            {% csrf_token %}
+            <div class="fp-qty">
+              <button type="button" onclick="panierChangeQty({{ ligne.id }}, -1)">−</button>
+              <input type="number" name="quantite" id="qty-{{ ligne.id }}"
+                     value="{{ ligne.quantite }}" min="0"
+                     max="{{ ligne.produit.quantite }}" readonly>
+              <button type="button" onclick="panierChangeQty({{ ligne.id }}, 1)">+</button>
+            </div>
+            <button type="submit" class="btn-pill-outline mt-2" style="padding:6px 14px;font-size:12px;">
+              <i class="bi bi-check-lg"></i>Mettre à jour
+            </button>
+          </form>
+        </div>
+
+        <!-- Sous-total + supprimer -->
+        <div class="col-6 col-md-3 text-end">
+          <div class="fw-bold mb-2" style="color:var(--text);">
+            {{ ligne.sous_total|floatformat:0 }} FCFA
+          </div>
+          <form method="POST" action="{% url 'commandes:supprimer_panier' ligne.id %}">
+            {% csrf_token %}
+            <button type="submit" class="panier-remove-link">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          </form>
+        </div>
+
       </div>
     </div>
     {% endfor %}
@@ -88,36 +84,29 @@
 
   <!-- Récapitulatif total -->
   <div class="col-md-4">
-    <div class="card shadow-sm border-0 p-4 sticky-top"
-         style="top:80px;">
-      <h5 class="fw-bold mb-3" style="color:#1B263B;">Récapitulatif</h5>
+    <div class="recap-card sticky-top" style="top:80px;">
+      <h5 class="fw-bold mb-3">Récapitulatif</h5>
 
-      <div class="d-flex justify-content-between mb-2 text-muted small">
+      <div class="recap-line">
         <span>Sous-total</span>
         <span>{{ total|floatformat:0 }} FCFA</span>
       </div>
-      <div class="d-flex justify-content-between mb-2 text-muted small">
+      <div class="recap-line">
         <span>Livraison</span>
         <span>À définir</span>
       </div>
 
-      <hr>
-
-      <div class="d-flex justify-content-between fw-bold mb-4"
-           style="color:#1B263B;">
+      <div class="recap-total">
         <span>Total</span>
         <span>{{ total|floatformat:0 }} FCFA</span>
       </div>
 
-      <a href="{% url 'commandes:valider_commande' %}"
-         class="btn w-100 fw-semibold py-2"
-         style="background-color:#1B263B;color:white;">
-        <i class="bi bi-bag-check me-2"></i>Valider la commande
+      <a href="{% url 'commandes:valider_commande' %}" class="fp-btn-panier mb-2">
+        <i class="bi bi-bag-check"></i>Valider la commande
       </a>
 
-      <a href="{% url 'produits:catalogue' %}"
-         class="btn w-100 btn-outline-secondary mt-2 fw-semibold">
-        <i class="bi bi-arrow-left me-1"></i>Continuer mes achats
+      <a href="{% url 'produits:catalogue' %}" class="btn-pill-outline">
+        <i class="bi bi-arrow-left"></i>Continuer mes achats
       </a>
     </div>
   </div>
@@ -126,16 +115,31 @@
 
 {% else %}
 <!-- Panier vide -->
-<div class="text-center py-5 text-muted">
-  <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
+<div class="empty-state">
+  <div class="empty-state-icon">
+    <i class="bi bi-cart-x"></i>
+  </div>
   <h5>Votre panier est vide</h5>
-  <p>Découvrez notre catalogue et ajoutez des produits !</p>
-  <a href="{% url 'produits:catalogue' %}"
-     class="btn fw-semibold px-4"
-     style="background-color:#1B263B;color:white;">
-    <i class="bi bi-grid me-2"></i>Voir le catalogue
+  <p class="text-muted">Découvrez notre catalogue et ajoutez des produits !</p>
+  <a href="{% url 'produits:catalogue' %}" class="produit-card-cta" style="max-width:240px;margin:0 auto;">
+    <i class="bi bi-grid"></i>Voir le catalogue
   </a>
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function panierChangeQty(ligneId, delta) {
+    const input = document.getElementById('qty-' + ligneId);
+    if (!input) return;
+    const max = parseInt(input.max || '999', 10);
+    const min = parseInt(input.min || '0', 10);
+    let val = parseInt(input.value || '1', 10) + delta;
+    if (val < min) val = min;
+    if (val > max) val = max;
+    input.value = val;
+  }
+</script>
 {% endblock %}

@@ -7,6 +7,43 @@
   <i class="bi bi-bag me-2"></i>Mes commandes
 </h4>
 
+<!-- Recherche -->
+<form method="GET" class="card shadow-sm border-0 p-3 mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold mb-1">Produit</label>
+      <input type="text" name="produit" value="{{ q_produit }}"
+             class="form-control form-control-sm" placeholder="Nom du produit...">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Catégorie</label>
+      <select name="categorie" class="form-select form-select-sm">
+        <option value="">Toutes</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if q_categorie == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.nom }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold mb-1">Date</label>
+      <input type="date" name="date" value="{{ q_date }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-sm fw-semibold flex-grow-1"
+              style="background-color:#1B263B;color:white;">
+        <i class="bi bi-search"></i> Filtrer
+      </button>
+      {% if q_produit or q_categorie or q_date %}
+        <a href="{% url 'commandes:mes_commandes' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-x"></i>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
 {% if commandes %}
   {% for commande in commandes %}
   <div class="card shadow-sm border-0 mb-3">
@@ -25,7 +62,6 @@
         </div>
 
         <!-- Aperçu articles -->
-        <!-- ✅ CORRIGÉ : commande.lignes au lieu de commande.details -->
         <div class="col-md-4">
           <span class="text-muted small">
             {% for ligne in commande.lignes.all|slice:":2" %}
@@ -48,21 +84,13 @@
         <!-- Statut -->
         <div class="col-md-2">
           {% if commande.statut == 'en_attente' %}
-            <span class="badge bg-warning text-dark px-3 py-2">
-              <i class="bi bi-clock me-1"></i>En attente
-            </span>
+            <span class="statut-badge statut-badge-attente">En attente</span>
           {% elif commande.statut == 'en_preparation' %}
-            <span class="badge bg-info text-dark px-3 py-2">
-              <i class="bi bi-box-seam me-1"></i>En préparation
-            </span>
+            <span class="statut-badge statut-badge-preparation">En préparation</span>
           {% elif commande.statut == 'livree' %}
-            <span class="badge bg-success px-3 py-2">
-              <i class="bi bi-check-circle me-1"></i>Livrée
-            </span>
+            <span class="statut-badge statut-badge-livree">Livrée</span>
           {% else %}
-            <span class="badge bg-danger px-3 py-2">
-              <i class="bi bi-x-circle me-1"></i>Annulée
-            </span>
+            <span class="statut-badge statut-badge-annulee">Annulée</span>
           {% endif %}
         </div>
 
@@ -80,10 +108,42 @@
   </div>
   {% endfor %}
 
+  <!-- Pagination -->
+  {% if commandes.has_other_pages %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if commandes.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ commandes.previous_page_number }}&produit={{ q_produit }}&categorie={{ q_categorie }}&date={{ q_date }}">Précédent</a>
+          </li>
+        {% endif %}
+        {% for num in commandes.paginator.page_range %}
+          <li class="page-item {% if commandes.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}&produit={{ q_produit }}&categorie={{ q_categorie }}&date={{ q_date }}"
+               {% if commandes.number == num %}style="background-color:#1B263B;border-color:#1B263B;"{% endif %}>
+              {{ num }}
+            </a>
+          </li>
+        {% endfor %}
+        {% if commandes.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ commandes.next_page_number }}&produit={{ q_produit }}&categorie={{ q_categorie }}&date={{ q_date }}">Suivant</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
 {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-bag-x fs-1 d-block mb-3" style="color:#D6E4EC;"></i>
-    <h5 style="color:#1B263B;">Aucune commande pour l'instant</h5>
+    <h5 style="color:#1B263B;">
+      {% if q_produit or q_categorie or q_date %}
+        Aucune commande ne correspond à votre recherche
+      {% else %}
+        Aucune commande pour l'instant
+      {% endif %}
+    </h5>
     <p>Découvrez nos produits et passez votre première commande !</p>
     <a href="{% url 'produits:catalogue' %}"
        class="btn fw-semibold mt-2 px-4"

@@ -34,21 +34,21 @@
 <!-- KPI -->
 <div class="row g-3 mb-4">
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">Produits actifs</div>
-      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ total_actifs }}</div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Produits actifs</div>
+      <div class="dash-kpi-value">{{ total_actifs }}</div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">Produits archivés</div>
-      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ total_archives }}</div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Produits archivés</div>
+      <div class="dash-kpi-value">{{ total_archives }}</div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">En alerte stock</div>
-      <div class="fs-3 fw-bold" style="color:#C47B8A;">{{ en_alerte|length }}</div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">En alerte stock</div>
+      <div class="dash-kpi-value" style="color:#C47B8A;">{{ en_alerte|length }}</div>
     </div>
   </div>
 </div>
@@ -64,9 +64,9 @@
 
 <!-- Liste produits -->
 {% if produits %}
-  <div class="table-responsive">
-    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
-      <thead style="background-color:#F8F9FA;">
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead>
         <tr>
           <th>Produit</th>
           <th>Catégorie</th>
@@ -80,13 +80,13 @@
       <tbody>
         {% for produit in produits %}
         <tr>
-          <td class="fw-semibold" style="color:#1B263B;">
-            {% if produit.image_principale %}
-              <img src="{{ produit.image_principale.image.url }}"
-                   style="width:36px;height:36px;object-fit:cover;border-radius:6px;"
-                   class="me-2">
-            {% endif %}
-            {{ produit.nom }}
+          <td>
+            <span class="dash-row-title">
+              {% if produit.image_principale %}
+                <img src="{{ produit.image_principale.image.url }}" class="dash-table-thumb">
+              {% endif %}
+              {{ produit.nom }}
+            </span>
           </td>
           <td>{{ produit.categorie.nom|default:"—" }}</td>
           <td>{{ produit.prix_vente|floatformat:0 }} FCFA</td>
@@ -100,18 +100,18 @@
           </td>
           <td>
             {% if produit.statut == 'actif' %}
-              <span class="badge" style="background-color:#2E7D32;">Actif</span>
+              <span class="statut-badge statut-badge-livree">Actif</span>
             {% else %}
-              <span class="badge bg-secondary">Archivé</span>
+              <span class="statut-badge statut-badge-annulee">Archivé</span>
             {% endif %}
           </td>
           <td class="text-end">
             <a href="{% url 'produits:modifier_produit' produit.pk %}"
-               class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
+               class="btn-table-icon" title="Modifier">
               <i class="bi bi-pencil"></i>
             </a>
             <a href="{% url 'produits:archiver_produit' produit.pk %}"
-               class="btn btn-sm btn-outline-danger"
+               class="btn-table-icon danger"
                title="{% if produit.statut == 'actif' %}Archiver{% else %}Réactiver{% endif %}"
                onclick="return confirm('Confirmer cette action ?');">
               {% if produit.statut == 'actif' %}

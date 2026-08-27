@@ -4,209 +4,545 @@
 {% block content %}
 
 <!-- Fil d'ariane -->
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb small">
-    <li class="breadcrumb-item">
-      <a href="{% url 'produits:catalogue' %}" style="color:#E0A458;">
-        Catalogue
-      </a>
-    </li>
-    {% if produit.categorie %}
-    <li class="breadcrumb-item">
-      <a href="{% url 'produits:catalogue' %}?categorie={{ produit.categorie.id }}"
-         style="color:#E0A458;">
-        {{ produit.categorie.nom }}
-      </a>
-    </li>
-    {% endif %}
-    <li class="breadcrumb-item active">{{ produit.nom }}</li>
-  </ol>
+<nav aria-label="breadcrumb" class="fp-breadcrumb">
+  <a href="{% url 'produits:catalogue' %}">Catalogue</a>
+  {% if produit.categorie %}
+    <i class="bi bi-chevron-right"></i>
+    <a href="{% url 'produits:catalogue' %}?categorie={{ produit.categorie.id }}">
+      {{ produit.categorie.nom }}
+    </a>
+  {% endif %}
+  <i class="bi bi-chevron-right"></i>
+  <span class="fp-breadcrumb-active">{{ produit.nom }}</span>
 </nav>
 
-<div class="row g-4">
+<div class="row g-5">
 
   <!-- Colonne gauche — Images -->
-  <div class="col-md-5">
+  <div class="col-md-6">
     {% if images %}
       <!-- Image principale -->
-      <img src="{{ images.0.image.url }}"
-           class="img-fluid rounded shadow-sm mb-2 w-100"
-           style="height:350px;object-fit:cover;"
-           id="img-principale">
+      <div class="fp-img-main-wrap">
+        {% if produit.offre and produit.offre.est_active %}
+          <span class="produit-badge promo" style="top:16px;left:16px;">
+            -{{ produit.offre.taux|floatformat:0 }}%
+          </span>
+        {% endif %}
+        <img src="{{ images.0.image.url }}"
+             class="fp-img-main"
+             id="img-principale">
+      </div>
       <!-- Miniatures -->
       {% if images|length > 1 %}
-      <div class="d-flex gap-2 flex-wrap">
+      <div class="fp-thumbs">
         {% for img in images %}
           <img src="{{ img.image.url }}"
-               class="rounded border"
-               style="height:70px;width:70px;object-fit:cover;
-                      cursor:pointer;transition:opacity 0.2s;"
-               onclick="document.getElementById('img-principale').src='{{ img.image.url }}'">
+               class="fp-thumb {% if forloop.first %}active{% endif %}"
+               onclick="document.getElementById('img-principale').src=this.src;
+                        document.querySelectorAll('.fp-thumb').forEach(t=>t.classList.remove('active'));
+                        this.classList.add('active');">
         {% endfor %}
       </div>
       {% endif %}
     {% else %}
-      <div class="rounded bg-light d-flex align-items-center
-                  justify-content-center"
-           style="height:350px;">
-        <i class="bi bi-image text-muted fs-1"></i>
+      <div class="fp-img-main-wrap fp-img-placeholder">
+        <i class="bi bi-image"></i>
       </div>
     {% endif %}
   </div>
 
   <!-- Colonne droite — Infos -->
-  <div class="col-md-7">
+  <div class="col-md-6">
 
     <!-- Catégorie -->
     {% if produit.categorie %}
-      <span class="badge mb-2"
-            style="background-color:#D6E4EC;color:#1B263B;">
-        {{ produit.categorie.nom }}
-      </span>
+      <span class="fp-eyebrow">{{ produit.categorie.nom }}</span>
     {% endif %}
 
     <!-- Nom -->
-    <h2 class="fw-bold" style="color:#1B263B;">{{ produit.nom }}</h2>
+    <h1 class="fp-titre">{{ produit.nom }}</h1>
 
     <!-- Note moyenne -->
     <div class="d-flex align-items-center gap-2 mb-3">
-      <div>
+      <span class="stars fs-6">
         {% for i in "12345" %}
           {% if forloop.counter <= note_moyenne %}
-            <i class="bi bi-star-fill" style="color:#E0A458;"></i>
+            <i class="bi bi-star-fill"></i>
           {% else %}
-            <i class="bi bi-star" style="color:#E0A458;"></i>
+            <i class="bi bi-star"></i>
           {% endif %}
         {% endfor %}
-      </div>
+      </span>
       <span class="text-muted small">
         {{ note_moyenne }}/5 ({{ avis|length }} avis)
       </span>
     </div>
 
     <!-- Prix -->
-    <div class="mb-3">
+    <div class="fp-prix-bloc">
       {% if offre and offre.est_active %}
-        <p class="mb-0 text-muted text-decoration-line-through">
-          {{ produit.prix_vente|floatformat:0 }} FCFA
-        </p>
-        <span class="fs-3 fw-bold" style="color:#C47B8A;">
-          {{ offre.prix_reduit|floatformat:0 }} FCFA
-        </span>
-        <span class="badge ms-2" style="background-color:#C47B8A;">
-          {{ offre.titre }} — -{{ offre.taux|floatformat:0 }}%
-        </span>
+        <span class="fp-prix-actuel">{{ offre.prix_reduit|floatformat:0 }} F</span>
+        <span class="fp-prix-barre">{{ produit.prix_vente|floatformat:0 }} F</span>
+        <span class="fp-badge-offre">{{ offre.titre }} · -{{ offre.taux|floatformat:0 }}%</span>
       {% else %}
-        <span class="fs-3 fw-bold" style="color:#1B263B;">
-          {{ produit.prix_vente|floatformat:0 }} FCFA
-        </span>
+        <span class="fp-prix-actuel">{{ produit.prix_vente|floatformat:0 }} F</span>
       {% endif %}
     </div>
 
     <!-- Stock -->
-    <div class="mb-3">
+    <div class="mb-4">
       {% if produit.quantite > 0 %}
-        <span class="badge bg-success">
-          <i class="bi bi-check-circle me-1"></i>En stock
-          ({{ produit.quantite }} disponible{{ produit.quantite|pluralize }})
+        <span class="fp-stock-pill en-stock">
+          <i class="bi bi-check-circle-fill"></i>En stock
+          <span class="fp-stock-count">· {{ produit.quantite }} disponible{{ produit.quantite|pluralize }}</span>
         </span>
       {% else %}
-        <span class="badge bg-danger">
-          <i class="bi bi-x-circle me-1"></i>Rupture de stock
+        <span class="fp-stock-pill rupture">
+          <i class="bi bi-x-circle-fill"></i>Rupture de stock
         </span>
       {% endif %}
     </div>
 
-    <!-- Description -->
-    <div class="mb-4">
-      <h6 class="fw-semibold" style="color:#1B263B;">Description</h6>
-      <p class="text-muted">
-        {{ produit.description|default:"Aucune description disponible." }}
-      </p>
-    </div>
 
     <!-- Bouton Ajouter au panier -->
     {% if produit.quantite > 0 %}
       {% if user.is_authenticated %}
         <form method="POST" action="{% url 'commandes:ajouter_panier' produit.pk %}">
           {% csrf_token %}
-          <div class="d-flex gap-2 align-items-center mb-3">
-            <input type="number" name="quantite" value="1" min="1"
-                   max="{{ produit.quantite }}"
-                   class="form-control" style="width:80px;">
-            <button type="submit" class="btn fw-semibold px-4"
-                    style="background-color:#1B263B;color:white;">
-              <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
+          <div class="fp-qty-selector mb-3">
+            <span class="fp-qty-label">Quantité</span>
+            <div class="fp-qty-stepper">
+              <button type="button" class="fp-qty-btn" onclick="fpQtyStep(-1)">
+                <i class="bi bi-dash"></i>
+              </button>
+              <input type="number" name="quantite" value="1" min="1"
+                     max="{{ produit.quantite }}" id="fp-qty-input">
+              <button type="button" class="fp-qty-btn" onclick="fpQtyStep(1)">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+            <span class="fp-qty-restants">{{ produit.quantite }} restant{{ produit.quantite|pluralize }}</span>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <button type="submit" class="btn-fp-panier">
+              <i class="bi bi-bag-plus-fill me-2"></i>Ajouter au panier
             </button>
-            {% if user.is_authenticated and user.est_client %}
+            {% if user.est_client %}
               <a href="{% url 'messagerie:demarrer' produit.commercant.id %}?produit={{ produit.id }}"
-                class="btn fw-semibold px-4 mt-2"
-                style="background-color:#D6E4EC;color:#1B263B;">
-                <i class="bi bi-chat-dots me-2"></i>Contacter le vendeur
+                 class="btn-fp-vendeur">
+                <i class="bi bi-chat-dots-fill me-2"></i>Contacter le vendeur
               </a>
             {% endif %}
           </div>
         </form>
       {% else %}
-        <a href="{% url 'users:login' %}"
-           class="btn fw-semibold px-4"
-           style="background-color:#1B263B;color:white;">
+        <a href="{% url 'users:login' %}" class="btn-fp-panier d-inline-flex">
           <i class="bi bi-box-arrow-in-right me-2"></i>
           Connectez-vous pour acheter
         </a>
       {% endif %}
+    {% else %}
+      <!-- Rupture de stock : bouton verrouillé, seul le contact vendeur reste actif -->
+      <div class="d-flex flex-column gap-2">
+        <button type="button" class="btn-fp-indisponible" disabled>
+          <i class="bi bi-lock-fill me-2"></i>Indisponible
+        </button>
+        {% if user.is_authenticated and user.est_client %}
+          <a href="{% url 'messagerie:demarrer' produit.commercant.id %}?produit={{ produit.id }}"
+             class="btn-fp-vendeur">
+            <i class="bi bi-chat-dots-fill me-2"></i>Contacter le vendeur
+          </a>
+        {% endif %}
+      </div>
     {% endif %}
 
+<hr> </hr>
+    <!-- Description -->
+    <div class="fp-description mb-4">
+      <h6>Details</h6>
+      <p>{{ produit.description|default:"Aucune description disponible." }}</p>
+    </div>
   </div>
 </div>
 
 <!-- Section Avis -->
-<hr class="my-4">
-<div class="row">
-  <div class="col-md-8">
-    <h5 class="fw-bold mb-3" style="color:#1B263B;">
-      <i class="bi bi-chat-square-text me-2"></i>Avis clients
-    </h5>
+<div class="fp-avis-section">
+  <h5 class="fp-avis-titre">
+    <i class="bi bi-chat-square-text-fill me-2"></i>Avis clients
+  </h5>
 
-    {% if avis %}
+  {% if avis %}
+    <div class="row g-3">
       {% for a in avis %}
-      <div class="card shadow-sm border-0 mb-3 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <span class="fw-semibold small" style="color:#1B263B;">
-            {{ a.client.utilisateur.get_full_name }}
-          </span>
-          <span class="text-muted small">
-            {{ a.date_avis|date:"d/m/Y" }}
-          </span>
-        </div>
-        <!-- Étoiles -->
-        <div class="mb-1">
-          {% for i in "12345" %}
-            {% if forloop.counter <= a.note %}
-              <i class="bi bi-star-fill small" style="color:#E0A458;"></i>
-            {% else %}
-              <i class="bi bi-star small" style="color:#E0A458;"></i>
+      <div class="col-md-6">
+        <div class="avis-card h-100">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="avis-avatar">{{ a.client.utilisateur.get_full_name|slice:":1"|upper }}</div>
+            <div>
+              <p class="mb-0 fw-semibold small" style="color:var(--text);">
+                {{ a.client.utilisateur.get_full_name }}
+              </p>
+              <span class="text-muted" style="font-size:11px;">{{ a.date_avis|date:"d/m/Y" }}</span>
+            </div>
+          </div>
+          <div class="stars mb-1">
+            {% for i in "12345" %}
+              {% if forloop.counter <= a.note %}
+                <i class="bi bi-star-fill"></i>
+              {% else %}
+                <i class="bi bi-star"></i>
+              {% endif %}
+            {% endfor %}
+            {% if a.verifie_achat %}
+              <span class="fp-badge-verifie">
+                <i class="bi bi-patch-check-fill me-1"></i>Achat vérifié
+              </span>
             {% endif %}
-          {% endfor %}
-          {% if a.verifie_achat %}
-            <span class="badge ms-2 small"
-                  style="background-color:#D6E4EC;color:#1B263B;">
-              <i class="bi bi-patch-check me-1"></i>Achat vérifié
-            </span>
+          </div>
+          {% if a.commentaire %}
+            <p class="avis-quote mb-0">{{ a.commentaire }}</p>
           {% endif %}
         </div>
-        {% if a.commentaire %}
-          <p class="text-muted small mb-0">{{ a.commentaire }}</p>
-        {% endif %}
       </div>
       {% endfor %}
-    {% else %}
-      <p class="text-muted small">
-        Aucun avis pour ce produit. Soyez le premier à donner votre avis !
-      </p>
-    {% endif %}
-
-  </div>
+    </div>
+  {% else %}
+    <p class="text-muted small">
+      Aucun avis pour ce produit. Soyez le premier à donner votre avis !
+    </p>
+  {% endif %}
 </div>
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════════
+   FICHE PRODUIT — fil d'ariane
+   ══════════════════════════════════════════════════════════════ */
+.fp-breadcrumb {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fp-breadcrumb a { color: var(--gold); font-weight: 500; }
+.fp-breadcrumb a:hover { color: var(--brown); }
+.fp-breadcrumb i { font-size: 10px; color: var(--border); }
+.fp-breadcrumb-active { color: var(--text); font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════════
+   FICHE PRODUIT — galerie images
+   ══════════════════════════════════════════════════════════════ */
+.fp-img-main-wrap {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.fp-img-main {
+  width: 100%;
+  height: 460px;
+  object-fit: cover;
+  display: block;
+}
+
+.fp-img-placeholder {
+  height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 3rem;
+}
+
+.fp-thumbs {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.fp-thumb {
+  width: 76px;
+  height: 76px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  transition: border-color 0.2s, opacity 0.2s;
+  opacity: 0.75;
+}
+
+.fp-thumb:hover { opacity: 1; }
+.fp-thumb.active { border-color: var(--gold); opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   FICHE PRODUIT — infos
+   ══════════════════════════════════════════════════════════════ */
+.fp-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.fp-titre {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 14px;
+  line-height: 1.15;
+}
+
+.fp-prix-bloc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.fp-prix-actuel {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fp-prix-barre {
+  font-size: 15px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.fp-badge-offre {
+  background: var(--gold-light);
+  color: var(--brown);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Pastille stock */
+.fp-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 50px;
+}
+
+.fp-stock-pill.en-stock { background: #E4F3E7; color: #3E8F53; }
+.fp-stock-pill.rupture  { background: #FAF0F2; color: #C47B8A; }
+.fp-stock-count { font-weight: 400; opacity: 0.85; }
+
+/* Description */
+.fp-description h6 {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 7px;
+}
+hr{
+  border: 0.01px solid rgb(198, 197, 197);
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.fp-description p {
+  text-align: justify;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Sélecteur de quantité */
+.fp-qty-selector {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.fp-qty-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fp-qty-stepper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.fp-qty-btn {
+  width: 38px;
+  height: 40px;
+  border: none;
+  background: var(--cream);
+  color: var(--text);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fp-qty-btn:hover { background: var(--gold-light); color: var(--brown); }
+
+.fp-qty-stepper input {
+  width: 46px;
+  height: 40px;
+  border: none;
+  border-left: 1.5px solid var(--border);
+  border-right: 1.5px solid var(--border);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.fp-qty-stepper input::-webkit-outer-spin-button,
+.fp-qty-stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fp-qty-restants { font-size: 12px; color: var(--muted); }
+
+/* Boutons d'action */
+.btn-fp-panier {
+  background: var(--text);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 15px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.22s, transform 0.2s;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-fp-panier:hover {
+  background: var(--brown);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.btn-fp-vendeur {
+  background: var(--gold-light);
+  color: var(--brown);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 15px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.22s;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-fp-vendeur:hover { background: var(--gold); color: var(--white); }
+
+.btn-fp-indisponible {
+  background: #E9E4DC;
+  color: var(--muted);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 15px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FICHE PRODUIT — avis clients
+   ══════════════════════════════════════════════════════════════ */
+.fp-avis-section {
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid var(--border);
+}
+
+.fp-avis-titre {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 30px;
+}
+
+.fp-avis-titre i { color: var(--gold); }
+
+.fp-badge-verifie {
+  background: var(--gold-light);
+  color: var(--brown);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 50px;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .fp-img-main, .fp-img-placeholder { height: 320px; }
+  .fp-titre { font-size: 1.6rem; }
+  .fp-prix-actuel { font-size: 1.6rem; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fpQtyStep(delta) {
+  const input = document.getElementById('fp-qty-input');
+  if (!input) return;
+  const max = parseInt(input.max || 999, 10);
+  const min = parseInt(input.min || 1, 10);
+  let val = parseInt(input.value || 1, 10) + delta;
+  if (val < min) val = min;
+  if (val > max) val = max;
+  input.value = val;
+}
+</script>
 {% endblock %}

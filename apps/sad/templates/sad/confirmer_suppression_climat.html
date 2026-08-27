@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer une saison — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card shadow-sm border-0 p-4 text-center">
+      <i class="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
+      <h5 class="fw-bold mb-3" style="color:#1B263B;">
+        Supprimer « {{ climat.nom }} » ?
+      </h5>
+      <p class="text-muted">
+        Cette saison ne sera plus utilisée pour déterminer la saison
+        actuelle affichée aux commerçants. Cette action est irréversible.
+      </p>
+      <form method="POST" class="d-flex gap-2 justify-content-center mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger fw-semibold px-4">
+          <i class="bi bi-trash me-1"></i>Confirmer la suppression
+        </button>
+        <a href="{% url 'sad:liste_climats' %}" class="btn btn-outline-secondary fw-semibold px-4">
+          Annuler
+        </a>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

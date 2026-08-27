@@ -110,14 +110,14 @@
 
   <div class="kpi-card">
     <div class="kpi-icon">
-      <i class="bi {% if saison == 'hivernage' %}bi-cloud-rain-heavy{% else %}bi-sun{% endif %}"></i>
+      <i class="bi {{ saison.icone|default:'bi-cloud-sun' }}"></i>
     </div>
     <div class="kpi-label">Saison actuelle</div>
     <div class="kpi-value" style="font-size:1.5rem;text-transform:capitalize;">
-      {{ saison|cut:"_"|default:saison }}
+      {{ saison.nom|default:"Non configurée" }}
     </div>
     <div class="kpi-sub">
-      {% if saison == 'hivernage' %}Anticipez la demande liée à la pluie{% else %}Anticipez la demande de saison sèche{% endif %}
+      {{ saison.conseil|default:"Configurez les saisons depuis l'espace admin."|truncatechars:70 }}
     </div>
   </div>
 </div>
@@ -194,6 +194,52 @@
   </div>
 </div>
 
+<!-- ══ RÉPARTITION GÉOGRAPHIQUE DES COMMANDES (§5.4) ══════════════════════════ -->
+<div class="row g-3 mt-1 fade-up fade-up-3">
+  <div class="col-lg-5">
+    <div class="sad-card">
+      <div class="sad-card-title">
+        <h5>Répartition géographique</h5>
+        <small>Par région</small>
+      </div>
+      {% if repartition_geo %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr class="text-muted small">
+                <th>Région</th>
+                <th class="text-end">Commandes</th>
+                <th class="text-end">CA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ligne in repartition_geo %}
+              <tr>
+                <td class="fw-semibold" style="color:#1B263B;">{{ ligne.region }}</td>
+                <td class="text-end">{{ ligne.nb_commandes }}</td>
+                <td class="text-end">{{ ligne.montant_total|floatformat:0 }} FCFA</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="sad-empty">Aucune commande localisée pour l'instant.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="sad-card">
+      <div class="sad-card-title">
+        <h5>Commandes par région</h5>
+        <small>Aide à la décision d'expansion / livraison</small>
+      </div>
+      <div id="chart-geo"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ NOTIFICATIONS ═════════════════════════════════════════════════════════ -->
 <div class="sad-card mt-3 fade-up fade-up-3">
   <div class="sad-card-title">
@@ -262,5 +308,39 @@
 
   const chart = new ApexCharts(document.querySelector("#chart-ventes"), options);
   chart.render();
+
+  const geoData = {{ repartition_geo_json|safe }};
+  const geoCategories = geoData.map(v => v.region);
+  const geoTotals = geoData.map(v => v.nb_commandes);
+
+  const geoOptions = {
+    chart: {
+      type: 'bar',
+      height: 300,
+      toolbar: { show: false },
+      fontFamily: 'Inter, sans-serif',
+      foreColor: '#8A8A8A',
+    },
+    series: [{ name: 'Commandes', data: geoTotals }],
+    plotOptions: {
+      bar: { borderRadius: 4, horizontal: true, distributed: true },
+    },
+    legend: { show: false },
+    xaxis: {
+      categories: geoCategories,
+      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
+    },
+    colors: ['#C8956C', '#E0A458', '#1B263B', '#8A8A8A', '#2E7D32'],
+    grid: { borderColor: '#E8E2D8', strokeDashArray: 4 },
+    dataLabels: { enabled: true },
+    tooltip: { theme: 'light' },
+    noData: {
+      text: 'Aucune commande localisée',
+      style: { color: '#8A8A8A', fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+    },
+  };
+
+  const chartGeo = new ApexCharts(document.querySelector("#chart-geo"), geoOptions);
+  chartGeo.render();
 </script>
 {% endblock %}

@@ -35,6 +35,7 @@
           <th>Adresse</th>
           <th>Inscrit le</th>
           <th>Statut</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -58,6 +59,22 @@
             {% else %}
               <span class="badge bg-secondary">Bloqué</span>
             {% endif %}
+          </td>
+          <td class="text-nowrap">
+            <a href="{% url 'users:toggle_actif_client' client.pk %}"
+               class="btn btn-sm {% if client.utilisateur.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+               onclick="return confirm('{% if client.utilisateur.is_active %}Bloquer{% else %}Réactiver{% endif %} ce compte client ?');">
+              {% if client.utilisateur.is_active %}
+                <i class="bi bi-slash-circle"></i> Bloquer
+              {% else %}
+                <i class="bi bi-check-circle"></i> Réactiver
+              {% endif %}
+            </a>
+            <a href="{% url 'users:reinitialiser_mot_de_passe' client.utilisateur.pk %}"
+               class="btn btn-sm btn-outline-secondary"
+               onclick="return confirm('Réinitialiser le mot de passe de ce client et lui envoyer par email ?');">
+              <i class="bi bi-key"></i> Réinitialiser mdp
+            </a>
           </td>
         </tr>
         {% endfor %}

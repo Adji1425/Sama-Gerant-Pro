@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Panier, LignePanier, Commande
+from .models import Panier, LignePanier, Commande, Region
 
 
 class LignePanierInline(admin.TabularInline):
@@ -11,9 +11,15 @@ class LignePanierInline(admin.TabularInline):
 
 @admin.register(Commande)
 class CommandeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'client', 'statut', 'montant_total', 'date_commande')
-    list_filter = ('statut',)
+    list_display = ('id', 'client', 'statut', 'region', 'commune', 'montant_total', 'date_commande')
+    list_filter = ('statut', 'region')
     inlines = [LignePanierInline]
+
+
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ('nom',)
+    search_fields = ('nom',)
 
 
 admin.site.register(Panier)

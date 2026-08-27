@@ -58,6 +58,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.users.context_processors.boutique',
+                'apps.users.context_processors.notifications_commercant',
             ],
         },
     },
@@ -117,6 +118,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@sama-gerant.pro'
 
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'

@@ -127,25 +127,36 @@
               </span>
             {% endif %}
             <!-- Bouton favori -->
-            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}">
+            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"
+                    {% if produit.quantite == 0 %}disabled{% endif %}>
               <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
             </button>
             <!-- Image -->
             {% if produit.image_principale %}
               <img src="{{ produit.image_principale.image.url }}"
                    alt="{{ produit.nom }}"
-                   class="produit-card-img">
+                   class="produit-card-img
+                   {% if produit.quantite == 0 %}img-grayscale{% endif %}">
             {% else %}
               <div class="produit-card-img-placeholder">
                 <i class="bi bi-image"></i>
               </div>
             {% endif %}
+            {% if produit.quantite == 0 %}
+              <div class="rupture-overlay">Rupture de stock</div>
+            {% endif %}
             <!-- Overlay au hover -->
             <div class="produit-card-overlay d-none d-md-flex">
-              <a href="{% url 'produits:fiche_produit' produit.pk %}"
-                 class="btn-overlay-panier">
-                <i class="bi bi-cart-plus me-2"></i>Choisir
-              </a>
+              {% if produit.quantite == 0 %}
+                <span class="btn-overlay-panier disabled">
+                  <i class="bi bi-lock-fill me-2"></i>Indisponible
+                </span>
+              {% else %}
+                <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                   class="btn-overlay-panier">
+                  <i class="bi bi-cart-plus me-2"></i>Choisir
+                </a>
+              {% endif %}
               {% if user.is_authenticated and user.role == 'client' %}
               <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
                  class="btn-overlay-msg">
@@ -156,7 +167,7 @@
           </div>
           <div class="produit-card-body">
             <p class="produit-card-nom">{{ produit.nom }}</p>
-            <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p>
+            <!-- <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p> -->
             <div class="d-flex align-items-center gap-2">
               {% if produit.offre and produit.offre.est_active %}
                 <span class="produit-card-prix-barre">
@@ -208,7 +219,10 @@
                 -{{ produit.offre.taux|floatformat:0 }}%
               </span>
             {% endif %}
-            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"><i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i></button>
+            <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"
+                    {% if produit.quantite == 0 %}disabled{% endif %}>
+              <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+            </button>
             {% if produit.quantite == 0 %}
               <div class="rupture-overlay">Rupture de stock</div>
             {% endif %}
@@ -223,10 +237,16 @@
               </div>
             {% endif %}
             <div class="produit-card-overlay d-none d-md-flex">
-              <a href="{% url 'produits:fiche_produit' produit.pk %}"
-                 class="btn-overlay-panier">
-                <i class="bi bi-cart-plus me-2"></i>Choisir
-              </a>
+              {% if produit.quantite == 0 %}
+                <span class="btn-overlay-panier disabled">
+                  <i class="bi bi-lock-fill me-2"></i>Indisponible
+                </span>
+              {% else %}
+                <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                   class="btn-overlay-panier">
+                  <i class="bi bi-cart-plus me-2"></i>Choisir
+                </a>
+              {% endif %}
               {% if user.is_authenticated and user.role == 'client' %}
               <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
                  class="btn-overlay-msg">
@@ -237,7 +257,7 @@
           </div>
           <div class="produit-card-body">
             <p class="produit-card-nom">{{ produit.nom }}</p>
-            <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p>
+            <!-- <p class="produit-card-sous">{{ produit.categorie.nom|default:"" }}</p> -->
             <div class="d-flex align-items-center gap-2">
               {% if produit.offre and produit.offre.est_active %}
                 <span class="produit-card-prix-barre">
@@ -336,7 +356,7 @@
     <div class="row g-5">
       <!-- Brand -->
       <div class="col-md-4">
-        <div style="font-size:13px;color:#775a3c;
+        <div style="font-size:14px;color:#955939;
                     letter-spacing:.1em;font-weight:1000;margin-bottom:3px;">
           Sama-gérant
         </div>
@@ -503,6 +523,20 @@
 .img-grayscale {
   filter: grayscale(60%);
   opacity: 0.75;
+}
+
+/* ── Boutons désactivés quand rupture de stock ──────────────── */
+.btn-overlay-panier.disabled {
+  background: #E9E4DC;
+  color: var(--muted);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-favori:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none !important;
 }
 
 /* ── Réseaux sociaux footer ─────────────────────────────────── */

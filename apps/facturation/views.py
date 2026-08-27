@@ -1,15 +1,11 @@
-import io
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
-from django.conf import settings
-from xhtml2pdf import pisa
+from django.contrib import messages
 
 from .models import Facture
 from apps.commandes.models import Commande
+from .services import generer_pdf_facture, envoyer_email_facture
 
 
 def _commercant_required(request):
@@ -28,17 +24,7 @@ def generer_facture(request, commande_pk):
         Commande.objects.distinct(), pk=commande_pk, lignes__produit__commercant=commercant
     )
 
-    facture, _ = Facture.objects.get_or_create(commande=commande)
-
-    html = render_to_string('facturation/facture_pdf.html', {
-        'commande': commande, 'facture': facture, 'commercant': commercant,
-    })
-
-    buffer = io.BytesIO()
-    pisa.CreatePDF(io.StringIO(html), dest=buffer)
-    buffer.seek(0)
-
-    facture.pdf_url.save(f"facture_{commande.id}.pdf", buffer, save=True)
+    facture = generer_pdf_facture(commande, commercant)
     return redirect('facturation:apercu_facture', pk=facture.pk)
 
 
@@ -79,16 +65,13 @@ def envoyer_facture_email(request, pk):
     facture = get_object_or_404(
         Facture, pk=pk, commande__lignes__produit__commercant=commercant
     )
-    client_email = facture.commande.client.utilisateur.email
-
-    if facture.pdf_url and client_email:
-        email = EmailMessage(
-            subject=f"Votre facture - Commande #{facture.commande.id}",
-            body="Merci pour votre commande ! Veuillez trouver votre facture en pièce jointe.",
-            from_email=settings.EMAIL_HOST_USER,
-            to=[client_email],
+    if envoyer_email_facture(facture):
+        messages.success(request, "✓ Facture envoyée au client par email.")
+    else:
+        messages.error(
+            request,
+            "Impossible d'envoyer la facture (email client manquant ou "
+            "erreur d'envoi)."
         )
-        email.attach_file(facture.pdf_url.path)
-        email.send()
 
     return redirect('facturation:apercu_facture', pk=facture.pk)

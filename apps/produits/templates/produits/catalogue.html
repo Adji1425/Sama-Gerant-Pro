@@ -4,26 +4,25 @@
 {% block content %}
 
 <!-- En-tête catalogue -->
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <h4 class="fw-bold mb-0" style="color:#1B263B;">
-    <i class="bi bi-grid me-2"></i>Catalogue
-  </h4>
-  <span class="text-muted small">
+<div class="catalogue-header">
+  <div>
+    <span class="section-label-small">EXPLOREZ</span>
+    <h2 class="mb-0">Catalogue</h2>
+  </div>
+  <span class="catalogue-count">
     {{ produits|length }} produit{{ produits|length|pluralize }} trouvé{{ produits|length|pluralize }}
   </span>
 </div>
 
 <!-- Barre recherche + filtres -->
-<form method="GET" class="mb-4">
+<form method="GET" class="catalogue-filter-bar">
   <div class="row g-2 align-items-center">
 
     <!-- Recherche -->
     <div class="col-md-6">
-      <div class="input-group">
-        <span class="input-group-text" style="background:#1B263B;border-color:#1B263B;">
-          <i class="bi bi-search text-white"></i>
-        </span>
-        <input type="text" name="q" class="form-control"
+      <div class="catalogue-search">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q"
                placeholder="Rechercher un produit..."
                value="{{ recherche }}">
       </div>
@@ -31,7 +30,7 @@
 
     <!-- Filtre catégorie -->
     <div class="col-md-4">
-      <select name="categorie" class="form-select">
+      <select name="categorie" class="catalogue-select">
         <option value="">Toutes les catégories</option>
         {% for cat in categories %}
           <option value="{{ cat.id }}"
@@ -44,9 +43,8 @@
 
     <!-- Bouton -->
     <div class="col-md-2">
-      <button type="submit" class="btn w-100 fw-semibold"
-              style="background-color:#1B263B;color:white;">
-        Filtrer
+      <button type="submit" class="btn-catalogue-filtrer">
+        <i class="bi bi-sliders"></i>Filtrer
       </button>
     </div>
 
@@ -55,102 +53,115 @@
 
 <!-- Grille produits -->
 {% if produits %}
-  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+  <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4">
     {% for produit in produits %}
-    <div class="col">
-      <div class="card h-100 shadow-sm border-0 position-relative
-                  hover-card">
+    <div class="col fade-up fade-up-{{ forloop.counter0|add:1 }}">
+      <div class="produit-card">
+        <div class="produit-card-img-wrap">
 
-        <!-- Badge offre -->
-        {% if produit.offre and produit.offre.est_active %}
-          <span class="badge position-absolute top-0 end-0 m-2"
-                style="background-color:#C47B8A;z-index:1;">
-            -{{ produit.offre.taux|floatformat:0 }}%
-          </span>
-        {% endif %}
-
-        <!-- Bouton favori -->
-        {% if user.is_authenticated and user.role == 'client' %}
-          <button type="button"
-                  class="btn-favori position-absolute top-0 start-0 m-2"
-                  data-produit-id="{{ produit.pk }}"
-                  style="z-index:1;width:34px;height:34px;border-radius:50%;
-                         border:none;background:white;box-shadow:0 1px 4px rgba(0,0,0,.15);
-                         display:flex;align-items:center;justify-content:center;">
-            <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"
-               style="color:#C47B8A;"></i>
-          </button>
-        {% endif %}
-
-        <!-- Image -->
-        <a href="{% url 'produits:fiche_produit' produit.pk %}">
-          {% if produit.image_principale %}
-            <img src="{{ produit.image_principale.image.url }}"
-                 class="card-img-top"
-                 style="height:200px;object-fit:cover;">
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center
-                        bg-light"
-                 style="height:200px;">
-              <i class="bi bi-image text-muted fs-1"></i>
-            </div>
-          {% endif %}
-        </a>
-
-        <div class="card-body d-flex flex-column">
-
-          <!-- Catégorie -->
-          {% if produit.categorie %}
-            <span class="badge mb-1 small"
-                  style="background-color:#D6E4EC;color:#1B263B;width:fit-content;">
-              {{ produit.categorie.nom }}
+          <!-- Badge offre -->
+          {% if produit.offre and produit.offre.est_active %}
+            <span class="produit-badge promo">
+              -{{ produit.offre.taux|floatformat:0 }}%
             </span>
           {% endif %}
 
+          <!-- Bouton favori -->
+          {% if user.is_authenticated and user.role == 'client' %}
+            <button type="button" class="produit-fav btn-favori"
+                    data-produit-id="{{ produit.pk }}"
+                    {% if produit.quantite == 0 %}disabled{% endif %}>
+              <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+            </button>
+          {% endif %}
+
+          <!-- Image -->
+          <a href="{% url 'produits:fiche_produit' produit.pk %}">
+            {% if produit.image_principale %}
+              <img src="{{ produit.image_principale.image.url }}"
+                   alt="{{ produit.nom }}"
+                   class="produit-card-img
+                   {% if produit.quantite == 0 %}img-grayscale{% endif %}">
+            {% else %}
+              <div class="produit-card-img-placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+            {% endif %}
+          </a>
+
+          <!-- Badge stock -->
+          {% if produit.quantite == 0 %}
+            <div class="rupture-overlay">Rupture de stock</div>
+          {% else %}
+            <span class="stock-pill en-stock">
+              <i class="bi bi-check-circle-fill"></i>En stock
+            </span>
+          {% endif %}
+
+          <!-- Overlay au hover -->
+          <div class="produit-card-overlay d-none d-md-flex">
+            {% if produit.quantite == 0 %}
+              <span class="btn-overlay-panier disabled">
+                <i class="bi bi-lock-fill me-2"></i>Indisponible
+              </span>
+            {% else %}
+              <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                 class="btn-overlay-panier">
+                <i class="bi bi-eye me-2"></i>Voir le produit
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="produit-card-body">
+
+          <!-- Catégorie -->
+          {% if produit.categorie %}
+            <p class="produit-card-sous mb-1">{{ produit.categorie.nom }}</p>
+          {% endif %}
+
           <!-- Nom -->
-          <h6 class="card-title fw-semibold mb-1" style="color:#1B263B;">
-            <a href="{% url 'produits:fiche_produit' produit.pk %}"
-               class="text-decoration-none" style="color:#1B263B;">
-              {{ produit.nom }}
-            </a>
-          </h6>
+          <a href="{% url 'produits:fiche_produit' produit.pk %}" class="produit-card-nom-link">
+            <p class="produit-card-nom">{{ produit.nom }}</p>
+          </a>
 
           <!-- Note étoiles -->
-          <div class="mb-2 small">
+          <div class="mb-2">
             {% with note=produit.note_moyenne %}
-              {% for i in "12345" %}
-                {% if forloop.counter <= note %}
-                  <i class="bi bi-star-fill" style="color:#E0A458;"></i>
-                {% else %}
-                  <i class="bi bi-star" style="color:#E0A458;"></i>
-                {% endif %}
-              {% endfor %}
-              <span class="text-muted">({{ produit.avis_set.count }})</span>
+              <span class="stars">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= note %}
+                    <i class="bi bi-star-fill"></i>
+                  {% else %}
+                    <i class="bi bi-star"></i>
+                  {% endif %}
+                {% endfor %}
+              </span>
+              <span class="produit-card-avis-count">({{ produit.avis_set.count }})</span>
             {% endwith %}
           </div>
 
-          <!-- Prix -->
-          <div class="mt-auto">
-            {% if produit.offre and produit.offre.est_active %}
-              <span class="text-muted text-decoration-line-through small">
-                {{ produit.prix_vente|floatformat:0 }} FCFA
-              </span>
-              <span class="fw-bold fs-5" style="color:#C47B8A;">
-                {{ produit.offre.prix_reduit|floatformat:0 }} FCFA
-              </span>
-            {% else %}
-              <span class="fw-bold fs-5" style="color:#1B263B;">
-                {{ produit.prix_vente|floatformat:0 }} FCFA
-              </span>
-            {% endif %}
+          <!-- Prix + bouton mobile -->
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              {% if produit.offre and produit.offre.est_active %}
+                <span class="produit-card-prix-barre">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+                <span class="produit-card-prix-remise">
+                  {{ produit.offre.prix_reduit|floatformat:0 }} F
+                </span>
+              {% else %}
+                <span class="produit-card-prix">
+                  {{ produit.prix_vente|floatformat:0 }} F
+                </span>
+              {% endif %}
+            </div>
+            <a href="{% url 'produits:fiche_produit' produit.pk %}"
+               class="btn-voir-produit-mobile d-md-none">
+              <i class="bi bi-eye"></i>
+            </a>
           </div>
-
-          <!-- Bouton -->
-          <a href="{% url 'produits:fiche_produit' produit.pk %}"
-             class="btn btn-sm mt-2 w-100 fw-semibold"
-             style="background-color:#1B263B;color:white;">
-            <i class="bi bi-eye me-1"></i>Voir le produit
-          </a>
 
         </div>
       </div>
@@ -160,14 +171,12 @@
 
 {% else %}
   <!-- Aucun produit -->
-  <div class="text-center py-5 text-muted">
-    <i class="bi bi-search fs-1 d-block mb-3"></i>
+  <div class="catalogue-empty">
+    <i class="bi bi-search"></i>
     <h5>Aucun produit trouvé</h5>
     {% if recherche %}
-      <p>Aucun résultat pour "<strong>{{ recherche }}</strong>"</p>
-      <a href="{% url 'produits:catalogue' %}"
-         class="btn btn-sm"
-         style="background-color:#1B263B;color:white;">
+      <p>Aucun résultat pour « <strong>{{ recherche }}</strong> »</p>
+      <a href="{% url 'produits:catalogue' %}" class="btn-catalogue-filtrer d-inline-flex">
         Voir tout le catalogue
       </a>
     {% endif %}
@@ -178,12 +187,237 @@
 
 {% block extra_css %}
 <style>
-  .hover-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .hover-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
-  }
+/* ══════════════════════════════════════════════════════════════
+   CATALOGUE — en-tête
+   ══════════════════════════════════════════════════════════════ */
+.catalogue-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.catalogue-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  padding-bottom: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CATALOGUE — barre recherche & filtres
+   ══════════════════════════════════════════════════════════════ */
+.catalogue-filter-bar { margin-bottom: 34px; }
+
+.catalogue-search {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.catalogue-search:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,149,108,0.15);
+}
+
+.catalogue-search i { color: var(--muted); font-size: 15px; flex-shrink: 0; }
+
+.catalogue-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+.catalogue-search input::placeholder { color: var(--muted); }
+
+.catalogue-select {
+  width: 100%;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238A8A8A' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+}
+
+.catalogue-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,149,108,0.15);
+}
+
+.btn-catalogue-filtrer {
+  width: 100%;
+  background: var(--text);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+}
+
+.btn-catalogue-filtrer:hover {
+  background: var(--brown);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CATALOGUE — carte produit (compléments à .produit-card)
+   ══════════════════════════════════════════════════════════════ */
+.produit-card {
+  border: 1px solid var(--border);
+}
+
+.produit-card-nom-link { text-decoration: none; }
+
+.produit-card-avis-count {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+/* Pastille "En stock" en haut à droite de l'image */
+.stock-pill {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+
+.stock-pill.en-stock { background: rgba(228,243,231,0.95); color: #3E8F53; }
+.stock-pill i { font-size: 10px; }
+
+/* Overlay produit au hover (repris de home.html) */
+.produit-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.08));
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.produit-card:hover .produit-card-overlay { opacity: 1; }
+
+.btn-overlay-panier {
+  flex: 1;
+  background: var(--white);
+  color: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-overlay-panier:hover { background: var(--cream); color: var(--text); }
+
+.btn-overlay-panier.disabled {
+  background: #E9E4DC;
+  color: var(--muted);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-voir-produit-mobile {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.btn-voir-produit-mobile:hover { background: var(--brown); color: var(--white); }
+
+/* Rupture de stock overlay (repris de home.html) */
+.rupture-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(224, 85, 85, 0.92);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 50px;
+  white-space: nowrap;
+  z-index: 3;
+  text-align: center;
+}
+
+.img-grayscale { filter: grayscale(60%); opacity: 0.75; }
+
+.btn-favori:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   CATALOGUE — état vide
+   ══════════════════════════════════════════════════════════════ */
+.catalogue-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+}
+
+.catalogue-empty i { font-size: 2.6rem; display: block; margin-bottom: 16px; color: var(--gold); }
+.catalogue-empty h5 { font-family: 'Playfair Display', serif; color: var(--text); margin-bottom: 8px; }
+.catalogue-empty p { margin-bottom: 20px; }
+
+@media (max-width: 767px) {
+  .catalogue-header h2 { font-size: 1.6rem; }
+}
 </style>
 {% endblock %}

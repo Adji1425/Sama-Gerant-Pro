@@ -12,6 +12,14 @@
        class="btn btn-outline-secondary fw-semibold px-4">
       <i class="bi bi-people me-1"></i>Voir tous les clients
     </a>
+    <a href="{% url 'evenements:liste_evenements' %}"
+       class="btn btn-outline-secondary fw-semibold px-4">
+      <i class="bi bi-calendar-event me-1"></i>Calendrier des événements
+    </a>
+    <a href="{% url 'sad:liste_climats' %}"
+       class="btn btn-outline-secondary fw-semibold px-4">
+      <i class="bi bi-cloud-sun me-1"></i>Configuration climatique
+    </a>
     {% if not commercant %}
       <a href="{% url 'users:creer_commercant' %}"
          class="btn fw-semibold px-4"
@@ -88,19 +96,26 @@
         </div>
       </div>
 
-      <form method="POST"
-            action="{% url 'users:toggle_actif_commercant' commercant.pk %}"
-            onsubmit="return confirm('Confirmer cette action ?');">
-        {% csrf_token %}
-        <button type="submit"
-                class="btn btn-sm {% if commercant.utilisateur.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
-          {% if commercant.utilisateur.is_active %}
-            <i class="bi bi-slash-circle me-1"></i>Bloquer
-          {% else %}
-            <i class="bi bi-check-circle me-1"></i>Débloquer
-          {% endif %}
-        </button>
-      </form>
+      <div class="d-flex gap-2">
+        <form method="POST"
+              action="{% url 'users:toggle_actif_commercant' commercant.pk %}"
+              onsubmit="return confirm('Confirmer cette action ?');">
+          {% csrf_token %}
+          <button type="submit"
+                  class="btn btn-sm {% if commercant.utilisateur.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+            {% if commercant.utilisateur.is_active %}
+              <i class="bi bi-slash-circle me-1"></i>Bloquer
+            {% else %}
+              <i class="bi bi-check-circle me-1"></i>Débloquer
+            {% endif %}
+          </button>
+        </form>
+        <a href="{% url 'users:reinitialiser_mot_de_passe' commercant.utilisateur.pk %}"
+           class="btn btn-sm btn-outline-secondary"
+           onclick="return confirm('Réinitialiser le mot de passe du commerçant et lui envoyer par email ?');">
+          <i class="bi bi-key me-1"></i>Réinitialiser mdp
+        </a>
+      </div>
     </div>
   </div>
 {% else %}

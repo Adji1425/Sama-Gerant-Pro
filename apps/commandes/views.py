@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Panier, LignePanier, Commande
-from apps.produits.models import Produit
+from django.core.paginator import Paginator
+from .models import Panier, LignePanier, Commande, Region
+from apps.produits.models import Produit, Categorie
 from django.http import JsonResponse
 from apps.facturation.models import Facture
 
@@ -158,12 +159,19 @@ def valider_commande(request):
     if request.method == 'POST':
         adresse = request.POST.get('adresse_livraison', client.adresse_livraison)
         telephone = request.POST.get('telephone', request.user.telephone)
+        commune = request.POST.get('commune', '').strip()
+        region_id = request.POST.get('region')
+        region = Region.objects.filter(pk=region_id).first() if region_id else None
 
         if not adresse or not telephone:
             messages.error(
                 request,
                 "Veuillez renseigner l'adresse et le téléphone."
             )
+            return redirect('commandes:voir_panier')
+
+        if not region:
+            messages.error(request, "Veuillez sélectionner votre région de livraison.")
             return redirect('commandes:voir_panier')
 
         for ligne in lignes:
@@ -178,6 +186,8 @@ def valider_commande(request):
             client=client,
             adresse_livraison_reel=adresse,
             telephone=telephone,
+            region=region,
+            commune=commune,
             statut='en_attente',
         )
 
@@ -214,6 +224,7 @@ def valider_commande(request):
         'lignes': lignes,
         'total': sum(l.sous_total() for l in lignes),
         'client': client,
+        'regions': Region.objects.all(),
     }
     return render(request, 'commandes/recap_commande.html', context)
 
@@ -260,9 +271,31 @@ def mes_commandes(request):
 
     commandes = Commande.objects.filter(
         client=request.user.client
-    ).prefetch_related('lignes__produit')
+    ).prefetch_related('lignes__produit__categorie').distinct().order_by('-date_commande')
 
-    return render(request, 'commandes/mes_commandes.html', {'commandes': commandes})
+    q_produit = request.GET.get('produit', '').strip()
+    q_categorie = request.GET.get('categorie', '')
+    q_date = request.GET.get('date', '').strip()
+
+    if q_produit:
+        commandes = commandes.filter(lignes__produit__nom__icontains=q_produit)
+    if q_categorie:
+        commandes = commandes.filter(lignes__produit__categorie_id=q_categorie)
+    if q_date:
+        commandes = commandes.filter(date_commande__date=q_date)
+
+    commandes = commandes.distinct()
+
+    paginator = Paginator(commandes, 10)
+    page = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'commandes/mes_commandes.html', {
+        'commandes': page,
+        'categories': Categorie.objects.all(),
+        'q_produit': q_produit,
+        'q_categorie': q_categorie,
+        'q_date': q_date,
+    })
 
 
 @login_required
@@ -390,11 +423,30 @@ def changer_statut(request, commande_id):
         commande = get_object_or_404(Commande, pk=commande_id)
         nouveau_statut = request.POST.get('statut')
 
+        # Une commande livrée ou annulée est définitive : on bloque tout
+        # changement ultérieur (entre autres pour éviter un remboursement
+        # de stock en double si on annule plusieurs fois).
+        statuts_finaux = ['livree', 'annulee']
+        if commande.statut in statuts_finaux:
+            messages.error(
+                request,
+                f"✗ Commande #{commande.id} : le statut « "
+                f"{commande.get_statut_display()} » est définitif et ne peut plus être modifié."
+            )
+            return redirect('commandes:commandes_commercant')
+
         statuts_valides = ['en_attente', 'en_preparation', 'livree', 'annulee']
         if nouveau_statut in statuts_valides:
             ancien_statut = commande.statut
             commande.statut = nouveau_statut
             commande.save()
+
+            # Annulation : on restitue le stock décrémenté à la commande
+            if nouveau_statut == 'annulee' and ancien_statut != 'annulee':
+                for ligne in commande.lignes.select_related('produit').all():
+                    if ligne.produit:
+                        ligne.produit.quantite += ligne.quantite
+                        ligne.produit.save()
 
             # Notifier le client
             try:
@@ -418,11 +470,23 @@ def changer_statut(request, commande_id):
 
 
 def _generer_facture_auto(commande):
-    """Génère automatiquement la facture quand commande livrée"""
+    """
+    Génère automatiquement la facture PDF quand la commande passe à
+    'livrée', puis l'envoie par email au client (§5.2.4 du cahier des
+    charges : envoi automatique du reçu après livraison).
+    """
     try:
-        if not hasattr(commande, 'facture'):
-            Facture.objects.create(commande=commande)
+        from apps.facturation.services import generer_et_envoyer_facture
+        # Le commerçant est déduit du produit de la première ligne
+        premiere_ligne = commande.lignes.select_related(
+            'produit__commercant'
+        ).first()
+        if premiere_ligne and premiere_ligne.produit:
+            commercant = premiere_ligne.produit.commercant
+            generer_et_envoyer_facture(commande, commercant)
     except Exception:
+        # Une erreur de génération/envoi de facture ne doit jamais
+        # bloquer le changement de statut de la commande.
         pass
 
 

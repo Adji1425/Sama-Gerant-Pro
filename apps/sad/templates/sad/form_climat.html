@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}{{ titre }} — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 p-4">
+
+      <h4 class="fw-bold mb-4" style="color:#1B263B;">
+        <i class="bi bi-cloud-sun me-2"></i>{{ titre }}
+      </h4>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Nom affiché</label>
+            {{ form.nom }}
+            {% if form.nom.errors %}<div class="text-danger small">{{ form.nom.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Code technique</label>
+            {{ form.code }}
+            {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <label class="form-label fw-semibold small">Début de la saison</label>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            {{ form.mois_debut }}
+            {% if form.mois_debut.errors %}<div class="text-danger small">{{ form.mois_debut.errors }}</div>{% endif %}
+          </div>
+          <div class="col-6">
+            {{ form.jour_debut }}
+            {% if form.jour_debut.errors %}<div class="text-danger small">{{ form.jour_debut.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <label class="form-label fw-semibold small">Fin de la saison</label>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            {{ form.mois_fin }}
+            {% if form.mois_fin.errors %}<div class="text-danger small">{{ form.mois_fin.errors }}</div>{% endif %}
+          </div>
+          <div class="col-6">
+            {{ form.jour_fin }}
+            {% if form.jour_fin.errors %}<div class="text-danger small">{{ form.jour_fin.errors }}</div>{% endif %}
+          </div>
+        </div>
+        <p class="text-muted small">
+          Astuce : une période peut chevaucher le nouvel an, ex. début
+          1/11 et fin 31/5.
+        </p>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Icône (Bootstrap Icons)</label>
+          {{ form.icone }}
+          {% if form.icone.errors %}<div class="text-danger small">{{ form.icone.errors }}</div>{% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="text-danger small mb-3">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Conseil affiché au commerçant</label>
+          {{ form.conseil }}
+          {% if form.conseil.errors %}<div class="text-danger small">{{ form.conseil.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-check mb-4">
+          {{ form.actif }}
+          <label class="form-check-label small fw-semibold">Saison active</label>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn fw-semibold px-4"
+                  style="background-color:#1B263B;color:white;">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+          <a href="{% url 'sad:liste_climats' %}"
+             class="btn btn-outline-secondary fw-semibold px-4">
+            Annuler
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

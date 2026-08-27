@@ -30,6 +30,25 @@
                  required>
         </div>
 
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Région</label>
+            <select name="region" class="form-select" required>
+              <option value="" disabled selected>Choisir une région</option>
+              {% for region in regions %}
+                <option value="{{ region.id }}">{{ region.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Commune / Quartier</label>
+            <input type="text" name="commune"
+                   class="form-control"
+                   placeholder="Ex : Parcelles Assainies"
+                   required>
+          </div>
+        </div>
+
         <div class="mb-4">
           <label class="form-label fw-semibold small">Téléphone</label>
           <input type="text" name="telephone"

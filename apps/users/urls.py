@@ -19,4 +19,6 @@ urlpatterns = [
     path('admin-dashboard/creer-commercant/', views.creer_commercant, name='creer_commercant'),
     path('admin-dashboard/clients/', views.liste_clients, name='liste_clients'),
     path('admin-dashboard/commercant/<int:pk>/toggle/', views.toggle_actif_commercant, name='toggle_actif_commercant'),
+    path('admin-dashboard/client/<int:pk>/toggle/', views.toggle_actif_client, name='toggle_actif_client'),
+    path('admin-dashboard/utilisateur/<int:pk>/reinitialiser-mdp/', views.reinitialiser_mot_de_passe, name='reinitialiser_mot_de_passe'),
 ]

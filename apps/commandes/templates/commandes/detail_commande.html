@@ -217,6 +217,7 @@
             <div class="text-muted">Adresse</div>
             <div class="fw-semibold" style="color:#1B263B;">
               {{ commande.adresse_livraison_reel }}
+              {% if commande.region %}<br><span class="text-muted small">{{ commande.commune }}, {{ commande.region.nom }}</span>{% endif %}
             </div>
           </div>
         </li>

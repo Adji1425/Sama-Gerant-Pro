@@ -1,7 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
+from django.conf import settings
 from .forms import (
     InscriptionForm, InscriptionCommercantForm, InscriptionAdminForm,
     ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
@@ -116,16 +119,22 @@ def logout_view(request):
 
 @login_required
 def profil(request):
-    """Page profil du client connecté"""
+    """Page profil de l'utilisateur connecté, adaptée à son rôle."""
     utilisateur = request.user
     client = None
+    commandes_recentes = None
+    nb_commandes = 0
 
     if hasattr(utilisateur, 'client'):
         client = utilisateur.client
+        commandes_recentes = client.commandes.order_by('-date_commande')[:5]
+        nb_commandes = client.commandes.count()
 
     context = {
         'utilisateur': utilisateur,
         'client': client,
+        'commandes_recentes': commandes_recentes,
+        'nb_commandes': nb_commandes,
     }
     return render(request, 'users/profil.html', context)
 
@@ -229,6 +238,73 @@ def toggle_actif_commercant(request, pk):
             f"Le compte de « {commercant.nom_boutique} » a été {statut}."
         )
     return redirect('users:admin_dashboard')
+
+
+@admin_required
+def toggle_actif_client(request, pk):
+    """
+    Bloque / débloque le compte d'un client (§5.3.1 : modération en cas
+    de comportement malveillant, ex. abus de commandes).
+    """
+    client = Client.objects.select_related('utilisateur').filter(pk=pk).first()
+    if client:
+        client.utilisateur.is_active = not client.utilisateur.is_active
+        client.utilisateur.save()
+        statut = "réactivé" if client.utilisateur.is_active else "bloqué"
+        messages.success(
+            request,
+            f"Le compte de « {client.utilisateur.get_full_name()} » a été {statut}."
+        )
+    return redirect('users:liste_clients')
+
+
+@admin_required
+def reinitialiser_mot_de_passe(request, pk):
+    """
+    Réinitialise le mot de passe d'un utilisateur (client, commerçant ou
+    administrateur) en cas de perte, et lui envoie le nouveau mot de
+    passe temporaire par email (§5.3.1).
+    """
+    utilisateur = get_object_or_404(Utilisateur, pk=pk)
+
+    nouveau_mdp = get_random_string(
+        10, allowed_chars='abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
+    )
+    utilisateur.set_password(nouveau_mdp)
+    utilisateur.save()
+
+    email_envoye = False
+    if utilisateur.email:
+        email_envoye = bool(send_mail(
+            subject="[Sama-Gérant Pro] Réinitialisation de votre mot de passe",
+            message=(
+                f"Bonjour {utilisateur.first_name},\n\n"
+                f"Un administrateur a réinitialisé votre mot de passe.\n"
+                f"Votre nouveau mot de passe temporaire est : {nouveau_mdp}\n\n"
+                f"Nous vous recommandons de le changer dès votre prochaine "
+                f"connexion, depuis votre espace profil."
+            ),
+            from_email=settings.EMAIL_HOST_USER or None,
+            recipient_list=[utilisateur.email],
+            fail_silently=True,
+        ))
+
+    if email_envoye:
+        messages.success(
+            request,
+            f"✓ Mot de passe de « {utilisateur.get_full_name()} » réinitialisé "
+            f"et envoyé par email."
+        )
+    else:
+        # Pas d'email configuré / envoi impossible : on donne le mot de
+        # passe temporaire à l'admin pour qu'il le transmette lui-même.
+        messages.warning(
+            request,
+            f"Mot de passe réinitialisé mais l'email n'a pas pu être envoyé. "
+            f"Mot de passe temporaire à transmettre vous-même : {nouveau_mdp}"
+        )
+
+    return redirect(request.META.get('HTTP_REFERER', 'users:admin_dashboard'))
 
 
 @admin_required

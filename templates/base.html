@@ -47,7 +47,12 @@
     
       {% if user.is_authenticated and user.role == 'commercant' %}
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'commandes:commandes_commercant' %}">Commandes</a>
+        <a class="nav-link nav-badge-anchor" href="{% url 'commandes:commandes_commercant' %}">
+          Commandes
+          {% if nb_commandes_attente %}
+            <span class="nav-badge">{{ nb_commandes_attente }}</span>
+          {% endif %}
+        </a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Produits</a>
@@ -91,7 +96,8 @@
         <!-- Dropdown profil -->
         <div class="dropdown">
           <button class="nav-icon-btn dropdown-toggle no-caret border-0 bg-transparent"
-                  data-bs-toggle="dropdown" aria-expanded="false">
+                  data-bs-toggle="dropdown" aria-expanded="false"
+                  style="position:relative;">
             {% if user.photo_profile %}
               <img src="{{ user.photo_profile.url }}"
                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
@@ -100,6 +106,9 @@
                           font-size:12px;border-radius:50%;">
                 {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
               </div>
+            {% endif %}
+            {% if nb_messages_non_lus %}
+              <span class="nav-dot" title="Messages non lus"></span>
             {% endif %}
           </button>
 
@@ -156,10 +165,12 @@
             {% endif %}
       {% if user.is_authenticated and user.role != 'admin' %}
             <li>
-              <a class="dropdown-item"
-                 href="{% url 'messagerie:liste_conversations' %}">
+              <a class="dropdown-item" href="{% url 'messagerie:liste_conversations' %}">
                 <i class="bi bi-chat-dots me-2" style="color:var(--gold);"></i>
                 Messages
+                {% if nb_messages_non_lus %}
+                  <span class="nav-badge-inline">{{ nb_messages_non_lus }}</span>
+                {% endif %}
               </a>
             </li>
       {%endif%}
@@ -181,6 +192,9 @@
               <a class="dropdown-item" href="{% url 'commandes:commandes_commercant' %}">
                 <i class="bi bi-receipt me-2" style="color:var(--gold);"></i>
                 Commandes reçues
+                {% if nb_commandes_attente %}
+                  <span class="nav-badge-inline">{{ nb_commandes_attente }}</span>
+                {% endif %}
               </a>
             </li>
             {% endif %}
@@ -294,6 +308,9 @@
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">
                 <i class="bi bi-chat-dots me-2"></i>Messages
+                {% if nb_messages_non_lus %}
+                  <span class="nav-badge-inline">{{ nb_messages_non_lus }}</span>
+                {% endif %}
               </a>
             </li>
             {% if user.role == 'client' %}
@@ -345,6 +362,9 @@
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">
                 <i class="bi bi-receipt me-2"></i>Commandes reçues
+                {% if nb_commandes_attente %}
+                  <span class="nav-badge-inline">{{ nb_commandes_attente }}</span>
+                {% endif %}
               </a>
             </li>
             {% endif %}

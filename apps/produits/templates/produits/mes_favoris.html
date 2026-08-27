@@ -3,50 +3,63 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-4" style="color:#1B263B;">
-  <i class="bi bi-heart-fill me-2" style="color:#C47B8A;"></i>Mes favoris
-</h4>
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div class="page-header-icon" style="background:var(--gold-light);color:#C47B8A;">
+    <i class="bi bi-heart-fill"></i>
+  </div>
+  <div>
+    <h4 class="fw-bold mb-0" style="font-family:'Playfair Display',serif;color:var(--text);">
+      Mes favoris
+    </h4>
+    <span class="text-muted small">
+      {{ favoris|length }} produit{{ favoris|length|pluralize }} enregistré{{ favoris|length|pluralize }}
+    </span>
+  </div>
+</div>
 
 {% if favoris %}
-  <div class="row row-cols-2 row-cols-md-4 g-3">
+  <div class="row row-cols-2 row-cols-md-4 g-4">
     {% for favori in favoris %}
     {% with produit=favori.produit %}
     <div class="col">
-      <div class="card h-100 shadow-sm border-0 position-relative">
+      <div class="produit-card h-100">
 
-        <button type="button"
-                class="btn-favori position-absolute top-0 start-0 m-2"
-                data-produit-id="{{ produit.pk }}"
-                style="z-index:1;width:34px;height:34px;border-radius:50%;
-                       border:none;background:white;box-shadow:0 1px 4px rgba(0,0,0,.15);
-                       display:flex;align-items:center;justify-content:center;">
-          <i class="bi bi-heart-fill" style="color:#C47B8A;"></i>
-        </button>
+        <div class="produit-card-img-wrap">
+          <button type="button"
+                  class="favori-remove-btn btn-favori"
+                  data-produit-id="{{ produit.pk }}"
+                  title="Retirer des favoris">
+            <i class="bi bi-heart-fill"></i>
+          </button>
 
-        <a href="{% url 'produits:fiche_produit' produit.pk %}">
-          {% if produit.image_principale %}
-            <img src="{{ produit.image_principale.image.url }}"
-                 class="card-img-top" style="height:180px;object-fit:cover;">
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center bg-light"
-                 style="height:180px;">
-              <i class="bi bi-image text-muted fs-1"></i>
-            </div>
-          {% endif %}
-        </a>
+          <a href="{% url 'produits:fiche_produit' produit.pk %}">
+            {% if produit.image_principale %}
+              <img src="{{ produit.image_principale.image.url }}" class="produit-card-img">
+            {% else %}
+              <div class="produit-card-img-placeholder">
+                <i class="bi bi-image"></i>
+              </div>
+            {% endif %}
+          </a>
+        </div>
 
-        <div class="card-body">
-          <h6 class="card-title fw-semibold mb-1" style="color:#1B263B;">
+        <div class="produit-card-body">
+          <p class="produit-card-nom">
             <a href="{% url 'produits:fiche_produit' produit.pk %}"
-               class="text-decoration-none" style="color:#1B263B;">
+               class="text-decoration-none" style="color:inherit;">
               {{ produit.nom }}
             </a>
-          </h6>
-          <p class="small text-muted mb-1">
-            {{ produit.categorie.nom|default:"" }}
           </p>
-          <div class="fw-bold" style="color:#C47B8A;">
-            {{ produit.prix_vente|floatformat:0 }} FCFA
+          {% if produit.categorie %}
+            <p class="produit-card-sous">{{ produit.categorie.nom }}</p>
+          {% endif %}
+          <div class="produit-card-prix-ligne">
+            {% if produit.offre and produit.offre.est_active %}
+              <span class="produit-card-prix-barre">{{ produit.prix_vente|floatformat:0 }} F</span>
+              <span class="produit-card-prix-remise">{{ produit.offre.prix_reduit|floatformat:0 }} F</span>
+            {% else %}
+              <span class="produit-card-prix">{{ produit.prix_vente|floatformat:0 }} F</span>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -55,14 +68,14 @@
     {% endfor %}
   </div>
 {% else %}
-  <div class="text-center py-5 text-muted">
-    <i class="bi bi-heart fs-1 d-block mb-3"></i>
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-heart"></i>
+    </div>
     <h5>Aucun favori pour l'instant</h5>
-    <p>Cliquez sur le cœur d'un produit pour l'ajouter ici.</p>
-    <a href="{% url 'produits:catalogue' %}"
-       class="btn fw-semibold px-4"
-       style="background-color:#1B263B;color:white;">
-      Parcourir le catalogue
+    <p class="text-muted">Cliquez sur le cœur d'un produit pour l'ajouter ici.</p>
+    <a href="{% url 'produits:catalogue' %}" class="produit-card-cta" style="max-width:240px;margin:0 auto;">
+      <i class="bi bi-grid"></i>Parcourir le catalogue
     </a>
   </div>
 {% endif %}

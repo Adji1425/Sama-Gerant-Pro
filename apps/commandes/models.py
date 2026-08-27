@@ -3,6 +3,24 @@ from apps.users.models import Client
 from apps.produits.models import Produit, OffreProduit
 
 
+class Region(models.Model):
+    """
+    Structuration des données de localisation (§5.4 du cahier des
+    charges) : les 14 régions administratives du Sénégal, utilisées pour
+    rattacher chaque commande à une zone géographique précise et
+    permettre l'analyse de répartition géographique des commandes.
+    """
+    nom = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Région"
+        verbose_name_plural = "Régions"
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+
 class Panier(models.Model):
     client = models.OneToOneField(
         Client, on_delete=models.CASCADE, related_name='panier'
@@ -106,6 +124,18 @@ class Commande(models.Model):
     adresse_livraison_reel = models.CharField(max_length=255)
     telephone = models.CharField(max_length=20)
     montant_total = models.FloatField(default=0)
+
+    # Localisation structurée (§5.4) : permet l'analyse de répartition
+    # géographique des commandes, en complément de l'adresse en texte
+    # libre ci-dessus (conservée pour le détail de livraison).
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='commandes',
+    )
+    commune = models.CharField(max_length=100, blank=True)
 
     class Meta:
         verbose_name = "Commande"
