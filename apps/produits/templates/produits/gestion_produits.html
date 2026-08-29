@@ -52,7 +52,6 @@
     </div>
   </div>
 </div>
-
 {% if en_alerte %}
   <div class="alert alert-warning small">
     <i class="bi bi-exclamation-triangle me-1"></i>
@@ -61,6 +60,63 @@
     {% for p in en_alerte %}{{ p.nom }}{% if not forloop.last %}, {% endif %}{% endfor %}
   </div>
 {% endif %}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+  <!-- Filtres par statut (à gauche) -->
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'produits:gestion_produits' %}{% if extra_qs %}?{{ extra_qs }}{% endif %}"
+       class="filter-pill {% if not statut_filtre %}active{% endif %}">
+      Tous
+    </a>
+    <a href="?statut=actif{% if extra_qs %}&{{ extra_qs }}{% endif %}"
+       class="filter-pill {% if statut_filtre == 'actif' %}active{% endif %}">
+      Actifs
+    </a>
+    <a href="?statut=archive{% if extra_qs %}&{{ extra_qs }}{% endif %}"
+       class="filter-pill {% if statut_filtre == 'archive' %}active{% endif %}">
+      Archivés
+    </a>
+  </div>
+
+  <!-- Recherche + filtre par catégorie (à droite) -->
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
+        style="flex:1 1 auto;max-width:520px;">
+    <input type="hidden" name="statut" value="{{ statut_filtre }}">
+
+    <div class="position-relative" style="width:210px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" value="{{ recherche }}"
+             placeholder="Nom du produit"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+
+    {% if categories %}
+      <select name="categorie" class="form-select form-select-sm" style="max-width:160px;"
+              onchange="this.form.submit()">
+        <option value="">Toutes catégories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if categorie_filtre == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.nom }}
+          </option>
+        {% endfor %}
+      </select>
+    {% endif %}
+
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;">
+      <i class="bi bi-search"></i>
+    </button>
+
+    {% if recherche or categorie_filtre %}
+      <a href="?statut={{ statut_filtre }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+
+</div>
 
 <!-- Liste produits -->
 {% if produits %}
@@ -129,14 +185,17 @@
 {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-box-seam fs-1 d-block mb-3"></i>
-    <h5>Aucun produit pour l'instant</h5>
-    <p>Commencez par ajouter votre premier produit.</p>
-    <a href="{% url 'produits:ajouter_produit' %}"
-       class="btn fw-semibold px-4"
-       style="background-color:#1B263B;color:white;">
-      <i class="bi bi-plus-lg me-1"></i>Ajouter un produit
-    </a>
+    {% if recherche or categorie_filtre or statut_filtre %}
+      <h5>Aucun produit ne correspond à votre recherche</h5>
+    {% else %}
+      <h5>Aucun produit pour l'instant</h5>
+      <p>Commencez par ajouter votre premier produit.</p>
+      <a href="{% url 'produits:ajouter_produit' %}"
+         class="btn fw-semibold px-4"
+         style="background-color:#1B263B;color:white;">
+        <i class="bi bi-plus-lg me-1"></i>Ajouter un produit
+      </a>
+    {% endif %}
   </div>
 {% endif %}
-
 {% endblock %}

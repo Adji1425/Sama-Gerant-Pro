@@ -6,7 +6,8 @@ from .models import Panier, LignePanier, Commande, Region
 from apps.produits.models import Produit, Categorie
 from django.http import JsonResponse
 from apps.facturation.models import Facture
-
+from django.db.models import Q
+from urllib.parse import urlencode
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def get_or_create_panier(client):
@@ -361,7 +362,6 @@ def commercant_required(view_func):
     wrapper.__name__ = view_func.__name__
     return wrapper
 
-
 @login_required
 def commandes_commercant(request):
     """Liste des commandes reçues par le commerçant"""
@@ -381,9 +381,44 @@ def commandes_commercant(request):
     if statut_filtre:
         commandes = commandes.filter(statut=statut_filtre)
 
+    # Recherche par client ou n° de commande, pour retrouver vite une
+    # commande précise quand il y en a beaucoup.
+    recherche = request.GET.get('q', '').strip()
+    if recherche:
+        filtre_recherche = (
+            Q(client__utilisateur__first_name__icontains=recherche) |
+            Q(client__utilisateur__last_name__icontains=recherche)
+        )
+        if recherche.lstrip('#').isdigit():
+            filtre_recherche |= Q(id=int(recherche.lstrip('#')))
+        commandes = commandes.filter(filtre_recherche)
+
+    # Filtre par plage de dates
+    date_debut = request.GET.get('date_debut', '').strip()
+    date_fin = request.GET.get('date_fin', '').strip()
+    if date_debut:
+        commandes = commandes.filter(date_commande__date__gte=date_debut)
+    if date_fin:
+        commandes = commandes.filter(date_commande__date__lte=date_fin)
+
+    # Query string des filtres actifs (hors statut), pour les préserver
+    # en changeant d'onglet de statut.
+    extra_params = {}
+    if recherche:
+        extra_params['q'] = recherche
+    if date_debut:
+        extra_params['date_debut'] = date_debut
+    if date_fin:
+        extra_params['date_fin'] = date_fin
+    extra_qs = urlencode(extra_params)
+
     context = {
         'commandes': commandes,
         'statut_filtre': statut_filtre,
+        'recherche': recherche,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'extra_qs': extra_qs,
         'total_en_attente': Commande.objects.filter(
             lignes__produit__commercant=commercant,
             statut='en_attente'
@@ -394,7 +429,6 @@ def commandes_commercant(request):
         ).distinct().count(),
     }
     return render(request, 'commandes/commandes_commercant.html', context)
-
 
 @login_required
 def detail_commande_commercant(request, commande_id):

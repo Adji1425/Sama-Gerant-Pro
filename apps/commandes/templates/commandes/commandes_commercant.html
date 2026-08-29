@@ -31,18 +31,64 @@
   </div>
 </div>
 
-<!-- Filtres par statut -->
-<div class="d-flex gap-2 mb-4 flex-wrap">
-  <a href="{% url 'commandes:commandes_commercant' %}"
-     class="filter-pill {% if not statut_filtre %}active{% endif %}">
-    Toutes
-  </a>
-  {% for code, label in commandes.model.STATUT_CHOICES %}
-    <a href="?statut={{ code }}"
-       class="filter-pill {% if statut_filtre == code %}active{% endif %}">
-      {{ label }}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+  <!-- Filtres par statut (à gauche) -->
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'commandes:commandes_commercant' %}{% if extra_qs %}?{{ extra_qs }}{% endif %}"
+       class="filter-pill {% if not statut_filtre %}active{% endif %}">
+      Toutes
     </a>
-  {% endfor %}
+    {% for code, label in commandes.model.STATUT_CHOICES %}
+      <a href="?statut={{ code }}{% if extra_qs %}&{{ extra_qs }}{% endif %}"
+         class="filter-pill {% if statut_filtre == code %}active{% endif %}">
+        {{ label }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Recherche + filtre par date (à droite) -->
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
+        style="flex:1 1 auto;max-width:520px;">
+    <input type="hidden" name="statut" value="{{ statut_filtre }}">
+
+    <div class="position-relative" style="width:210px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" value="{{ recherche }}"
+             placeholder="Client ou n° commande"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+
+    <button type="button" class="btn btn-outline-secondary btn-sm"
+            onclick="document.getElementById('bloc-filtre-date').classList.toggle('d-none');">
+      <i class="bi bi-funnel me-1"></i>Date
+    </button>
+
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;">
+      <i class="bi bi-search"></i>
+    </button>
+
+    {% if recherche or date_debut or date_fin %}
+      <a href="?statut={{ statut_filtre }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+
+    <div id="bloc-filtre-date"
+         class="d-flex flex-wrap gap-2 align-items-center justify-content-end
+                {% if not date_debut and not date_fin %}d-none{% endif %}"
+         style="flex-basis:100%;">
+      <label class="small text-muted mb-0">Du</label>
+      <input type="date" name="date_debut" value="{{ date_debut }}"
+             class="form-control form-control-sm" style="max-width:150px;">
+      <label class="small text-muted mb-0">au</label>
+      <input type="date" name="date_fin" value="{{ date_fin }}"
+             class="form-control form-control-sm" style="max-width:150px;">
+    </div>
+  </form>
+
 </div>
 
 {% if commandes %}
@@ -87,11 +133,19 @@
       </tbody>
     </table>
   </div>
+
 {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-receipt fs-1 d-block mb-3"></i>
-    <h5>Aucune commande {% if statut_filtre %}avec ce statut{% else %}pour l'instant{% endif %}</h5>
+    <h5>
+      {% if recherche or date_debut or date_fin %}
+        Aucune commande ne correspond à votre recherche
+      {% elif statut_filtre %}
+        Aucune commande avec ce statut
+      {% else %}
+        Aucune commande pour l'instant
+      {% endif %}
+    </h5>
   </div>
 {% endif %}
-
 {% endblock %}

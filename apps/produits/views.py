@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import Produit, Categorie, ImageProd, OffreProduit, Depense, Approvisionnement, Favori
 from .forms import ProduitForm, OffreProduitForm, DepenseForm, ApprovisionnementForm
-
+from urllib.parse import urlencode
 
 # ── Décorateur commerçant ──────────────────────────────────────────────────────
 def commercant_required(view_func):
@@ -116,11 +116,45 @@ def gestion_produits(request):
         commercant=commercant
     ).select_related('categorie').order_by('-date_creation')
 
+    # KPI calculés sur l'ensemble des produits du commerçant, avant filtrage
+    total_actifs = produits.filter(statut='actif').count()
+    total_archives = produits.filter(statut='archive').count()
+    en_alerte = [p for p in produits if p.est_en_alerte()]
+
+    # Filtre par statut (pastilles, comme pour les commandes)
+    statut_filtre = request.GET.get('statut', '')
+    if statut_filtre:
+        produits = produits.filter(statut=statut_filtre)
+
+    # Recherche par nom, pour retrouver vite un produit quand il y en a beaucoup
+    recherche = request.GET.get('q', '').strip()
+    if recherche:
+        produits = produits.filter(nom__icontains=recherche)
+
+    # Filtre par catégorie
+    categorie_filtre = request.GET.get('categorie', '').strip()
+    if categorie_filtre:
+        produits = produits.filter(categorie_id=categorie_filtre)
+
+    extra_params = {}
+    if recherche:
+        extra_params['q'] = recherche
+    if categorie_filtre:
+        extra_params['categorie'] = categorie_filtre
+    extra_qs = urlencode(extra_params)
+
     return render(request, 'produits/gestion_produits.html', {
         'produits': produits,
-        'total_actifs': produits.filter(statut='actif').count(),
-        'total_archives': produits.filter(statut='archive').count(),
-        'en_alerte': [p for p in produits if p.est_en_alerte()],
+        'total_actifs': total_actifs,
+        'total_archives': total_archives,
+        'en_alerte': en_alerte,
+        'statut_filtre': statut_filtre,
+        'recherche': recherche,
+        'categorie_filtre': categorie_filtre,
+        'categories': Categorie.objects.filter(
+            produits__commercant=commercant
+        ).distinct().order_by('nom'),
+        'extra_qs': extra_qs,
     })
 
 
