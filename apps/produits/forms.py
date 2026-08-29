@@ -75,7 +75,6 @@ class ProduitForm(forms.ModelForm):
 
     def clean_seuil_dormant(self):
         return self._positif_entier('seuil_dormant', "Le nombre de jours")
-
     def clean(self):
         cleaned_data = super().clean()
         categorie = cleaned_data.get('categorie')
@@ -89,6 +88,25 @@ class ProduitForm(forms.ModelForm):
             cleaned_data['categorie'] = categorie
         elif not categorie:
             self.add_error('categorie', "Choisissez une catégorie ou créez-en une nouvelle.")
+
+        # Empêche un produit vendu à perte (prix de vente < coût réel du
+        # produit) : bug remonté où un produit acheté à 1000 FCFA pouvait
+        # être revendu à 500 FCFA sans avertissement, donnant une marge
+        # négative affichée telle quelle sur le tableau de bord.
+        prix_achat = cleaned_data.get('prix_achat')
+        prix_vente = cleaned_data.get('prix_vente')
+        frais_packaging = cleaned_data.get('frais_packaging') or 0
+
+        if prix_achat is not None and prix_vente is not None:
+            cout_total = prix_achat + frais_packaging
+            if prix_vente < cout_total:
+                self.add_error(
+                    'prix_vente',
+                    f"Le prix de vente ({prix_vente} FCFA) est inférieur au coût "
+                    f"du produit ({cout_total} FCFA = prix d'achat + packaging). "
+                    f"Vous vendriez à perte : augmentez le prix de vente ou "
+                    f"réduisez le prix d'achat/les frais de packaging."
+                )
 
         return cleaned_data
 
