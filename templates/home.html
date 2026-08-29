@@ -146,22 +146,21 @@
               <div class="rupture-overlay">Rupture de stock</div>
             {% endif %}
             <!-- Overlay au hover -->
-            <div class="produit-card-overlay d-none d-md-flex">
+                      <div class="produit-card-overlay d-none d-md-flex">
               {% if produit.quantite == 0 %}
                 <span class="btn-overlay-panier disabled">
                   <i class="bi bi-lock-fill me-2"></i>Indisponible
                 </span>
+              {% elif user.is_authenticated and user.est_commercant %}
+                <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                   class="btn-overlay-panier">
+                  <i class="bi bi-eye me-2"></i>Voir
+                </a>
               {% else %}
                 <a href="{% url 'produits:fiche_produit' produit.pk %}"
                    class="btn-overlay-panier">
                   <i class="bi bi-cart-plus me-2"></i>Choisir
                 </a>
-              {% endif %}
-              {% if user.is_authenticated and user.role == 'client' %}
-              <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
-                 class="btn-overlay-msg">
-                <i class="bi bi-chat-dots-fill"></i>
-              </a>
               {% endif %}
             </div>
           </div>
@@ -236,22 +235,21 @@
                 <i class="bi bi-image"></i>
               </div>
             {% endif %}
-            <div class="produit-card-overlay d-none d-md-flex">
+                      <div class="produit-card-overlay d-none d-md-flex">
               {% if produit.quantite == 0 %}
                 <span class="btn-overlay-panier disabled">
                   <i class="bi bi-lock-fill me-2"></i>Indisponible
                 </span>
+              {% elif user.is_authenticated and user.est_commercant %}
+                <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                   class="btn-overlay-panier">
+                  <i class="bi bi-eye me-2"></i>Voir
+                </a>
               {% else %}
                 <a href="{% url 'produits:fiche_produit' produit.pk %}"
                    class="btn-overlay-panier">
                   <i class="bi bi-cart-plus me-2"></i>Choisir
                 </a>
-              {% endif %}
-              {% if user.is_authenticated and user.role == 'client' %}
-              <a href="{% url 'messagerie:demarrer' produit.commercant.id %}"
-                 class="btn-overlay-msg">
-                <i class="bi bi-chat-dots-fill"></i>
-              </a>
               {% endif %}
             </div>
           </div>

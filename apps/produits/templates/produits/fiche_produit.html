@@ -103,9 +103,18 @@
       {% endif %}
     </div>
 
-
     <!-- Bouton Ajouter au panier -->
-    {% if produit.quantite > 0 %}
+         <!-- Bouton Ajouter au panier / Modifier (si le commerçant possède ce produit) -->
+    {% if user.is_authenticated and user.est_commercant and produit.commercant_id == user.commercant.id %}
+      <!-- Le commerçant consulte l'une de ses propres fiches : on lui propose
+           directement la modification plutôt qu'un achat sur son propre produit. -->
+      <div class="d-flex flex-column gap-2">
+        <a href="{% url 'produits:modifier_produit' produit.pk %}" class="btn-fp-panier">
+          <i class="bi bi-pencil-fill me-2"></i>Modifier
+        </a>
+      </div>
+    {% elif produit.quantite > 0 %}
+    
       {% if user.is_authenticated %}
         <form method="POST" action="{% url 'commandes:ajouter_panier' produit.pk %}">
           {% csrf_token %}
