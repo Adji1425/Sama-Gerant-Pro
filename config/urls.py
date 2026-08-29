@@ -43,17 +43,24 @@ def home(request):
     ).filter(note__gte=2).order_by('-date_avis')[:3]
 
     # Stats
+       # Stats — calculées à partir des vraies données (aucune valeur figée)
+    from django.db.models import Avg
+
+    note_moyenne_globale = Avis.objects.aggregate(moyenne=Avg('note'))['moyenne']
+
     stats = [
         {
             'valeur': f"{Produit.objects.filter(statut='actif').count()}+",
             'label': 'Produits'
         },
         {
-            'valeur': f"{Avis.objects.filter(note__gte=4).count()}+",
+            # Clients distincts (pas juste le nombre d'avis) ayant laissé
+            # une note de 4 ou 5 étoiles.
+            'valeur': f"{Avis.objects.filter(note__gte=4).values('client').distinct().count()}+",
             'label': 'Clients satisfaits'
         },
         {
-            'valeur': '5.0 ★',
+            'valeur': f"{note_moyenne_globale:.1f} ★" if note_moyenne_globale is not None else "— ★",
             'label': 'Note moyenne'
         },
     ]
