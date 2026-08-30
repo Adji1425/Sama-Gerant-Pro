@@ -1,7 +1,6 @@
 from django.db import models
 from apps.users.models import Client
-from apps.produits.models import Produit, OffreProduit
-
+from apps.produits.models import Produit
 
 class Region(models.Model):
     """
@@ -71,12 +70,6 @@ class LignePanier(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
-    offre = models.ForeignKey(
-        OffreProduit,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
     quantite = models.IntegerField(default=1)
     # Prix figé au moment de l'ajout au panier
     prix_unitaire_vente = models.FloatField()
@@ -89,11 +82,6 @@ class LignePanier(models.Model):
         return f"{self.quantite} x {self.produit}"
 
     def sous_total(self):
-        if self.offre and self.offre.est_active():
-            remise = self.prix_unitaire_vente * (self.offre.taux / 100)
-            return round(
-                self.quantite * (self.prix_unitaire_vente - remise), 2
-            )
         return round(self.quantite * self.prix_unitaire_vente, 2)
 
     def save(self, *args, **kwargs):

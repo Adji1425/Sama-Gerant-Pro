@@ -58,14 +58,6 @@
     <div class="col fade-up fade-up-{{ forloop.counter0|add:1 }}">
       <div class="produit-card">
         <div class="produit-card-img-wrap">
-
-          <!-- Badge offre -->
-          {% if produit.offre and produit.offre.est_active %}
-            <span class="produit-badge promo">
-              -{{ produit.offre.taux|floatformat:0 }}%
-            </span>
-          {% endif %}
-
           <!-- Bouton favori -->
           {% if user.is_authenticated and user.role == 'client' %}
             <button type="button" class="produit-fav btn-favori"

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Produit, OffreProduit, Depense, Approvisionnement, Categorie
+from .models import Produit,Depense, Approvisionnement, Categorie
 
 
 class ProduitForm(forms.ModelForm):
@@ -116,34 +116,6 @@ class ProduitForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-
-class OffreProduitForm(forms.ModelForm):
-    class Meta:
-        model = OffreProduit
-        fields = ['titre', 'taux', 'description', 'date_debut', 'date_fin']
-        widgets = {
-            'titre': forms.TextInput(attrs={'class': 'form-control'}),
-            'taux': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 20', 'min': '1', 'max': '100', 'step': '1'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'date_debut': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'date_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
-        labels = {
-            'taux': 'Taux de réduction (%)',
-            'date_debut': 'Date début',
-            'date_fin': 'Date fin',
-        }
-
-    def clean_taux(self):
-        taux = self.cleaned_data.get('taux')
-        if taux is None:
-            return taux
-        if taux != int(taux):
-            raise forms.ValidationError("Le taux doit être un nombre entier, sans virgule.")
-        if taux <= 0 or taux > 100:
-            raise forms.ValidationError("Le taux doit être compris entre 1 et 100.")
-        return int(taux)
 
 
 class DepenseForm(forms.ModelForm):

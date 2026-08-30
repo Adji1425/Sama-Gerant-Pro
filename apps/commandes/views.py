@@ -193,17 +193,7 @@ def valider_commande(request):
         )
 
         for ligne in lignes:
-            offre_active = None
-            if ligne.produit and hasattr(ligne.produit, 'offre'):
-                try:
-                    if ligne.produit.offre.est_active():
-                        offre_active = ligne.produit.offre
-                except Exception:
-                    pass
-
-            # ✅ Rattacher LignePanier à la commande
             ligne.commande = commande
-            ligne.offre = offre_active
             ligne.save()
 
             # Décrémenter le stock
@@ -307,7 +297,7 @@ def detail_commande(request, commande_id):
         client=request.user.client
     )
     # ✅ CORRIGÉ : commande.lignes
-    details = commande.lignes.select_related('produit', 'offre').all()
+    details = commande.lignes.select_related('produit').all()
 
     avis_par_produit = {}
     if commande.statut == 'livree':
@@ -439,7 +429,7 @@ def detail_commande_commercant(request, commande_id):
     commande = get_object_or_404(Commande, pk=commande_id)
     lignes = commande.lignes.filter(
         produit__commercant=request.user.commercant
-    ).select_related('produit', 'offre')
+    ).select_related('produit')
 
     return render(request, 'commandes/detail_commande_commercant.html', {
         'commande': commande,
@@ -544,7 +534,7 @@ def generer_facture(request, commande_id):
         html = template.render({
             'commande': commande,
             'facture': facture,
-            'lignes': commande.lignes.select_related('produit', 'offre').all(),
+            'lignes': commande.lignes.select_related('produit').all(),
         })
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = (

@@ -119,13 +119,6 @@
           <div class="produit-card-img-wrap">
             <!-- Badge NEW -->
             <span class="produit-badge new">NEW</span>
-            <!-- Badge offre -->
-            {% if produit.offre and produit.offre.est_active %}
-              <span class="produit-badge promo"
-                    style="left:auto;right:12px;">
-                -{{ produit.offre.taux|floatformat:0 }}%
-              </span>
-            {% endif %}
             <!-- Bouton favori -->
             <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"
                     {% if produit.quantite == 0 %}disabled{% endif %}>
@@ -213,11 +206,6 @@
       <div class="col">
         <div class="produit-card">
           <div class="produit-card-img-wrap">
-            {% if produit.offre and produit.offre.est_active %}
-              <span class="produit-badge promo">
-                -{{ produit.offre.taux|floatformat:0 }}%
-              </span>
-            {% endif %}
             <button type="button" class="produit-fav btn-favori" data-produit-id="{{ produit.pk }}"
                     {% if produit.quantite == 0 %}disabled{% endif %}>
               <i class="bi {% if produit.pk in favoris_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>

@@ -54,12 +54,7 @@
             <p class="produit-card-sous">{{ produit.categorie.nom }}</p>
           {% endif %}
           <div class="produit-card-prix-ligne">
-            {% if produit.offre and produit.offre.est_active %}
-              <span class="produit-card-prix-barre">{{ produit.prix_vente|floatformat:0 }} F</span>
-              <span class="produit-card-prix-remise">{{ produit.offre.prix_reduit|floatformat:0 }} F</span>
-            {% else %}
               <span class="produit-card-prix">{{ produit.prix_vente|floatformat:0 }} F</span>
-            {% endif %}
           </div>
         </div>
       </div>

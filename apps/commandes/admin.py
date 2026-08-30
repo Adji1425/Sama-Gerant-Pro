@@ -6,7 +6,7 @@ class LignePanierInline(admin.TabularInline):
     """Affiche les lignes rattachées à une commande directement dans sa fiche admin"""
     model = LignePanier
     extra = 0
-    fields = ('produit', 'quantite', 'prix_unitaire_vente', 'offre')
+    fields = ('produit', 'quantite', 'prix_unitaire_vente')
 
 
 @admin.register(Commande)

@@ -87,32 +87,6 @@ class ImageProd(models.Model):
         return f"Image de {self.produit.nom}"
 
 
-class OffreProduit(models.Model):
-    produit = models.OneToOneField(
-        Produit, on_delete=models.CASCADE, related_name='offre'
-    )
-    titre = models.CharField(max_length=150)
-    taux = models.FloatField(help_text="Taux de réduction en %")
-    description = models.TextField(blank=True)
-    date_debut = models.DateField()
-    date_fin = models.DateField()
-
-    class Meta:
-        verbose_name = "Offre Produit"
-        verbose_name_plural = "Offres Produits"
-
-    def __str__(self):
-        return f"{self.titre} — {self.taux}%"
-
-    def est_active(self):
-        today = timezone.now().date()
-        return self.date_debut <= today <= self.date_fin
-
-    def prix_reduit(self):
-        remise = self.produit.prix_vente * (self.taux / 100)
-        return round(self.produit.prix_vente - remise, 2)
-
-
 class Depense(models.Model):
     commercant = models.ForeignKey(
         Commercant, on_delete=models.CASCADE, related_name='depenses'

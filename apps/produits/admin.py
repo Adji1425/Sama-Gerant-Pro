@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categorie, Produit, ImageProd, OffreProduit, Depense, Favori
+from .models import Categorie, Produit, ImageProd, Depense, Favori
 
 
 @admin.register(Categorie)
@@ -24,12 +24,6 @@ class ProduitAdmin(admin.ModelAdmin):
         return obj.est_en_alerte()
     alerte.boolean = True
     alerte.short_description = "En alerte"
-
-
-@admin.register(OffreProduit)
-class OffreProduitAdmin(admin.ModelAdmin):
-    list_display = ('titre', 'produit', 'taux', 'date_debut', 'date_fin')
-
 
 @admin.register(Depense)
 class DepenseAdmin(admin.ModelAdmin):

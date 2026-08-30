@@ -19,9 +19,6 @@ urlpatterns = [
     path('dashboard/stock/', views.gestion_stock, name='gestion_stock'),
     path('dashboard/stock/<int:pk>/modifier/', views.modifier_stock, name='modifier_stock'),
     path('dashboard/approvisionnement/ajouter/', views.ajouter_approvisionnement, name='ajouter_appro'),
-    path('dashboard/offres/', views.gestion_offres, name='gestion_offres'),
-    path('dashboard/offre/ajouter/<int:produit_id>/', views.ajouter_offre, name='ajouter_offre'),
-    path('dashboard/offre/<int:pk>/supprimer/', views.supprimer_offre, name='supprimer_offre'),
     path('dashboard/depenses/', views.gestion_depenses, name='gestion_depenses'),
     path('dashboard/depense/ajouter/', views.ajouter_depense, name='ajouter_depense'),
 ]

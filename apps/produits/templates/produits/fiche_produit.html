@@ -23,11 +23,6 @@
     {% if images %}
       <!-- Image principale -->
       <div class="fp-img-main-wrap">
-        {% if produit.offre and produit.offre.est_active %}
-          <span class="produit-badge promo" style="top:16px;left:16px;">
-            -{{ produit.offre.taux|floatformat:0 }}%
-          </span>
-        {% endif %}
         <img src="{{ images.0.image.url }}"
              class="fp-img-main"
              id="img-principale">
@@ -433,7 +428,7 @@ hr{
   font-weight: 600;
   color: var(--text);
   outline: none;
-  -moz-appearance: textfield;
+  /* -moz-appearance: textfield; */
 }
 
 .fp-qty-stepper input::-webkit-outer-spin-button,

@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from .models import Produit, Categorie, ImageProd, OffreProduit, Depense, Approvisionnement, Favori
-from .forms import ProduitForm, OffreProduitForm, DepenseForm, ApprovisionnementForm
+from .models import Produit, Categorie, ImageProd, Depense, Approvisionnement, Favori
+from .forms import ProduitForm, DepenseForm, ApprovisionnementForm
 from urllib.parse import urlencode
 
 # ── Décorateur commerçant ──────────────────────────────────────────────────────
@@ -103,7 +103,6 @@ def fiche_produit(request, pk):
         'avis_client': avis_client,
         'peut_noter': peut_noter,
         'note_moyenne': produit.note_moyenne(),
-        'offre': getattr(produit, 'offre', None),
         'est_favori': est_favori,
     })
 
@@ -285,64 +284,6 @@ def ajouter_approvisionnement(request):
         )
 
     return render(request, 'produits/ajouter_approvisionnement.html', {'form': form})
-
-
-# ── OFFRES ────────────────────────────────────────────────────────────────────
-@commercant_required
-def gestion_offres(request):
-    commercant = request.user.commercant
-    produits_avec_offre = Produit.objects.filter(
-        commercant=commercant, offre__isnull=False
-    ).select_related('offre')
-    produits_sans_offre = Produit.objects.filter(
-        commercant=commercant, statut='actif', offre__isnull=True
-    )
-
-    return render(request, 'produits/gestion_offres.html', {
-        'produits_avec_offre': produits_avec_offre,
-        'produits_sans_offre': produits_sans_offre,
-    })
-
-
-@commercant_required
-def ajouter_offre(request, produit_id):
-    produit = get_object_or_404(
-        Produit, pk=produit_id, commercant=request.user.commercant
-    )
-
-    if hasattr(produit, 'offre'):
-        messages.warning(request, "Ce produit a déjà une offre active.")
-        return redirect('produits:gestion_offres')
-
-    if request.method == 'POST':
-        form = OffreProduitForm(request.POST)
-        if form.is_valid():
-            offre = form.save(commit=False)
-            offre.produit = produit
-            offre.save()
-            messages.success(
-                request,
-                f"✓ Offre '{offre.titre}' créée pour '{produit.nom}'."
-            )
-            return redirect('produits:gestion_offres')
-    else:
-        form = OffreProduitForm()
-
-    return render(request, 'produits/ajouter_offre.html', {
-        'form': form, 'produit': produit
-    })
-
-
-@commercant_required
-def supprimer_offre(request, pk):
-    offre = get_object_or_404(
-        OffreProduit, pk=pk,
-        produit__commercant=request.user.commercant
-    )
-    nom = offre.titre
-    offre.delete()
-    messages.info(request, f"Offre '{nom}' supprimée.")
-    return redirect('produits:gestion_offres')
 
 
 # ── DÉPENSES ──────────────────────────────────────────────────────────────────
