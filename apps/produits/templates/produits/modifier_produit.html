@@ -46,43 +46,31 @@
             {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label fw-semibold small">{{ form.prix_achat.label }}</label>
             {{ form.prix_achat }}
             {% if form.prix_achat.errors %}<div class="text-danger small">{{ form.prix_achat.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-md-4">
+          <div class="col-md-6">
             <label class="form-label fw-semibold small">{{ form.prix_vente.label }}</label>
             {{ form.prix_vente }}
             {% if form.prix_vente.errors %}<div class="text-danger small">{{ form.prix_vente.errors }}</div>{% endif %}
           </div>
 
           <div class="col-md-4">
-            <label class="form-label fw-semibold small">{{ form.frais_packaging.label }}</label>
-            {{ form.frais_packaging }}
-            {% if form.frais_packaging.errors %}<div class="text-danger small">{{ form.frais_packaging.errors }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label fw-semibold small">{{ form.attribut.label }}</label>
-            {{ form.attribut }}
-            {% if form.attribut.errors %}<div class="text-danger small">{{ form.attribut.errors }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-2">
             <label class="form-label fw-semibold small">{{ form.quantite.label }}</label>
             {{ form.quantite }}
             {% if form.quantite.errors %}<div class="text-danger small">{{ form.quantite.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-md-2">
+          <div class="col-md-4">
             <label class="form-label fw-semibold small">{{ form.seuil_alerte.label }}</label>
             {{ form.seuil_alerte }}
             {% if form.seuil_alerte.errors %}<div class="text-danger small">{{ form.seuil_alerte.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-md-2">
+          <div class="col-md-4">
             <label class="form-label fw-semibold small">{{ form.seuil_dormant.label }}</label>
             {{ form.seuil_dormant }}
             {% if form.seuil_dormant.errors %}<div class="text-danger small">{{ form.seuil_dormant.errors }}</div>{% endif %}

@@ -2,8 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db.models import Q
 from .models import Produit, Categorie, ImageProd, Depense, Approvisionnement, Favori
-from .forms import ProduitForm, DepenseForm, ApprovisionnementForm
+from .forms import ProduitForm, ProduitModifierForm, DepenseForm, ApprovisionnementForm
 from urllib.parse import urlencode
 
 # ── Décorateur commerçant ──────────────────────────────────────────────────────
@@ -192,7 +193,7 @@ def modifier_produit(request, pk):
     )
 
     if request.method == 'POST':
-        form = ProduitForm(request.POST, instance=produit)
+        form = ProduitModifierForm(request.POST, instance=produit)
         if form.is_valid():
             form.save()
 
@@ -204,7 +205,7 @@ def modifier_produit(request, pk):
             messages.success(request, "✓ Produit modifié avec succès !")
             return redirect('produits:gestion_produits')
     else:
-        form = ProduitForm(instance=produit)
+        form = ProduitModifierForm(instance=produit)
 
     return render(request, 'produits/modifier_produit.html', {
         'form': form, 'produit': produit
@@ -230,13 +231,34 @@ def archiver_produit(request, pk):
 @commercant_required
 def gestion_stock(request):
     commercant = request.user.commercant
-    produits = Produit.objects.filter(
+    tous_produits = Produit.objects.filter(
         commercant=commercant, statut='actif'
     ).order_by('quantite')
 
+    # KPI calculés avant filtrage
+    total_produits = tous_produits.count()
+    en_alerte = [p for p in tous_produits if p.est_en_alerte()]
+
+    produits = tous_produits
+
+    # Recherche par nom, comme dans "Mes produits"
+    recherche = request.GET.get('q', '').strip()
+    if recherche:
+        produits = produits.filter(nom__icontains=recherche)
+
+    # Filtre par état (pastilles : Tous / En alerte / OK)
+    etat_filtre = request.GET.get('etat', '')
+    if etat_filtre == 'alerte':
+        produits = [p for p in produits if p.est_en_alerte()]
+    elif etat_filtre == 'ok':
+        produits = [p for p in produits if not p.est_en_alerte()]
+
     return render(request, 'produits/gestion_stock.html', {
         'produits': produits,
-        'en_alerte': [p for p in produits if p.est_en_alerte()],
+        'total_produits': total_produits,
+        'en_alerte': en_alerte,
+        'recherche': recherche,
+        'etat_filtre': etat_filtre,
         'approvisionnements': Approvisionnement.objects.filter(
             commercant=commercant
         ).select_related('produit').order_by('-date_approvisionnement')[:10],
@@ -290,14 +312,26 @@ def ajouter_approvisionnement(request):
 @commercant_required
 def gestion_depenses(request):
     commercant = request.user.commercant
-    depenses = Depense.objects.filter(
-        commercant=commercant
-    ).order_by('-date')
+    toutes_depenses = Depense.objects.filter(commercant=commercant).order_by('-date')
 
-    total = sum(d.montant for d in depenses)
+    # KPI calculés avant filtrage
+    total = sum(d.montant for d in toutes_depenses)
+    nb_depenses = toutes_depenses.count()
+
+    depenses = toutes_depenses
+
+    # Recherche par type ou description, comme dans "Mes produits"
+    recherche = request.GET.get('q', '').strip()
+    if recherche:
+        depenses = depenses.filter(
+            Q(type__icontains=recherche) | Q(description__icontains=recherche)
+        )
+
     return render(request, 'produits/gestion_depenses.html', {
         'depenses': depenses,
         'total': total,
+        'nb_depenses': nb_depenses,
+        'recherche': recherche,
     })
 
 

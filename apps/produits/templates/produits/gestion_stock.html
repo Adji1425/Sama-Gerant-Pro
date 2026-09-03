@@ -14,6 +14,7 @@
   </a>
 </div>
 
+<!-- Sous-navigation dashboard -->
 <ul class="nav nav-pills mb-4 gap-2">
   <li class="nav-item">
     <a class="nav-link text-dark" href="{% url 'produits:gestion_produits' %}">Produits</a>
@@ -27,6 +28,28 @@
   </li>
 </ul>
 
+<!-- KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Produits en stock</div>
+      <div class="dash-kpi-value">{{ total_produits }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">En alerte stock</div>
+      <div class="dash-kpi-value" style="color:#C47B8A;">{{ en_alerte|length }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Approvisionnements récents</div>
+      <div class="dash-kpi-value">{{ approvisionnements|length }}</div>
+    </div>
+  </div>
+</div>
+
 {% if en_alerte %}
   <div class="alert alert-warning small">
     <i class="bi bi-exclamation-triangle me-1"></i>
@@ -35,59 +58,116 @@
   </div>
 {% endif %}
 
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+  <!-- Filtres par état (à gauche) -->
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="?{% if recherche %}q={{ recherche }}{% endif %}"
+       class="filter-pill {% if not etat_filtre %}active{% endif %}">
+      Tous
+    </a>
+    <a href="?etat=alerte{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="filter-pill {% if etat_filtre == 'alerte' %}active{% endif %}">
+      En alerte
+    </a>
+    <a href="?etat=ok{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="filter-pill {% if etat_filtre == 'ok' %}active{% endif %}">
+      OK
+    </a>
+  </div>
+
+  <!-- Recherche (à droite) -->
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
+        style="flex:1 1 auto;max-width:340px;">
+    <input type="hidden" name="etat" value="{{ etat_filtre }}">
+
+    <div class="position-relative" style="width:210px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" value="{{ recherche }}"
+             placeholder="Nom du produit"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;">
+      <i class="bi bi-search"></i>
+    </button>
+
+    {% if recherche or etat_filtre %}
+      <a href="{% url 'produits:gestion_stock' %}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+
+</div>
+
 <div class="row g-4">
 
   <!-- État des stocks -->
   <div class="col-lg-7">
-    <div class="card border-0 shadow-sm p-3">
-      <h6 class="fw-semibold mb-3" style="color:#1B263B;">État des stocks</h6>
+    <h6 class="fw-semibold mb-3" style="color:#1B263B;">État des stocks</h6>
 
-      {% if produits %}
-        <div class="table-responsive">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Quantité</th>
-                <th>Seuil alerte</th>
-                <th></th>
-                <th class="text-end">Ajuster</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for produit in produits %}
-              <tr>
-                <td class="fw-semibold" style="color:#1B263B;">{{ produit.nom }}</td>
-                <td>{{ produit.quantite }}</td>
-                <td class="text-muted">{{ produit.seuil_alerte }}</td>
-                <td>
-                  {% if produit.est_en_alerte %}
-                    <span class="badge" style="background-color:#C47B8A;">Stock bas</span>
-                  {% else %}
-                    <span class="badge" style="background-color:#2E7D32;">OK</span>
+    {% if produits %}
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Seuil alerte</th>
+              <th>Statut</th>
+              <th class="text-end">Ajuster</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for produit in produits %}
+            <tr>
+              <td>
+                <span class="dash-row-title">
+                  {% if produit.image_principale %}
+                    <img src="{{ produit.image_principale.image.url }}" class="dash-table-thumb">
                   {% endif %}
-                </td>
-                <td class="text-end">
-                  <form method="POST"
-                        action="{% url 'produits:modifier_stock' produit.pk %}"
-                        class="d-flex justify-content-end gap-1">
-                    {% csrf_token %}
-                    <input type="number" name="quantite" value="{{ produit.quantite }}"
-                           class="form-control form-control-sm" style="width:80px;" min="0">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">
-                      <i class="bi bi-check"></i>
-                    </button>
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="text-muted small mb-0">Aucun produit actif pour l'instant.</p>
-      {% endif %}
-    </div>
+                  {{ produit.nom }}
+                </span>
+              </td>
+              <td>{{ produit.quantite }}</td>
+              <td class="text-muted">{{ produit.seuil_alerte }}</td>
+              <td>
+                {% if produit.est_en_alerte %}
+                  <span class="statut-badge statut-badge-annulee">Stock bas</span>
+                {% else %}
+                  <span class="statut-badge statut-badge-livree">OK</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <form method="POST"
+                      action="{% url 'produits:modifier_stock' produit.pk %}"
+                      class="d-flex justify-content-end gap-1">
+                  {% csrf_token %}
+                  <input type="number" name="quantite" value="{{ produit.quantite }}"
+                         class="form-control form-control-sm" style="width:80px;" min="0">
+                  <button type="submit" class="btn-table-icon" title="Enregistrer">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-boxes fs-1 d-block mb-3"></i>
+        {% if recherche or etat_filtre %}
+          <h5>Aucun produit ne correspond à votre recherche</h5>
+        {% else %}
+          <h5>Aucun produit actif pour l'instant</h5>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 
   <!-- Derniers approvisionnements -->

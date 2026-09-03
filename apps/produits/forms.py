@@ -95,7 +95,14 @@ class ProduitForm(forms.ModelForm):
         # négative affichée telle quelle sur le tableau de bord.
         prix_achat = cleaned_data.get('prix_achat')
         prix_vente = cleaned_data.get('prix_vente')
-        frais_packaging = cleaned_data.get('frais_packaging') or 0
+        if 'frais_packaging' in self.fields:
+            # Champ présent dans le formulaire (ex: création) : on prend la
+            # valeur saisie.
+            frais_packaging = cleaned_data.get('frais_packaging') or 0
+        else:
+            # Champ absent du formulaire (ex: modification) : on réutilise
+            # la valeur déjà enregistrée sur le produit.
+            frais_packaging = self.instance.frais_packaging if self.instance and self.instance.pk else 0
 
         if prix_achat is not None and prix_vente is not None:
             cout_total = prix_achat + frais_packaging
@@ -116,6 +123,28 @@ class ProduitForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class ProduitModifierForm(ProduitForm):
+    """Formulaire de modification d'un produit existant.
+
+    Reprend ProduitForm mais sans les champs 'attribut' et
+    'frais_packaging' (retirés du formulaire de modification), et rend
+    tous les champs restants obligatoires (ex: description, qui est
+    optionnelle à la création).
+    """
+
+    class Meta(ProduitForm.Meta):
+        fields = [
+            'nom', 'categorie', 'description',
+            'prix_achat', 'prix_vente',
+            'quantite', 'seuil_alerte', 'seuil_dormant'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Tous les champs doivent être obligatoires en modification
+        self.fields['description'].required = True
 
 
 class DepenseForm(forms.ModelForm):

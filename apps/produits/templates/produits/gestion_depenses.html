@@ -14,6 +14,7 @@
   </a>
 </div>
 
+<!-- Sous-navigation dashboard -->
 <ul class="nav nav-pills mb-4 gap-2">
   <li class="nav-item">
     <a class="nav-link text-dark" href="{% url 'produits:gestion_produits' %}">Produits</a>
@@ -27,15 +28,54 @@
   </li>
 </ul>
 
-<div class="card border-0 shadow-sm p-3 mb-4" style="max-width:300px;">
-  <div class="text-muted small">Total des dépenses</div>
-  <div class="fs-3 fw-bold" style="color:#C47B8A;">{{ total|floatformat:0 }} FCFA</div>
+<!-- KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Total des dépenses</div>
+      <div class="dash-kpi-value" style="color:#C47B8A;">{{ total|floatformat:0 }} FCFA</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Dépenses enregistrées</div>
+      <div class="dash-kpi-value">{{ nb_depenses }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-end align-items-center flex-wrap gap-3 mb-4">
+
+  <!-- Recherche -->
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
+        style="flex:1 1 auto;max-width:340px;">
+
+    <div class="position-relative" style="width:210px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" value="{{ recherche }}"
+             placeholder="Type ou description"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;">
+      <i class="bi bi-search"></i>
+    </button>
+
+    {% if recherche %}
+      <a href="{% url 'produits:gestion_depenses' %}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+
 </div>
 
 {% if depenses %}
-  <div class="table-responsive">
-    <table class="table align-middle bg-white shadow-sm rounded overflow-hidden">
-      <thead style="background-color:#F8F9FA;">
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead>
         <tr>
           <th>Date</th>
           <th>Type</th>
@@ -47,9 +87,11 @@
         {% for depense in depenses %}
         <tr>
           <td>{{ depense.date|date:"d/m/Y" }}</td>
-          <td class="fw-semibold" style="color:#1B263B;">{{ depense.type }}</td>
-          <td class="text-muted small">{{ depense.description|default:"—" }}</td>
-          <td class="text-end fw-semibold">{{ depense.montant|floatformat:0 }} FCFA</td>
+          <td>
+            <span class="dash-row-title">{{ depense.type }}</span>
+          </td>
+          <td class="text-muted">{{ depense.description|default:"—" }}</td>
+          <td class="text-end fw-semibold" style="color:#1B263B;">{{ depense.montant|floatformat:0 }} FCFA</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -58,13 +100,17 @@
 {% else %}
   <div class="text-center py-5 text-muted">
     <i class="bi bi-cash-stack fs-1 d-block mb-3"></i>
-    <h5>Aucune dépense enregistrée</h5>
-    <p>Suivez ici vos frais (transport, emballage, publicité...)</p>
-    <a href="{% url 'produits:ajouter_depense' %}"
-       class="btn fw-semibold px-4"
-       style="background-color:#1B263B;color:white;">
-      <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
-    </a>
+    {% if recherche %}
+      <h5>Aucune dépense ne correspond à votre recherche</h5>
+    {% else %}
+      <h5>Aucune dépense enregistrée</h5>
+      <p>Suivez ici vos frais (transport, emballage, publicité...)</p>
+      <a href="{% url 'produits:ajouter_depense' %}"
+         class="btn fw-semibold px-4"
+         style="background-color:#1B263B;color:white;">
+        <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
+      </a>
+    {% endif %}
   </div>
 {% endif %}
 
