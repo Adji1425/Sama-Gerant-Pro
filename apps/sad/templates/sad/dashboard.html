@@ -99,14 +99,16 @@
     <div class="kpi-sub">Sur vos produits actifs</div>
   </div>
 
-  <div class="kpi-card {% if produits_alerte %}kpi-alert{% endif %}">
+  <a href="{% url 'produits:gestion_stock' %}?etat=alerte"
+     class="kpi-card {% if produits_alerte %}kpi-alert{% endif %}"
+     style="text-decoration:none;color:inherit;display:block;cursor:pointer;">
     <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
     <div class="kpi-label">Produits en alerte</div>
     <div class="kpi-value">{{ produits_alerte|length }}</div>
     <div class="kpi-sub">
-      {% if produits_alerte %}Stock sous le seuil défini{% else %}Tout est sous contrôle{% endif %}
+      {% if produits_alerte %}Stock sous le seuil défini — voir les produits{% else %}Tout est sous contrôle{% endif %}
     </div>
-  </div>
+  </a>
 
   <div class="kpi-card">
     <div class="kpi-icon">
@@ -161,16 +163,41 @@
         <small>&gt; 60 jours sans vente</small>
       </div>
       {% for p in stocks_dormants %}
-        <div class="info-row">
-          <div class="info-icon"><i class="bi bi-box-seam"></i></div>
-          <div>
-            <div class="info-title">{{ p.nom }}</div>
-            <div class="info-sub">{{ p.quantite }} unité{{ p.quantite|pluralize }} en stock</div>
+        {% if forloop.counter0 < 3 %}
+          <div class="info-row">
+            <div class="info-icon"><i class="bi bi-box-seam"></i></div>
+            <div>
+              <div class="info-title">{{ p.nom }}</div>
+              <div class="info-sub">{{ p.quantite }} unité{{ p.quantite|pluralize }} en stock</div>
+            </div>
           </div>
-        </div>
+        {% endif %}
       {% empty %}
         <p class="sad-empty">Aucun stock dormant, tout circule bien.</p>
       {% endfor %}
+
+      {% if stocks_dormants|length > 3 %}
+        <div class="collapse" id="dormantsPlus">
+          {% for p in stocks_dormants %}
+            {% if forloop.counter0 >= 3 %}
+              <div class="info-row">
+                <div class="info-icon"><i class="bi bi-box-seam"></i></div>
+                <div>
+                  <div class="info-title">{{ p.nom }}</div>
+                  <div class="info-sub">{{ p.quantite }} unité{{ p.quantite|pluralize }} en stock</div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <button class="btn btn-sm btn-link px-0 mt-2" type="button"
+                data-bs-toggle="collapse" data-bs-target="#dormantsPlus"
+                aria-expanded="false" aria-controls="dormantsPlus"
+                style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
+          <span class="voir-plus-label">Voir plus ({{ stocks_dormants|length|add:"-3" }})</span>
+          <span class="voir-moins-label d-none">Voir moins</span>
+        </button>
+      {% endif %}
     </div>
   </div>
 
@@ -247,18 +274,45 @@
     <small>{{ notifications|length }} non lue{{ notifications|length|pluralize }}</small>
   </div>
   {% for n in notifications %}
-    <div class="notif-item">
-      <div>
-        <div class="notif-title">{{ n.titre }}</div>
-        <div class="notif-msg">{{ n.message }}</div>
+    {% if forloop.counter0 < 3 %}
+      <div class="notif-item">
+        <div>
+          <div class="notif-title">{{ n.titre }}</div>
+          <div class="notif-msg">{{ n.message }}</div>
+        </div>
+        <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
+          <i class="bi bi-check2"></i> Marquer lue
+        </a>
       </div>
-      <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
-        <i class="bi bi-check2"></i> Marquer lue
-      </a>
-    </div>
+    {% endif %}
   {% empty %}
     <p class="sad-empty">Aucune notification pour le moment.</p>
   {% endfor %}
+
+  {% if notifications|length > 3 %}
+    <div class="collapse" id="notifsPlus">
+      {% for n in notifications %}
+        {% if forloop.counter0 >= 3 %}
+          <div class="notif-item">
+            <div>
+              <div class="notif-title">{{ n.titre }}</div>
+              <div class="notif-msg">{{ n.message }}</div>
+            </div>
+            <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
+              <i class="bi bi-check2"></i> Marquer lue
+            </a>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <button class="btn btn-sm btn-link px-0 mt-1" type="button"
+            data-bs-toggle="collapse" data-bs-target="#notifsPlus"
+            aria-expanded="false" aria-controls="notifsPlus"
+            style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
+      <span class="voir-plus-label">Voir plus ({{ notifications|length|add:"-3" }})</span>
+      <span class="voir-moins-label d-none">Voir moins</span>
+    </button>
+  {% endif %}
 </div>
 
 {% endblock %}
@@ -342,5 +396,21 @@
 
   const chartGeo = new ApexCharts(document.querySelector("#chart-geo"), geoOptions);
   chartGeo.render();
+
+  // Bascule le texte "Voir plus (N)" / "Voir moins" sur les listes repliables
+  document.querySelectorAll('.collapse').forEach(function (collapseEl) {
+    const trigger = document.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
+    if (!trigger) return;
+    const plusLabel = trigger.querySelector('.voir-plus-label');
+    const moinsLabel = trigger.querySelector('.voir-moins-label');
+    collapseEl.addEventListener('show.bs.collapse', function () {
+      plusLabel.classList.add('d-none');
+      moinsLabel.classList.remove('d-none');
+    });
+    collapseEl.addEventListener('hide.bs.collapse', function () {
+      plusLabel.classList.remove('d-none');
+      moinsLabel.classList.add('d-none');
+    });
+  });
 </script>
 {% endblock %}

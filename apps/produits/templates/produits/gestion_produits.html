@@ -159,6 +159,10 @@
             {% endif %}
           </td>
           <td class="text-end">
+            <a href="{% url 'produits:fiche_produit' produit.pk %}"
+               class="btn-table-icon" title="Voir" target="_blank" rel="noopener">
+              <i class="bi bi-eye"></i>
+            </a>
             <a href="{% url 'produits:modifier_produit' produit.pk %}"
                class="btn-table-icon" title="Modifier">
               <i class="bi bi-pencil"></i>
