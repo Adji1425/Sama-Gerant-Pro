@@ -19,10 +19,11 @@
 </div>
 
 <p class="text-muted small mb-4">
-  Ces périodes déterminent la « saison actuelle » affichée sur le tableau de
-  bord du commerçant et les conseils associés (§5.3.2 du cahier des
-  charges). Elles remplacent l'ancien découpage codé en dur dans le code :
-  modifiez-les ici sans intervention technique.
+  La saison actuelle est <strong>détectée automatiquement</strong> à partir
+  des données météo réelles à Dakar — précipitations et températures (API
+  météo, temps réel, aucune prédiction basée sur le calendrier). Ici, vous
+  éditez uniquement le <strong>texte et l'icône</strong> affichés au
+  commerçant pour chaque saison détectée (§5.3.2 du cahier des charges).
 </p>
 
 {% if climats %}
@@ -31,7 +32,6 @@
       <thead style="background-color:#F8F9FA;">
         <tr>
           <th>Saison</th>
-          <th>Période</th>
           <th>Conseil affiché</th>
           <th>Statut</th>
           <th>Actions</th>
@@ -42,9 +42,8 @@
         <tr>
           <td class="fw-semibold" style="color:#1B263B;">
             <i class="bi {{ climat.icone }} me-1"></i>{{ climat.nom }}
-            <div class="text-muted small">{{ climat.code }}</div>
+            <div class="text-muted small">{{ climat.get_code_display }}</div>
           </td>
-          <td>{{ climat.jour_debut }}/{{ climat.mois_debut }} → {{ climat.jour_fin }}/{{ climat.mois_fin }}</td>
           <td class="text-muted small">{{ climat.conseil|truncatechars:60 }}</td>
           <td>
             {% if climat.actif %}

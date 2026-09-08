@@ -21,38 +21,17 @@
             {% if form.nom.errors %}<div class="text-danger small">{{ form.nom.errors }}</div>{% endif %}
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold small">Code technique</label>
+            <label class="form-label fw-semibold small">Saison correspondante</label>
             {{ form.code }}
             {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors }}</div>{% endif %}
           </div>
         </div>
 
-        <label class="form-label fw-semibold small">Début de la saison</label>
-        <div class="row g-3 mb-3">
-          <div class="col-6">
-            {{ form.mois_debut }}
-            {% if form.mois_debut.errors %}<div class="text-danger small">{{ form.mois_debut.errors }}</div>{% endif %}
-          </div>
-          <div class="col-6">
-            {{ form.jour_debut }}
-            {% if form.jour_debut.errors %}<div class="text-danger small">{{ form.jour_debut.errors }}</div>{% endif %}
-          </div>
-        </div>
-
-        <label class="form-label fw-semibold small">Fin de la saison</label>
-        <div class="row g-3 mb-3">
-          <div class="col-6">
-            {{ form.mois_fin }}
-            {% if form.mois_fin.errors %}<div class="text-danger small">{{ form.mois_fin.errors }}</div>{% endif %}
-          </div>
-          <div class="col-6">
-            {{ form.jour_fin }}
-            {% if form.jour_fin.errors %}<div class="text-danger small">{{ form.jour_fin.errors }}</div>{% endif %}
-          </div>
-        </div>
         <p class="text-muted small">
-          Astuce : une période peut chevaucher le nouvel an, ex. début
-          1/11 et fin 31/5.
+          La saison est détectée automatiquement en temps réel à partir
+          des données météo réelles à Dakar (API météo) — pas de plage
+          de dates à définir ici. Ce texte s'affichera au commerçant
+          quand cette saison sera détectée.
         </p>
 
         <div class="mb-3">

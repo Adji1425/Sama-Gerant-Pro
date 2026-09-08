@@ -3,27 +3,30 @@ from django.db import models
 
 class ConfigurationClimatique(models.Model):
     """
-    Définition paramétrable des saisons climatiques utilisées par le SAD
-    pour adapter ses conseils au commerçant (§5.3.2 du cahier des charges).
+    Textes affichés au commerçant selon la saison climatique détectée
+    (§5.3.2 du cahier des charges) : conseil + icône, paramétrables par
+    l'administrateur sans toucher au code.
 
-    Remplace l'ancien dictionnaire SAISONS_SENEGAL codé en dur dans
-    apps/sad/utils.py : désormais géré par l'administrateur depuis une
-    page dédiée, sans toucher au code.
+    La saison elle-même n'est PLUS déterminée par une plage de dates :
+    elle est détectée en temps réel à partir des données météo réelles
+    à Dakar (précipitations + températures, API Open-Meteo — voir
+    apps/sad/utils.py). Ce modèle ne sert qu'à éditer le texte/icône
+    affichés pour chaque saison détectée.
     """
-    MOIS_CHOICES = [(i, i) for i in range(1, 13)]
+    CODE_CHOICES = [
+        ('hivernage', 'Hivernage'),
+        ('saison_seche_fraiche', 'Saison sèche fraîche (harmattan)'),
+        ('saison_seche_chaude', 'Saison sèche chaude'),
+    ]
 
     nom = models.CharField(
-        max_length=100, unique=True,
-        help_text="Ex : Hivernage, Saison sèche"
+        max_length=100,
+        help_text="Ex : Hivernage, Saison sèche fraîche"
     )
-    code = models.SlugField(
-        max_length=50, unique=True,
-        help_text="Identifiant technique (sans espace), ex : hivernage"
+    code = models.CharField(
+        max_length=50, unique=True, choices=CODE_CHOICES,
+        help_text="Saison à laquelle ce texte correspond (détectée via l'API météo)."
     )
-    mois_debut = models.PositiveSmallIntegerField(choices=MOIS_CHOICES)
-    jour_debut = models.PositiveSmallIntegerField(default=1)
-    mois_fin = models.PositiveSmallIntegerField(choices=MOIS_CHOICES)
-    jour_fin = models.PositiveSmallIntegerField(default=1)
     conseil = models.TextField(
         help_text="Conseil affiché au commerçant durant cette saison"
     )
@@ -36,20 +39,7 @@ class ConfigurationClimatique(models.Model):
     class Meta:
         verbose_name = "Configuration climatique"
         verbose_name_plural = "Configurations climatiques"
-        ordering = ['mois_debut', 'jour_debut']
+        ordering = ['code']
 
     def __str__(self):
         return self.nom
-
-    def contient_date(self, date):
-        """
-        Vrai si `date` (objet date) tombe dans la période définie.
-        Gère les périodes à cheval sur le nouvel an
-        (ex : 1 novembre → 31 mai).
-        """
-        debut = (self.mois_debut, self.jour_debut)
-        fin = (self.mois_fin, self.jour_fin)
-        courant = (date.month, date.day)
-        if debut <= fin:
-            return debut <= courant <= fin
-        return courant >= debut or courant <= fin

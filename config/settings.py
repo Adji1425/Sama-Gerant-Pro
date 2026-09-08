@@ -111,17 +111,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
-# # Email
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-# EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-# EMAIL_USE_TLS = True
-
-
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@sama-gerant.pro'
-
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/users/login/'
@@ -145,9 +134,27 @@ EMAIL_USE_TLS = True
 
 # 2. TRÈS IMPORTANT pour Gmail : l'expéditeur DOIT être votre adresse Gmail
 # On force l'utilisation de EMAIL_HOST_USER comme expéditeur par défaut
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # Si EMAIL_HOST_USER est vide, on met une adresse bidon pour le mode console
 if not DEFAULT_FROM_EMAIL:
     DEFAULT_FROM_EMAIL = 'admin@sama-gerant.local'
 
 # --- Fin Configuration Email ---
+
+# Logging — rend visibles en console les erreurs d'envoi d'email
+# (facture, alertes stock, nouvelle commande...) qui seraient sinon
+# avalées silencieusement, et sert à diagnostiquer un souci SMTP
+# (identifiants invalides, mot de passe d'application Gmail requis, etc.)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

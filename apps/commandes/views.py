@@ -222,8 +222,11 @@ def valider_commande(request):
 
 def _notifier_commercant(commande):
     """Notification commerçant — utilise commande.lignes"""
+    import logging
+    logger = logging.getLogger(__name__)
     try:
         from apps.notifications.models import Notification
+        from apps.sad.utils import envoyer_email_alerte
         # ✅ CORRIGÉ : commande.lignes au lieu de commande.details
         lignes = commande.lignes.select_related('produit__commercant').all()
         commercants_notifies = set()
@@ -231,18 +234,29 @@ def _notifier_commercant(commande):
             if ligne.produit:
                 commercant = ligne.produit.commercant
                 if commercant.id not in commercants_notifies:
+                    message = (
+                        f"Le client {commande.client} vient de passer "
+                        f"une commande de {commande.montant_total:.0f} FCFA."
+                    )
                     Notification.objects.create(
                         commercant=commercant,
                         titre=f"Nouvelle commande #{commande.id}",
-                        message=(
-                            f"Le client {commande.client} vient de passer "
-                            f"une commande de {commande.montant_total:.0f} FCFA."
-                        ),
+                        message=message,
                         type='commande',
+                    )
+                    # Email en plus de la notification interne (le
+                    # commerçant n'est pas toujours connecté à l'app).
+                    envoyer_email_alerte(
+                        commercant,
+                        sujet=f"Nouvelle commande #{commande.id}",
+                        message=message,
                     )
                     commercants_notifies.add(commercant.id)
     except Exception:
-        pass
+        logger.exception(
+            "Échec de la notification (interne/email) du commerçant pour la commande #%s",
+            commande.id,
+        )
 
 
 @login_required
@@ -499,6 +513,8 @@ def _generer_facture_auto(commande):
     'livrée', puis l'envoie par email au client (§5.2.4 du cahier des
     charges : envoi automatique du reçu après livraison).
     """
+    import logging
+    logger = logging.getLogger(__name__)
     try:
         from apps.facturation.services import generer_et_envoyer_facture
         # Le commerçant est déduit du produit de la première ligne
@@ -510,8 +526,12 @@ def _generer_facture_auto(commande):
             generer_et_envoyer_facture(commande, commercant)
     except Exception:
         # Une erreur de génération/envoi de facture ne doit jamais
-        # bloquer le changement de statut de la commande.
-        pass
+        # bloquer le changement de statut de la commande, mais on la
+        # journalise pour ne pas perdre la trace du problème.
+        logger.exception(
+            "Échec de la génération/envoi automatique de la facture pour la commande #%s",
+            commande.id,
+        )
 
 
 @login_required

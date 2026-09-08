@@ -1,45 +1,174 @@
+import logging
+from types import SimpleNamespace
+
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Sum
 from django.core.mail import send_mail
+from django.core.cache import cache
 from django.conf import settings
+import requests
+
+logger = logging.getLogger(__name__)
+
+# Coordonnées de Dakar : point de référence unique pour interroger
+# l'API météo (le Sénégal est un petit pays, régime climatique
+# globalement homogène à l'échelle d'un dashboard national).
+DAKAR_LATITUDE = 14.6928
+DAKAR_LONGITUDE = -17.4467
+
+# Seuils utilisés pour interpréter les données météo réelles :
+# - plus de 1mm de pluie cumulée sur 7 jours => on est en hivernage
+# - sinon, en saison sèche, on distingue "fraîche" (harmattan, nuits
+#   fraîches) de "chaude" via la température minimale moyenne relevée
+SEUIL_PLUIE_HIVERNAGE_MM = 1.0
+SEUIL_TEMPERATURE_FRAICHE_C = 20.0
+
+# Textes affichés si l'administrateur n'a pas (encore) configuré de
+# ConfigurationClimatique pour la saison détectée (voir sad/models.py).
+# Ce ne sont que des textes de repli pour l'affichage — jamais utilisés
+# pour déterminer la saison elle-même, qui vient uniquement de l'API.
+SAISON_TEXTES_DEFAUT = {
+    'hivernage': {
+        'nom': 'Hivernage',
+        'icone': 'bi-cloud-rain-heavy',
+        'conseil': "Pluies détectées à Dakar cette semaine : anticipez la demande en imperméables, bottes et parapluies.",
+    },
+    'saison_seche_fraiche': {
+        'nom': 'Saison sèche fraîche (harmattan)',
+        'icone': 'bi-cloud-fog2',
+        'conseil': "Températures matinales fraîches détectées : forte demande de pulls et vestes légères.",
+    },
+    'saison_seche_chaude': {
+        'nom': 'Saison sèche chaude',
+        'icone': 'bi-sun',
+        'conseil': "Chaleur sèche détectée : forte demande en ventilateurs, crèmes solaires et boissons fraîches.",
+    },
+}
 
 
 def envoyer_email_alerte(commercant, sujet, message):
     """
-    Envoie un email d'alerte au commerçant (stock bas / stock dormant).
-    fail_silently=True : si le SMTP n'est pas configuré (dev local),
-    l'application continue de fonctionner normalement.
+    Envoie un email d'alerte au commerçant (stock bas / stock dormant /
+    nouvelle commande). N'échoue jamais bruyamment : les erreurs SMTP
+    sont journalisées (voir LOGGING dans settings.py) plutôt que
+    silencieusement avalées, pour rester diagnosticable.
     """
     destinataire = getattr(commercant.utilisateur, 'email', None)
     if not destinataire:
-        return
-    send_mail(
-        subject=f"[Sama-Gérant Pro] {sujet}",
-        message=message,
-        from_email=settings.EMAIL_HOST_USER or None,
-        recipient_list=[destinataire],
-        fail_silently=True,
-    )
+        logger.warning(
+            "Email d'alerte non envoyé : le commerçant %s n'a pas d'adresse email.",
+            commercant,
+        )
+        return False
+    try:
+        send_mail(
+            subject=f"[Sama-Gérant Pro] {sujet}",
+            message=message,
+            from_email=settings.EMAIL_HOST_USER or None,
+            recipient_list=[destinataire],
+            fail_silently=False,
+        )
+        return True
+    except Exception:
+        logger.exception(
+            "Échec de l'envoi de l'email d'alerte '%s' au commerçant %s",
+            sujet, commercant,
+        )
+        return False
+
+
+def _recuperer_meteo_dakar():
+    """
+    Interroge l'API météo gratuite Open-Meteo (aucune clé requise) pour
+    récupérer, pour Dakar, les précipitations et températures réelles
+    des 7 derniers jours. Résultat mis en cache 6h pour ne pas
+    solliciter l'API à chaque affichage du dashboard. Retourne None si
+    l'API est injoignable (pas de réseau, timeout, panne du service...).
+    """
+    cle_cache = "sad_meteo_dakar"
+    donnees = cache.get(cle_cache)
+    if donnees is not None:
+        return donnees
+
+    try:
+        reponse = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": DAKAR_LATITUDE,
+                "longitude": DAKAR_LONGITUDE,
+                "daily": "precipitation_sum,temperature_2m_min",
+                "past_days": 7,
+                "forecast_days": 1,
+                "timezone": "Africa/Dakar",
+            },
+            timeout=5,
+        )
+        reponse.raise_for_status()
+        donnees = reponse.json()
+        cache.set(cle_cache, donnees, 6 * 60 * 60)  # 6h
+        return donnees
+    except requests.RequestException:
+        logger.warning("API météo Open-Meteo injoignable, saison non détectée.")
+        return None
+
 
 def get_saison_actuelle():
     """
-    Retourne la ConfigurationClimatique (saison) active correspondant à
-    la date du jour, telle que paramétrée par l'administrateur (§5.3.2).
+    Détermine la saison actuelle au Sénégal UNIQUEMENT à partir des
+    données météo RÉELLES des 7 derniers jours à Dakar, via l'API
+    gratuite Open-Meteo (sans clé) — aucune prédiction basée sur le
+    calendrier (pas de "de juin à octobre c'est l'hivernage").
 
-    Remplace l'ancien dictionnaire SAISONS_SENEGAL codé en dur : les
-    saisons sont maintenant des lignes en base, modifiables sans toucher
-    au code, via la page « Configuration climatique » de l'espace admin.
-    Retourne None si aucune saison active ne couvre la date du jour
-    (ex : configuration incomplète).
+    Logique :
+    - s'il a plu de façon significative sur la semaine -> hivernage
+    - sinon (saison sèche), on distingue via la température minimale
+      moyenne relevée : fraîche (harmattan) si nuits fraîches, chaude
+      sinon.
+
+    Retourne :
+    - la ConfigurationClimatique (nom/icône/conseil éditables par
+      l'admin) correspondant à la saison détectée, si elle existe ;
+    - à défaut, un objet générique avec les mêmes attributs ;
+    - None si l'API météo est injoignable ou renvoie des données
+      inexploitables (le dashboard affiche alors "météo indisponible",
+      sans deviner de saison).
     """
     from apps.sad.models import ConfigurationClimatique
 
-    aujourdhui = timezone.now().date()
-    for config in ConfigurationClimatique.objects.filter(actif=True):
-        if config.contient_date(aujourdhui):
-            return config
-    return None
+    donnees = _recuperer_meteo_dakar()
+    if not donnees:
+        return None
+
+    try:
+        quotidien = donnees["daily"]
+        precipitations = [p for p in quotidien["precipitation_sum"] if p is not None]
+        temps_min = [t for t in quotidien["temperature_2m_min"] if t is not None]
+        total_pluie_semaine = sum(precipitations)
+    except (KeyError, TypeError):
+        return None
+
+    if total_pluie_semaine > SEUIL_PLUIE_HIVERNAGE_MM:
+        code = "hivernage"
+    elif temps_min:
+        temp_min_moyenne = sum(temps_min) / len(temps_min)
+        code = (
+            "saison_seche_fraiche"
+            if temp_min_moyenne < SEUIL_TEMPERATURE_FRAICHE_C
+            else "saison_seche_chaude"
+        )
+    else:
+        # Pas de pluie détectée mais température indisponible : on ne
+        # peut pas distinguer fraîche/chaude, on retient la saison
+        # sèche la plus fréquente par défaut (chaude).
+        code = "saison_seche_chaude"
+
+    config = ConfigurationClimatique.objects.filter(code=code, actif=True).first()
+    if config:
+        return config
+
+    return SimpleNamespace(code=code, **SAISON_TEXTES_DEFAUT[code])
+
 
 
 def calculer_marge_nette(produit):

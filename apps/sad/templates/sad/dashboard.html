@@ -116,10 +116,10 @@
     </div>
     <div class="kpi-label">Saison actuelle</div>
     <div class="kpi-value" style="font-size:1.5rem;text-transform:capitalize;">
-      {{ saison.nom|default:"Non configurée" }}
+      {{ saison.nom|default:"Météo indisponible" }}
     </div>
     <div class="kpi-sub">
-      {{ saison.conseil|default:"Configurez les saisons depuis l'espace admin."|truncatechars:70 }}
+      {{ saison.conseil|default:"Données météo indisponibles pour le moment (API injoignable)."|truncatechars:70 }}
     </div>
   </div>
 </div>
