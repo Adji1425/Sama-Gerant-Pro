@@ -104,7 +104,40 @@ def marquer_notification_lue(request, pk):
         return HttpResponseForbidden("Réservé aux commerçants.")
 
     Notification.objects.filter(pk=pk, commercant=commercant).update(lu=True)
+
+    # Redirige vers la page d'où venait la demande (dashboard ou liste complète)
+    retour = request.META.get('HTTP_REFERER')
+    if retour:
+        return redirect(retour)
     return redirect('sad:dashboard')
+
+
+@login_required
+def toutes_notifications(request):
+    commercant = _commercant_required(request)
+    if not commercant:
+        return HttpResponseForbidden("Réservé aux commerçants.")
+
+    notifications = Notification.objects.filter(
+        commercant=commercant, lu=False
+    ).order_by('-date_envoi')
+
+    return render(request, 'sad/notifications_liste.html', {
+        'notifications': notifications,
+    })
+
+
+@login_required
+def stocks_dormants_liste(request):
+    commercant = _commercant_required(request)
+    if not commercant:
+        return HttpResponseForbidden("Réservé aux commerçants.")
+
+    stocks_dormants = identifier_stocks_dormants(commercant)
+
+    return render(request, 'sad/stocks_dormants_liste.html', {
+        'stocks_dormants': stocks_dormants,
+    })
 
 
 # ── Configuration climatique (§5.3.2 : paramétrable par l'administrateur) ──

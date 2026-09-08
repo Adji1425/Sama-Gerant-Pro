@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — Sama-Gérant Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notif-item{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
+    padding:14px 16px;border-radius:var(--r-sm);background:var(--cream-light);
+    border-left:3px solid var(--gold);margin-bottom:10px;}
+  .notif-item:last-child{margin-bottom:0;}
+  .notif-title{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .notif-msg{font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .notif-mark{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--gold);white-space:nowrap;
+    display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px;}
+  .notif-mark:hover{color:var(--brown);}
+  .sad-empty{font-size:13px;color:var(--muted);font-style:italic;padding:8px 0;}
+  .sad-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);
+    padding:26px;box-shadow:var(--shadow-sm);}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <a href="{% url 'sad:dashboard' %}" class="text-decoration-none small text-muted">
+      <i class="bi bi-arrow-left me-1"></i>Tableau de bord
+    </a>
+    <h4 class="fw-bold mb-0 mt-1" style="color:#1B263B;">
+      <i class="bi bi-bell me-2"></i>Notifications
+    </h4>
+  </div>
+  <span class="text-muted small">{{ notifications|length }} non lue{{ notifications|length|pluralize }}</span>
+</div>
+
+<div class="sad-card">
+  {% for n in notifications %}
+    <div class="notif-item">
+      <div>
+        <div class="notif-title">{{ n.titre }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+        <div class="notif-msg mt-1" style="opacity:.7;">{{ n.date_envoi|date:"d/m/Y H:i" }}</div>
+      </div>
+      <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
+        <i class="bi bi-check2"></i> Marquer lue
+      </a>
+    </div>
+  {% empty %}
+    <p class="sad-empty mb-0">Aucune notification pour le moment.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

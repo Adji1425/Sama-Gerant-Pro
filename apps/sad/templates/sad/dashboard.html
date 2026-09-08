@@ -177,26 +177,11 @@
       {% endfor %}
 
       {% if stocks_dormants|length > 3 %}
-        <div class="collapse" id="dormantsPlus">
-          {% for p in stocks_dormants %}
-            {% if forloop.counter0 >= 3 %}
-              <div class="info-row">
-                <div class="info-icon"><i class="bi bi-box-seam"></i></div>
-                <div>
-                  <div class="info-title">{{ p.nom }}</div>
-                  <div class="info-sub">{{ p.quantite }} unité{{ p.quantite|pluralize }} en stock</div>
-                </div>
-              </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-        <button class="btn btn-sm btn-link px-0 mt-2" type="button"
-                data-bs-toggle="collapse" data-bs-target="#dormantsPlus"
-                aria-expanded="false" aria-controls="dormantsPlus"
-                style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
-          <span class="voir-plus-label">Voir plus ({{ stocks_dormants|length|add:"-3" }})</span>
-          <span class="voir-moins-label d-none">Voir moins</span>
-        </button>
+        <a href="{% url 'sad:stocks_dormants_liste' %}"
+           class="btn btn-sm btn-link px-0 mt-2"
+           style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
+          Voir plus ({{ stocks_dormants|length|add:"-3" }}) <i class="bi bi-arrow-right"></i>
+        </a>
       {% endif %}
     </div>
   </div>
@@ -290,28 +275,11 @@
   {% endfor %}
 
   {% if notifications|length > 3 %}
-    <div class="collapse" id="notifsPlus">
-      {% for n in notifications %}
-        {% if forloop.counter0 >= 3 %}
-          <div class="notif-item">
-            <div>
-              <div class="notif-title">{{ n.titre }}</div>
-              <div class="notif-msg">{{ n.message }}</div>
-            </div>
-            <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
-              <i class="bi bi-check2"></i> Marquer lue
-            </a>
-          </div>
-        {% endif %}
-      {% endfor %}
-    </div>
-    <button class="btn btn-sm btn-link px-0 mt-1" type="button"
-            data-bs-toggle="collapse" data-bs-target="#notifsPlus"
-            aria-expanded="false" aria-controls="notifsPlus"
-            style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
-      <span class="voir-plus-label">Voir plus ({{ notifications|length|add:"-3" }})</span>
-      <span class="voir-moins-label d-none">Voir moins</span>
-    </button>
+    <a href="{% url 'sad:toutes_notifications' %}"
+       class="btn btn-sm btn-link px-0 mt-1"
+       style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
+      Voir plus ({{ notifications|length|add:"-3" }}) <i class="bi bi-arrow-right"></i>
+    </a>
   {% endif %}
 </div>
 
@@ -396,21 +364,6 @@
 
   const chartGeo = new ApexCharts(document.querySelector("#chart-geo"), geoOptions);
   chartGeo.render();
-
-  // Bascule le texte "Voir plus (N)" / "Voir moins" sur les listes repliables
-  document.querySelectorAll('.collapse').forEach(function (collapseEl) {
-    const trigger = document.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
-    if (!trigger) return;
-    const plusLabel = trigger.querySelector('.voir-plus-label');
-    const moinsLabel = trigger.querySelector('.voir-moins-label');
-    collapseEl.addEventListener('show.bs.collapse', function () {
-      plusLabel.classList.add('d-none');
-      moinsLabel.classList.remove('d-none');
-    });
-    collapseEl.addEventListener('hide.bs.collapse', function () {
-      plusLabel.classList.remove('d-none');
-      moinsLabel.classList.add('d-none');
-    });
-  });
 </script>
+
 {% endblock %}
