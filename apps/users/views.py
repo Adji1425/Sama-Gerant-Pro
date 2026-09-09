@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import (
     InscriptionForm, InscriptionCommercantForm, InscriptionAdminForm,
     ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
@@ -83,6 +84,13 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('home')
 
+    # 'next' indique la page que l'utilisateur voulait voir avant d'être
+    # renvoyé se connecter (ex : la fiche produit qu'il regardait). Django
+    # l'ajoute automatiquement en ?next=... via @login_required. On le
+    # récupère aussi bien en GET (premier affichage du formulaire) qu'en
+    # POST (soumission, via le champ caché du template).
+    next_url = request.POST.get('next') or request.GET.get('next')
+
     if request.method == 'POST':
         form = ConnexionForm(request, data=request.POST)
         if form.is_valid():
@@ -92,6 +100,14 @@ def login_view(request):
                 request,
                 f"Bon retour, {utilisateur.first_name} !"
             )
+            # Priorité à la page d'origine (next), si elle est présente et
+            # sûre (évite les redirections vers un autre site : "open
+            # redirect"). Sinon, on retombe sur la redirection par rôle.
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                return redirect(next_url)
+
             # Redirection selon le rôle
             if utilisateur.est_commercant():
                 return redirect('produits:gestion_produits')
@@ -107,7 +123,7 @@ def login_view(request):
     else:
         form = ConnexionForm(request)
 
-    return render(request, 'users/login.html', {'form': form})
+    return render(request, 'users/login.html', {'form': form, 'next': next_url})
 
 
 def logout_view(request):
