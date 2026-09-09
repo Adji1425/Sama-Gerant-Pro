@@ -898,6 +898,19 @@ img { max-width: 100%; display: block; }
 .alert-warning { background: #FFF8E6; color: #856404; }
 .alert-info    { background: #E8F4F8; color: #1B5F7E; }
 
+/* Lien optionnel à droite dans une alerte (ex : "Voir le panier" après
+   un ajout au panier). Le .btn-close étant en position absolute, la
+   marge à droite évite qu'ils se chevauchent. */
+.alert-link-right {
+  float: right;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  margin-right: 28px;
+  white-space: nowrap;
+}
+.alert-link-right:hover { opacity: 0.8; }
+
 /* ══════════════════════════════════════════════════════════════
    NAVBAR SCROLL JS — ajoute .scrolled via JavaScript
    ══════════════════════════════════════════════════════════════ */

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#F4F1EC; font-family:Helvetica, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F1EC; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF; border-radius:8px; overflow:hidden;">
+
+          <!-- En-tête -->
+          <tr>
+            <td style="background-color:#2C2C2C; padding:28px 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="color:#FFFFFF; font-size:18px; font-weight:bold;">
+                    Sama-Gérant Pro
+                  </td>
+                  <td align="right" style="color:#C8956C; font-size:13px; font-weight:bold; letter-spacing:1px;">
+                    NOUVELLE COMMANDE
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Corps -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="font-size:15px; color:#2C2C2C; margin:0 0 4px 0;">
+                Bonjour {{ commercant.utilisateur.first_name|default:commercant.nom_boutique }},
+              </p>
+              <p style="font-size:14px; color:#4A4A4A; line-height:1.6; margin:0 0 24px 0;">
+                Vous venez de recevoir une nouvelle commande sur <strong>{{ commercant.nom_boutique }}</strong>.
+                Voici le récapitulatif :
+              </p>
+
+              <!-- Détails commande -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF8F3; border-radius:6px; margin-bottom:20px;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <table role="presentation" width="100%" cellpadding="4" cellspacing="0" style="font-size:13px; color:#2C2C2C;">
+                      <tr>
+                        <td style="color:#6B6B6B;">Numéro de commande</td>
+                        <td align="right"><strong>#{{ commande.id }}</strong></td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6B6B6B;">Client</td>
+                        <td align="right"><strong>{{ commande.client }}</strong></td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6B6B6B;">Zone de livraison</td>
+                        <td align="right"><strong>{{ commande.commune|default:"—" }}{% if commande.region %}, {{ commande.region.nom }}{% endif %}</strong></td>
+                      </tr>
+                      <tr>
+                        <td style="color:#6B6B6B; padding-top:10px; border-top:1px solid #E8E2D8;">Montant total</td>
+                        <td align="right" style="padding-top:10px; border-top:1px solid #E8E2D8;">
+                          <strong style="color:#C8956C; font-size:16px;">{{ commande.montant_total|floatformat:0 }} FCFA</strong>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Articles -->
+              <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="font-size:13px; color:#2C2C2C; margin-bottom:24px;">
+                <tr>
+                  <td style="border-bottom:1px solid #E8E2D8; color:#6B6B6B; font-size:11px; text-transform:uppercase;">Produit</td>
+                  <td align="right" style="border-bottom:1px solid #E8E2D8; color:#6B6B6B; font-size:11px; text-transform:uppercase;">Qté</td>
+                </tr>
+                {% for ligne in commande.lignes.all %}
+                <tr>
+                  <td style="border-bottom:1px solid #F0EEE8;">{{ ligne.produit }}</td>
+                  <td align="right" style="border-bottom:1px solid #F0EEE8;">{{ ligne.quantite }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+
+              <!-- Bouton -->
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#C8956C; border-radius:6px;">
+                    <a href="{{ lien_commande }}" style="display:inline-block; padding:12px 26px; color:#FFFFFF; font-size:13px; font-weight:bold; text-decoration:none;">
+                      Traiter la commande →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Pied de page -->
+          <tr>
+            <td style="background-color:#FAF8F3; padding:20px 36px; text-align:center; border-top:1px solid #E8E2D8;">
+              <p style="font-size:11px; color:#999999; margin:0;">
+                Notification automatique de Sama-Gérant Pro
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

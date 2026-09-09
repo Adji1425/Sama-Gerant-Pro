@@ -331,7 +331,7 @@
           <a href="{% url 'messagerie:liste_conversations' %}">Messages</a>
         {% else %}
           <a href="{% url 'users:register' %}">Créer un compte</a>
-          <a href="{% url 'users:login' %}">Connexion</a>
+          <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}">Connexion</a>
         {% endif %}
       </div>
       <!-- Services -->

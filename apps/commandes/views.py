@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from apps.facturation.models import Facture
 from django.db.models import Q
 from urllib.parse import urlencode
+from django.urls import reverse
+from django.utils.html import format_html
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def get_or_create_panier(client):
@@ -90,7 +92,14 @@ def ajouter_panier(request, produit_id):
                 prix_unitaire_vente=produit.prix_vente,
             )
 
-        messages.success(request, f"✓ {produit.nom} ajouté au panier !")
+        messages.success(
+            request,
+            format_html(
+                '✓ {} ajouté au panier ! '
+                '<a href="{}" class="alert-link-right">Voir le panier <i class="bi bi-arrow-right"></i></a>',
+                produit.nom, reverse('commandes:voir_panier')
+            )
+        )
         return redirect('produits:fiche_produit', pk=produit_id)
 
     return redirect('produits:catalogue')
@@ -226,7 +235,6 @@ def _notifier_commercant(commande):
     logger = logging.getLogger(__name__)
     try:
         from apps.notifications.models import Notification
-        from apps.sad.utils import envoyer_email_alerte
         # ✅ CORRIGÉ : commande.lignes au lieu de commande.details
         lignes = commande.lignes.select_related('produit__commercant').all()
         commercants_notifies = set()
@@ -246,17 +254,65 @@ def _notifier_commercant(commande):
                     )
                     # Email en plus de la notification interne (le
                     # commerçant n'est pas toujours connecté à l'app).
-                    envoyer_email_alerte(
-                        commercant,
-                        sujet=f"Nouvelle commande #{commande.id}",
-                        message=message,
-                    )
+                    _envoyer_email_nouvelle_commande(commercant, commande)
                     commercants_notifies.add(commercant.id)
     except Exception:
         logger.exception(
             "Échec de la notification (interne/email) du commerçant pour la commande #%s",
             commande.id,
         )
+
+
+def _envoyer_email_nouvelle_commande(commercant, commande):
+    """
+    Email HTML soigné envoyé au commerçant à chaque nouvelle commande
+    (+ repli texte brut). N'échoue jamais bruyamment : les erreurs SMTP
+    sont journalisées, pas levées (voir _notifier_commercant ci-dessus).
+    """
+    import logging
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from django.urls import reverse
+
+    logger = logging.getLogger(__name__)
+
+    destinataire = getattr(commercant.utilisateur, 'email', None)
+    if not destinataire:
+        return False
+
+    lien_commande = reverse(
+        'commandes:detail_commande_commercant', args=[commande.id]
+    )
+
+    texte_brut = (
+        f"Bonjour {commercant.utilisateur.first_name or commercant.nom_boutique},\n\n"
+        f"Vous avez reçu une nouvelle commande #{commande.id} de "
+        f"{commande.client} pour un montant de {commande.montant_total:.0f} FCFA.\n\n"
+        f"Traitez-la depuis votre tableau de bord : {lien_commande}"
+    )
+
+    try:
+        html_body = render_to_string('commandes/email/nouvelle_commande.html', {
+            'commercant': commercant,
+            'commande': commande,
+            'lien_commande': lien_commande,
+        })
+        email = EmailMultiAlternatives(
+            subject=f"🛒 Nouvelle commande #{commande.id} — {commande.montant_total:.0f} FCFA",
+            body=texte_brut,
+            from_email=settings.EMAIL_HOST_USER or None,
+            to=[destinataire],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception(
+            "Échec de l'envoi de l'email de nouvelle commande #%s au commerçant %s",
+            commande.id, commercant,
+        )
+        return False
 
 
 @login_required

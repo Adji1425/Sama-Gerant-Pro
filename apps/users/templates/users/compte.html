@@ -72,7 +72,7 @@
     <h5>Bienvenue</h5>
     <p>Connectez-vous pour accéder à vos commandes et gérer votre compte.</p>
     <div class="d-flex justify-content-center gap-2 flex-wrap">
-      <a href="{% url 'users:login' %}"
+      <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}"
          class="btn fw-semibold px-4"
          style="background-color:var(--gold);color:white;">
         Se connecter

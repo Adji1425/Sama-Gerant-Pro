@@ -58,7 +58,7 @@ def dashboard(request):
     evenements_proches = [e for e in EvenementSAD.objects.all() if e.est_proche()]
     saison = get_saison_actuelle()
 
-    notifications = Notification.objects.filter(commercant=commercant, lu=False)[:20]
+    notifications = Notification.objects.filter(commercant=commercant, lu=False)[:2]
 
     repartition_geo = repartition_geographique_commandes(commercant)
 

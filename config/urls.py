@@ -20,22 +20,52 @@ def home(request):
                     categorie.photo = img
                     break
 
-    # Nouveautés — 8 derniers produits actifs
+    # Nouveautés — 8 derniers produits actifs ajoutés (les plus récents)
     nouveautes = Produit.objects.filter(
         statut='actif'
     ).prefetch_related('images').select_related(
         'categorie', 'commercant'
     ).order_by('-date_creation')[:8]
 
-    # Populaires — produits avec le + d'avis
-    from django.db.models import Count
-    populaires = Produit.objects.filter(
-        statut='actif'
-    ).annotate(
-        nb_avis=Count('avis_set')
-    ).prefetch_related('images').select_related(
-        'categorie', 'commercant'
-    ).order_by('-nb_avis', '-date_creation')[:8]
+    nouveautes_ids = [p.id for p in nouveautes]
+
+    # Populaires — produits les PLUS VENDUS (quantité totale sur des
+    # commandes livrées), pas les plus récents ni les plus notés. On
+    # exclut explicitement les nouveautés déjà affichées ci-dessus pour
+    # ne jamais montrer deux fois le même produit sur la page d'accueil.
+    from django.db.models import Sum, Q as Qf
+
+    populaires = list(
+        Produit.objects.filter(
+            statut='actif'
+        ).exclude(
+            id__in=nouveautes_ids
+        ).annotate(
+            quantite_vendue=Sum(
+                'lignepanier__quantite',
+                filter=Qf(lignepanier__commande__statut='livree')
+            )
+        ).filter(
+            quantite_vendue__gt=0
+        ).prefetch_related('images').select_related(
+            'categorie', 'commercant'
+        ).order_by('-quantite_vendue')[:8]
+    )
+
+    # Boutique récente / peu de ventes : on complète avec les produits
+    # actifs restants (toujours hors nouveautés déjà affichées et hors
+    # produits populaires déjà retenus), pour ne pas laisser la section
+    # vide en attendant les premières ventes.
+    if len(populaires) < 8:
+        ids_deja_affiches = nouveautes_ids + [p.id for p in populaires]
+        complement = Produit.objects.filter(
+            statut='actif'
+        ).exclude(
+            id__in=ids_deja_affiches
+        ).prefetch_related('images').select_related(
+            'categorie', 'commercant'
+        ).order_by('-date_creation')[:8 - len(populaires)]
+        populaires = populaires + list(complement)
 
     # Derniers avis 2 étoiles et +
     derniers_avis = Avis.objects.select_related(

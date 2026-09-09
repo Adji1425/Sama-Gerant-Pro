@@ -418,7 +418,7 @@
             </li>
           {% else %}
             <li class="mb-1">
-              <a href="{% url 'users:login' %}"
+              <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}"
                  style="display:block;padding:10px 0;font-size:15px;
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">

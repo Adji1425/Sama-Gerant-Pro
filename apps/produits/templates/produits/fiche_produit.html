@@ -140,7 +140,7 @@
           </div>
         </form>
       {% else %}
-        <a href="{% url 'users:login' %}" class="btn-fp-panier d-inline-flex">
+        <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}" class="btn-fp-panier d-inline-flex">
           <i class="bi bi-box-arrow-in-right me-2"></i>
           Connectez-vous pour acheter
         </a>

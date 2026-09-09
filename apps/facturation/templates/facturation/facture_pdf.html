@@ -1,32 +1,179 @@
 <html>
 <head>
 <style>
-body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
-h1 { color: #2c3e50; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-th { background-color: #f0f0f0; }
-.total { text-align: right; font-weight: bold; margin-top: 10px; }
+  @page {
+    size: A4;
+    margin: 2.2cm 1.8cm 2.5cm 1.8cm;
+    @frame footer_frame {
+      -pdf-frame-content: footer_content;
+      bottom: 1cm;
+      left: 1.8cm;
+      right: 1.8cm;
+      height: 1.5cm;
+    }
+  }
+
+  body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 10.5px;
+    color: #2C2C2C;
+  }
+
+  /* ── En-tête : boutique à gauche, "FACTURE" + n° à droite ─────────── */
+  .header-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
+  .header-table td { border: none; padding: 0; vertical-align: top; }
+
+  .logo-box { width: 46px; height: 46px; border-radius: 4px; }
+  .boutique-nom { font-size: 17px; font-weight: bold; color: #2C2C2C; margin: 0 0 3px 0; }
+  .boutique-contact { font-size: 9px; color: #6B6B6B; line-height: 1.5; }
+
+  .facture-titre { font-size: 22px; font-weight: bold; color: #C8956C; text-align: right; margin: 0; letter-spacing: 1px; }
+  .facture-numero { font-size: 10px; color: #6B6B6B; text-align: right; margin-top: 4px; }
+  .facture-numero strong { color: #2C2C2C; }
+
+  hr.separator { border: none; border-top: 1.5px solid #C8956C; margin: 0 0 20px 0; }
+
+  /* ── Bloc facturé à / livraison ────────────────────────────────────── */
+  .infos-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .infos-table td { border: none; padding: 0; vertical-align: top; width: 50%; }
+  .infos-label { font-size: 8.5px; font-weight: bold; color: #C8956C; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .infos-contenu { font-size: 10px; line-height: 1.6; color: #2C2C2C; }
+
+  /* ── Tableau des articles ───────────────────────────────────────────── */
+  table.articles { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+  table.articles th {
+    background-color: #2C2C2C;
+    color: #FFFFFF;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 9px 10px;
+    text-align: left;
+  }
+  table.articles th.num { text-align: right; }
+  table.articles td {
+    padding: 9px 10px;
+    font-size: 10px;
+    border-bottom: 1px solid #E8E2D8;
+  }
+  table.articles td.num { text-align: right; }
+  table.articles tr.odd td { background-color: #FAF8F3; }
+
+  /* ── Totaux ─────────────────────────────────────────────────────────── */
+  table.totaux { width: 260px; float: right; margin-top: 14px; border-collapse: collapse; }
+  table.totaux td { padding: 6px 10px; font-size: 10.5px; }
+  table.totaux td.label { text-align: left; color: #6B6B6B; }
+  table.totaux td.valeur { text-align: right; }
+  table.totaux tr.total-final td { border-top: 1.5px solid #2C2C2C; font-size: 13px; font-weight: bold; color: #2C2C2C; padding-top: 10px; }
+  table.totaux tr.total-final td.valeur { color: #C8956C; }
+
+  .clearfix { clear: both; }
+
+  /* ── Remerciement ───────────────────────────────────────────────────── */
+  .remerciement {
+    margin-top: 60px;
+    padding: 16px 18px;
+    background-color: #FAF8F3;
+    border-left: 3px solid #C8956C;
+    font-size: 10px;
+    color: #2C2C2C;
+    line-height: 1.6;
+  }
+
+  /* ── Pied de page ───────────────────────────────────────────────────── */
+  #footer_content {
+    font-size: 8px;
+    color: #999999;
+    text-align: center;
+    border-top: 1px solid #E8E2D8;
+    padding-top: 8px;
+  }
 </style>
 </head>
 <body>
-<h1>Facture #{{ commande.id }}</h1>
-<p><strong>{{ commercant.nom_boutique }}</strong></p>
-<p>Date : {{ facture.date_facture }}</p>
-<p>Client : {{ commande.client }}</p>
-<p>Adresse de livraison : {{ commande.adresse_livraison_reel }}</p>
 
-<table>
-    <tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th></tr>
-    {% for detail in commande.lignes.all %}
+  <table class="header-table">
     <tr>
-        <td>{{ detail.produit }}</td>
-        <td>{{ detail.quantite }}</td>
-        <td>{{ detail.prix_unitaire_vente }} FCFA</td>
-        <td>{{ detail.sous_total }} FCFA</td>
+      <td style="width: 60%;">
+        {% if commercant.logo %}
+          <img src="{{ commercant.logo.path }}" class="logo-box"/><br/>
+        {% endif %}
+        <p class="boutique-nom">{{ commercant.nom_boutique }}</p>
+        <p class="boutique-contact">
+          {% if commercant.utilisateur.adresse %}{{ commercant.utilisateur.adresse }}<br/>{% endif %}
+          {% if commercant.utilisateur.telephone %}Tél : {{ commercant.utilisateur.telephone }}<br/>{% endif %}
+          {% if commercant.utilisateur.email %}{{ commercant.utilisateur.email }}{% endif %}
+        </p>
+      </td>
+      <td style="width: 40%;">
+        <p class="facture-titre">FACTURE</p>
+        <p class="facture-numero">
+          N° <strong>FAC-{{ facture.id|stringformat:"06d" }}</strong><br/>
+          Commande <strong>#{{ commande.id }}</strong><br/>
+          Date : {{ facture.date_facture|date:"d/m/Y" }}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <hr class="separator"/>
+
+  <table class="infos-table">
+    <tr>
+      <td>
+        <p class="infos-label">FACTURÉ À</p>
+        <p class="infos-contenu">
+          {{ commande.client.utilisateur.get_full_name|default:commande.client.utilisateur.username }}<br/>
+          {% if commande.client.utilisateur.email %}{{ commande.client.utilisateur.email }}<br/>{% endif %}
+          {% if commande.telephone %}Tél : {{ commande.telephone }}{% endif %}
+        </p>
+      </td>
+      <td>
+        <p class="infos-label">LIVRÉ À</p>
+        <p class="infos-contenu">
+          {{ commande.adresse_livraison_reel }}<br/>
+          {% if commande.commune %}{{ commande.commune }}{% if commande.region %}, {% endif %}{% endif %}{% if commande.region %}{{ commande.region.nom }}{% endif %}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <table class="articles">
+    <tr>
+      <th style="width: 46%;">Produit</th>
+      <th class="num" style="width: 14%;">Qté</th>
+      <th class="num" style="width: 20%;">Prix unitaire</th>
+      <th class="num" style="width: 20%;">Sous-total</th>
+    </tr>
+    {% for ligne in commande.lignes.all %}
+    <tr class="{% cycle 'odd' '' %}">
+      <td>{{ ligne.produit }}</td>
+      <td class="num">{{ ligne.quantite }}</td>
+      <td class="num">{{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA</td>
+      <td class="num">{{ ligne.sous_total|floatformat:0 }} FCFA</td>
     </tr>
     {% endfor %}
-</table>
-<p class="total">Total : {{ commande.montant_total }} FCFA</p>
+  </table>
+
+  <table class="totaux">
+    <tr class="total-final">
+      <td class="label">TOTAL À PAYER</td>
+      <td class="valeur">{{ commande.montant_total|floatformat:0 }} FCFA</td>
+    </tr>
+  </table>
+
+  <div class="clearfix"></div>
+
+  <div class="remerciement">
+    Merci pour votre confiance ! Cette facture confirme votre commande auprès de
+    <strong>{{ commercant.nom_boutique }}</strong> sur Sama-Gérant Pro. Pour toute question
+    concernant votre commande, vous pouvez contacter directement la boutique aux coordonnées
+    ci-dessus.
+  </div>
+
+  <div id="footer_content">
+    Facture générée automatiquement par Sama-Gérant Pro — {{ commercant.nom_boutique }}
+  </div>
+
 </body>
 </html>
