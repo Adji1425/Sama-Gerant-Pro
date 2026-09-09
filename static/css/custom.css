@@ -402,7 +402,44 @@ img { max-width: 100%; display: block; }
   padding: 52px 0;
 }
 
+/* Défilement automatique en boucle (bandeau) : les catégories glissent
+   en continu sur une seule ligne. La liste est incluse deux fois
+   (voir home.html) pour une boucle parfaitement fluide, sans saut
+   visible. On met en pause au survol pour laisser le temps de cliquer,
+   et le lien "VOIR TOUT" reste disponible pour voir toute la liste. */
+.categories-marquee {
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+}
+
+.categories-track {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 28px;
+  padding: 6px 14px 18px;
+  animation: categories-loop 30s linear infinite;
+}
+
+.categories-marquee:hover .categories-track,
+.categories-track:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes categories-loop {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .categories-track { animation: none; }
+  .categories-marquee { overflow-x: auto; }
+}
+
 .categorie-item {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;

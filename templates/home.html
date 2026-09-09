@@ -23,6 +23,27 @@
   </div> -->
 </section>
 
+<!-- ══ RÉASSURANCE (Tailwind CSS, §6.2 du cahier des charges) ═════════════════
+     Petite bannière construite entièrement avec des classes Tailwind
+     préfixées "tw-" (voir base.html), en complément de Bootstrap utilisé
+     partout ailleurs sur la page. -->
+<section class="tw-bg-[#F8F4EC] tw-border-y tw-border-[#E5DCC9]">
+  <div class="tw-max-w-6xl tw-mx-auto tw-px-6 tw-py-6 tw-grid tw-grid-cols-1 sm:tw-grid-cols-3 tw-gap-6 tw-text-center">
+    <div class="tw-flex tw-flex-col tw-items-center tw-gap-2">
+      <i class="bi bi-truck tw-text-2xl tw-text-[#E0A458]"></i>
+      <span class="tw-text-sm tw-font-medium tw-text-[#1B263B]">Livraison rapide partout au Sénégal</span>
+    </div>
+    <div class="tw-flex tw-flex-col tw-items-center tw-gap-2">
+      <i class="bi bi-shield-check tw-text-2xl tw-text-[#E0A458]"></i>
+      <span class="tw-text-sm tw-font-medium tw-text-[#1B263B]">Paiement sécurisé</span>
+    </div>
+    <div class="tw-flex tw-flex-col tw-items-center tw-gap-2">
+      <i class="bi bi-patch-check tw-text-2xl tw-text-[#E0A458]"></i>
+      <span class="tw-text-sm tw-font-medium tw-text-[#1B263B]">Produits de qualité garantie</span>
+    </div>
+  </div>
+</section>
+
 <!-- ══ CATÉGORIES EN CERCLES ═════════════════════════════════════════════════ -->
 <section class="section-categories">
   <div class="container">
@@ -33,35 +54,13 @@
       </a>
     </div>
 
-    <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-3 justify-content-center">
-      {% for categorie in categories %}
-      <div class="col d-flex justify-content-center">
-        <a href="{% url 'produits:catalogue' %}?categorie={{ categorie.id }}"
-           class="categorie-item text-decoration-none">
-          <div class="categorie-circle">
-            {% if categorie.photo %}
-              <img src="{{ categorie.photo.image.url }}" alt="{{ categorie.nom }}">
-            {% else %}
-              <div class="categorie-circle-placeholder">
-                <i class="bi bi-grid"></i>
-              </div>
-            {% endif %}
-          </div>
-          <span class="categorie-nom">{{ categorie.nom }}</span>
-        </a>
+    <div class="categories-marquee">
+      <div class="categories-track">
+        {% include 'partials/_categories_items.html' %}
       </div>
-      {% empty %}
-      {% for icon, nom in categories_defaut %}
-      <div class="col d-flex justify-content-center">
-        <div class="categorie-item">
-          <div class="categorie-circle">
-            <div class="categorie-circle-placeholder">{{ icon }}</div>
-          </div>
-          <span class="categorie-nom">{{ nom }}</span>
-        </div>
+      <div class="categories-track" aria-hidden="true">
+        {% include 'partials/_categories_items.html' %}
       </div>
-      {% endfor %}
-      {% endfor %}
     </div>
   </div>
 </section>
