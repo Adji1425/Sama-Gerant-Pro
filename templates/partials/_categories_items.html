@@ -1,0 +1,24 @@
+{% for categorie in categories %}
+<a href="{% url 'produits:catalogue' %}?categorie={{ categorie.id }}"
+   class="categorie-item text-decoration-none">
+  <div class="categorie-circle">
+    {% if categorie.photo %}
+      <img src="{{ categorie.photo.image.url }}" alt="{{ categorie.nom }}">
+    {% else %}
+      <div class="categorie-circle-placeholder">
+        <i class="bi bi-grid"></i>
+      </div>
+    {% endif %}
+  </div>
+  <span class="categorie-nom">{{ categorie.nom }}</span>
+</a>
+{% empty %}
+{% for icon, nom in categories_defaut %}
+<div class="categorie-item">
+  <div class="categorie-circle">
+    <div class="categorie-circle-placeholder">{{ icon }}</div>
+  </div>
+  <span class="categorie-nom">{{ nom }}</span>
+</div>
+{% endfor %}
+{% endfor %}

@@ -5,35 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Sama-Gérant Pro{% endblock %}</title>
 
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  {% load static %}
+
+  <!-- Bootstrap 5 — hébergé en local (static/vendor/) au lieu du CDN
+       jsdelivr : sans connexion Internet, le CDN ne répond plus et la
+       page se retrouve sans mise en page (comme sur la capture d'écran).
+       En local, Bootstrap se charge toujours, même hors ligne. -->
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!-- Bootstrap Icons — également en local, même raison -->
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
 
   <!-- Tailwind CSS (§6.2 du cahier des charges) — en complément de Bootstrap.
-       - corePlugins.preflight = false : on désactive le reset CSS de Tailwind
-         pour ne pas écraser les styles de base déjà fournis par Bootstrap
-         (marges des titres, listes, formulaires, etc.).
-       - prefix "tw-" : toutes les classes utilitaires Tailwind sont préfixées
-         (ex: tw-flex, tw-bg-blue-500) pour ne JAMAIS entrer en conflit avec
-         les classes Bootstrap identiques déjà utilisées partout dans le
-         projet (.container, .row, .border, .rounded, .shadow, .text-center...).
-       Utilisation : class="tw-flex tw-gap-2 tw-rounded-xl" à côté des classes
-       Bootstrap existantes, sans rien casser.
-       Note : le CDN "Play" convient au développement ; pour la production,
-       il est recommandé de compiler Tailwind via le CLI officiel. -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      prefix: 'tw-',
-      corePlugins: { preflight: false },
-    };
-  </script>
+       Compilé en local via le CLI officiel (static/vendor/tailwind/), au
+       lieu du CDN "Play" : fonctionne aussi hors connexion, et ne contient
+       que les classes réellement utilisées dans les templates (~3 Ko).
+       - preflight désactivé (voir tailwind.config.js) : on ne casse pas les
+         styles de base déjà fournis par Bootstrap (marges des titres, etc.)
+       - préfixe "tw-" : toutes les classes utilitaires Tailwind sont
+         préfixées (ex: tw-flex, tw-bg-blue-500) pour ne JAMAIS entrer en
+         conflit avec les classes Bootstrap identiques déjà utilisées
+         partout ailleurs (.container, .row, .border, .rounded, .shadow...).
+       Utilisé actuellement dans templates/home.html (bannière de
+       réassurance sous le hero). Pour utiliser Tailwind sur une nouvelle
+       page : ajoute tes classes "tw-...", puis relance
+       `npx tailwindcss -i static/src/tailwind-input.css -o static/vendor/tailwind/tailwind.min.css --minify`
+       pour régénérer ce fichier avec les nouvelles classes. -->
+  <link href="{% static 'vendor/tailwind/tailwind.min.css' %}" rel="stylesheet">
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts — ⚠️ nécessite aussi Internet (fonts.googleapis.com).
+       Dis-moi si tu veux que je télécharge les polices en local également. -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  {% load static %}
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
@@ -467,8 +469,8 @@
 </main>
 {% endblock %}
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS — en local aussi -->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/favoris.js' %}"></script>
 
 <!-- Navbar scroll effect -->

@@ -33,67 +33,36 @@
       </a>
     </div>
 
-    <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-3 justify-content-center">
-      {% for categorie in categories %}
-      <div class="col d-flex justify-content-center">
-        <a href="{% url 'produits:catalogue' %}?categorie={{ categorie.id }}"
-           class="categorie-item text-decoration-none">
-          <div class="categorie-circle">
-            {% if categorie.photo %}
-              <img src="{{ categorie.photo.image.url }}" alt="{{ categorie.nom }}">
-            {% else %}
-              <div class="categorie-circle-placeholder">
-                <i class="bi bi-grid"></i>
-              </div>
-            {% endif %}
-          </div>
-          <span class="categorie-nom">{{ categorie.nom }}</span>
-        </a>
+    <div class="categories-marquee">
+      <div class="categories-track">
+        {% include 'partials/_categories_items.html' %}
       </div>
-      {% empty %}
-      {% for icon, nom in categories_defaut %}
-      <div class="col d-flex justify-content-center">
-        <div class="categorie-item">
-          <div class="categorie-circle">
-            <div class="categorie-circle-placeholder">{{ icon }}</div>
-          </div>
-          <span class="categorie-nom">{{ nom }}</span>
-        </div>
+      <div class="categories-track" aria-hidden="true">
+        {% include 'partials/_categories_items.html' %}
       </div>
-      {% endfor %}
-      {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ══ BANNIÈRE SERVICES ══════════════════════════════════════════════════════ -->
-<section class="section-services">
-  <div class="container">
-    <div class="row g-3 justify-content-center">
-      <div class="col-auto">
-        <div class="service-item">
-          <i class="bi bi-truck"></i>
-          LIVRAISON RAPIDE
-        </div>
-      </div>
-      <div class="col-auto d-none d-md-flex">
-        <span style="color:var(--border);font-size:20px;">|</span>
-      </div>
-      <div class="col-auto">
-        <div class="service-item">
-          <i class="bi bi-shield-check"></i>
-          PAIEMENT SÉCURISÉ
-        </div>
-      </div>
-      <div class="col-auto d-none d-md-flex">
-        <span style="color:var(--border);font-size:20px;">|</span>
-      </div>
-      <div class="col-auto">
-        <div class="service-item">
-          <i class="bi bi-headset"></i>
-          SUPPORT CLIENT
-        </div>
-      </div>
+<!-- ══ BANNIÈRE SERVICES (Tailwind CSS, §6.2 du cahier des charges) ═══════════
+     Classes préfixées "tw-" (voir base.html), en complément de Bootstrap
+     utilisé partout ailleurs sur la page. Remplace l'ancienne bannière
+     services (Bootstrap) : même design compact, mêmes couleurs. -->
+<section class="tw-bg-white tw-border-y tw-border-[#E8E2D8] tw-py-3">
+  <div class="tw-max-w-6xl tw-mx-auto tw-px-6 tw-flex tw-flex-wrap tw-items-center tw-justify-center tw-gap-x-4 tw-gap-y-2 md:tw-gap-x-6">
+    <div class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-tracking-widest tw-uppercase tw-text-[#2C2C2C]">
+      <i class="bi bi-truck tw-text-[#C8956C] tw-text-base"></i>
+      Livraison rapide
+    </div>
+    <span class="tw-hidden md:tw-inline tw-text-[#E8E2D8] tw-text-xl">|</span>
+    <div class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-tracking-widest tw-uppercase tw-text-[#2C2C2C]">
+      <i class="bi bi-shield-check tw-text-[#C8956C] tw-text-base"></i>
+      Paiement sécurisé
+    </div>
+    <span class="tw-hidden md:tw-inline tw-text-[#E8E2D8] tw-text-xl">|</span>
+    <div class="tw-flex tw-items-center tw-gap-2 tw-text-[11px] tw-font-semibold tw-tracking-widest tw-uppercase tw-text-[#2C2C2C]">
+      <i class="bi bi-headset tw-text-[#C8956C] tw-text-base"></i>
+      Support client
     </div>
   </div>
 </section>

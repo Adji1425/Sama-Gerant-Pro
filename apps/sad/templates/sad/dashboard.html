@@ -286,7 +286,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% load static %}
+<!-- ApexCharts — en local (static/vendor/) au lieu du CDN jsdelivr, pour
+     que les graphiques du dashboard SAD fonctionnent aussi hors ligne. -->
+<script src="{% static 'vendor/apexcharts/apexcharts.min.js' %}"></script>
 <script>
   const ventesData = {{ ventes_par_jour_json|safe }};
   const categories = ventesData.map(v => v.jour);

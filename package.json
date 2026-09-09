@@ -1,0 +1,24 @@
+{
+  "name": "sama-gerant-pro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i static/src/tailwind-input.css -o static/vendor/tailwind/tailwind.min.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adji1425/Sama-Gerant-Pro.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adji1425/Sama-Gerant-Pro/issues"
+  },
+  "homepage": "https://github.com/Adji1425/Sama-Gerant-Pro#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}
