@@ -11,6 +11,8 @@
   .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:32px;}
   @media (max-width:991px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
   @media (max-width:575px){.kpi-grid{grid-template-columns:1fr;}}
+  @media (max-width:767px){.chart-geo-wrap{justify-content:center;text-align:center;}
+    .chart-geo-legend{width:100%;}}
 
   .kpi-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);
     padding:22px 24px;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s;}
@@ -72,6 +74,27 @@
   .notif-mark:hover{color:var(--brown);}
 
   #chart-ventes{margin:0 -6px;}
+  #chart-ventes canvas{max-height:300px;}
+
+  /* ── Donut "Commandes par région" ──────────────────────────────────── */
+  .chart-geo-wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+  .chart-geo-canvas-box{position:relative;width:190px;height:190px;flex-shrink:0;}
+  .chart-geo-canvas-box canvas{width:100%!important;height:100%!important;}
+  .chart-geo-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    text-align:center;pointer-events:none;}
+  .chart-geo-center span{display:block;font-family:'Playfair Display',serif;font-weight:700;
+    font-size:1.7rem;color:var(--text);line-height:1;}
+  .chart-geo-center small{font-size:10.5px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.06em;}
+
+  .chart-geo-legend{list-style:none;margin:0;padding:0;flex:1;min-width:180px;}
+  .chart-geo-legend li{display:flex;align-items:center;gap:10px;padding:8px 0;
+    border-bottom:1px solid var(--border);font-size:13px;}
+  .chart-geo-legend li:last-child{border-bottom:none;padding-bottom:0;}
+  .chart-geo-legend li:first-child{padding-top:0;}
+  .chart-geo-legend .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .chart-geo-legend .nom{flex:1;font-weight:500;color:var(--text);}
+  .chart-geo-legend .pct{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;}
 </style>
 {% endblock %}
 
@@ -132,7 +155,7 @@
         <h5>Évolution des ventes</h5>
         <small>30 derniers jours</small>
       </div>
-      <div id="chart-ventes"></div>
+      <div id="chart-ventes"><canvas id="chart-ventes-canvas" height="300"></canvas></div>
     </div>
   </div>
 
@@ -220,6 +243,7 @@
             <thead>
               <tr class="text-muted small">
                 <th>Région</th>
+                <th>Produit le + demandé</th>
                 <th class="text-end">Commandes</th>
                 <th class="text-end">CA</th>
               </tr>
@@ -228,6 +252,11 @@
               {% for ligne in repartition_geo %}
               <tr>
                 <td class="fw-semibold" style="color:#1B263B;">{{ ligne.region }}</td>
+                <td>
+                  <span class="badge" style="background-color:#FAF8F3;color:#C8956C;border:1px solid #E8E2D8;font-weight:600;">
+                    {{ ligne.top_categorie }}
+                  </span>
+                </td>
                 <td class="text-end">{{ ligne.nb_commandes }}</td>
                 <td class="text-end">{{ ligne.montant_total|floatformat:0 }} FCFA</td>
               </tr>
@@ -247,7 +276,20 @@
         <h5>Commandes par région</h5>
         <small>Aide à la décision d'expansion / livraison</small>
       </div>
-      <div id="chart-geo"></div>
+      {% if repartition_geo %}
+        <div class="chart-geo-wrap">
+          <div class="chart-geo-canvas-box">
+            <canvas id="chart-geo-canvas"></canvas>
+            <div class="chart-geo-center">
+              <span id="chart-geo-total">0</span>
+              <small>commandes</small>
+            </div>
+          </div>
+          <ul class="chart-geo-legend" id="chart-geo-legend"></ul>
+        </div>
+      {% else %}
+        <p class="sad-empty">Aucune commande localisée pour l'instant.</p>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -287,86 +329,139 @@
 
 {% block extra_js %}
 {% load static %}
-<!-- ApexCharts — en local (static/vendor/) au lieu du CDN jsdelivr, pour
-     que les graphiques du dashboard SAD fonctionnent aussi hors ligne. -->
-<script src="{% static 'vendor/apexcharts/apexcharts.min.js' %}"></script>
+<!-- Chart.js — en local (static/vendor/), conforme au cahier des charges
+     (§6.2 : "Chart.js... intégrée directement dans les templates Django
+     pour transformer les indicateurs du SAD en graphiques interactifs"). -->
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'vendor/chartjs/chartjs-adapter-date-fns.bundle.min.js' %}"></script>
 <script>
   const ventesData = {{ ventes_par_jour_json|safe }};
-  const categories = ventesData.map(v => v.jour);
-  const totals = ventesData.map(v => v.total);
+  const ventesLabels = ventesData.map(v => v.jour);
+  const ventesTotals = ventesData.map(v => v.total);
 
-  const options = {
-    chart: {
-      type: 'area',
-      height: 300,
-      toolbar: { show: false },
-      fontFamily: 'Inter, sans-serif',
-      foreColor: '#8A8A8A',
-    },
-    series: [{ name: 'Unités vendues', data: totals }],
-    xaxis: {
-      categories: categories,
-      type: 'datetime',
-      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
-      forceNiceScale: true,
-    },
-    colors: ['#C8956C'],
-    stroke: { curve: 'smooth', width: 2.5 },
-    fill: {
-      type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 90, 100] },
-    },
-    grid: { borderColor: '#E8E2D8', strokeDashArray: 4 },
-    dataLabels: { enabled: false },
-    markers: { size: 4, colors: ['#C8956C'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 6 } },
-    tooltip: { theme: 'light', x: { format: 'dd MMM' } },
-    noData: {
-      text: 'Aucune vente sur cette période',
-      style: { color: '#8A8A8A', fontSize: '13px', fontFamily: 'Inter, sans-serif' },
-    },
-  };
+  const ctxVentes = document.getElementById('chart-ventes-canvas');
+  const gradientVentes = ctxVentes.getContext('2d').createLinearGradient(0, 0, 0, 300);
+  gradientVentes.addColorStop(0, 'rgba(200,149,108,0.35)');
+  gradientVentes.addColorStop(1, 'rgba(200,149,108,0.02)');
 
-  const chart = new ApexCharts(document.querySelector("#chart-ventes"), options);
-  chart.render();
+  new Chart(ctxVentes, {
+    type: 'line',
+    data: {
+      labels: ventesLabels,
+      datasets: [{
+        label: 'Unités vendues',
+        data: ventesTotals,
+        borderColor: '#C8956C',
+        backgroundColor: gradientVentes,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#C8956C',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#fff',
+          titleColor: '#2C2C2C',
+          bodyColor: '#2C2C2C',
+          borderColor: '#E8E2D8',
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', tooltipFormat: 'dd MMM' },
+          grid: { color: '#E8E2D8', borderDash: [4, 4] },
+          ticks: { color: '#8A8A8A', font: { size: 11, family: 'Inter, sans-serif' } },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#E8E2D8', borderDash: [4, 4] },
+          ticks: {
+            color: '#8A8A8A', font: { size: 11, family: 'Inter, sans-serif' },
+            precision: 0, // pas de décimales : on vend des unités entières
+          },
+        },
+      },
+    },
+  });
 
   const geoData = {{ repartition_geo_json|safe }};
-  const geoCategories = geoData.map(v => v.region);
+  const geoLabels = geoData.map(v => v.region);
   const geoTotals = geoData.map(v => v.nb_commandes);
+  const geoTotalGlobal = geoTotals.reduce((a, b) => a + b, 0);
+  const geoPalette = [
+    '#C8956C', '#1B263B', '#E0A458', '#2E7D32', '#8A8A8A',
+    '#A0522D', '#6B8E9F', '#B08968',
+  ];
+  const geoColors = geoLabels.map((_, i) => geoPalette[i % geoPalette.length]);
 
-  const geoOptions = {
-    chart: {
-      type: 'bar',
-      height: 300,
-      toolbar: { show: false },
-      fontFamily: 'Inter, sans-serif',
-      foreColor: '#8A8A8A',
-    },
-    series: [{ name: 'Commandes', data: geoTotals }],
-    plotOptions: {
-      bar: { borderRadius: 4, horizontal: true, distributed: true },
-    },
-    legend: { show: false },
-    xaxis: {
-      categories: geoCategories,
-      labels: { style: { colors: '#8A8A8A', fontSize: '11px' } },
-    },
-    colors: ['#C8956C', '#E0A458', '#1B263B', '#8A8A8A', '#2E7D32'],
-    grid: { borderColor: '#E8E2D8', strokeDashArray: 4 },
-    dataLabels: { enabled: true },
-    tooltip: { theme: 'light' },
-    noData: {
-      text: 'Aucune commande localisée',
-      style: { color: '#8A8A8A', fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+  // Plugin maison : affiche le total au centre du donut.
+  const centreTextPlugin = {
+    id: 'centreTextPlugin',
+    afterDraw() {
+      document.getElementById('chart-geo-total').textContent = geoTotalGlobal;
     },
   };
 
-  const chartGeo = new ApexCharts(document.querySelector("#chart-geo"), geoOptions);
-  chartGeo.render();
+  if (geoLabels.length) {
+    new Chart(document.getElementById('chart-geo-canvas'), {
+      type: 'doughnut',
+      data: {
+        labels: geoLabels,
+        datasets: [{
+          data: geoTotals,
+          backgroundColor: geoColors,
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 6,
+        }],
+      },
+      plugins: [centreTextPlugin],
+      options: {
+        cutout: '68%',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }, // légende maison (HTML) ci-dessous, plus lisible
+          tooltip: {
+            backgroundColor: '#fff',
+            titleColor: '#2C2C2C',
+            bodyColor: '#2C2C2C',
+            borderColor: '#E8E2D8',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label(ctx) {
+                const pct = ((ctx.parsed / geoTotalGlobal) * 100).toFixed(0);
+                return ` ${ctx.label} : ${ctx.parsed} commande(s) (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Légende maison en HTML (style cohérent avec le reste du dashboard,
+    // plutôt que la légende par défaut de Chart.js).
+    const legendeHtml = geoLabels.map((label, i) => {
+      const pct = ((geoTotals[i] / geoTotalGlobal) * 100).toFixed(0);
+      return `<li>
+        <span class="dot" style="background:${geoColors[i]}"></span>
+        <span class="nom">${label}</span>
+        <span class="pct">${pct}%</span>
+      </li>`;
+    }).join('');
+    document.getElementById('chart-geo-legend').innerHTML = legendeHtml;
+  }
 </script>
 
 {% endblock %}
