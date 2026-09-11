@@ -341,11 +341,13 @@ def generer_notifications_stock(commercant):
 def repartition_geographique_commandes(commercant):
     """
     Analyse de répartition géographique des commandes (§5.4) : regroupe
-    les commandes contenant des produits du commerçant par région,
-    avec le nombre de commandes et le chiffre d'affaires correspondant.
-    Aide le commerçant à identifier ses zones de vente les plus actives.
+    les commandes contenant des produits du commerçant par région, avec
+    le nombre de commandes, le chiffre d'affaires, et le TYPE DE PRODUIT
+    (catégorie) le plus demandé dans cette région. Aide le commerçant à
+    identifier ses zones de vente les plus actives et ce qui s'y vend le
+    mieux, pour adapter son offre par localité.
     """
-    from apps.commandes.models import Commande
+    from apps.commandes.models import Commande, LignePanier
 
     commandes = (
         Commande.objects
@@ -364,6 +366,34 @@ def repartition_geographique_commandes(commercant):
         )
         entry['nb_commandes'] += 1
         entry['montant_total'] += commande.montant_total
+
+    # Produit (catégorie) le plus demandé par région : on agrège les
+    # quantités vendues par région + catégorie, puis on ne garde que la
+    # catégorie en tête pour chaque région.
+    quantites_par_region_categorie = (
+        LignePanier.objects
+        .filter(
+            produit__commercant=commercant,
+            commande__isnull=False,
+            commande__statut__in=['en_preparation', 'livree'],
+        )
+        .values('commande__region__nom', 'produit__categorie__nom')
+        .annotate(quantite=Sum('quantite'))
+        .order_by('commande__region__nom', '-quantite')
+    )
+
+    top_categorie_par_region = {}
+    for ligne in quantites_par_region_categorie:
+        nom_region = ligne['commande__region__nom'] or "Non renseignée"
+        # Première occurrence rencontrée pour cette région = la plus
+        # vendue (grâce au tri -quantite ci-dessus).
+        if nom_region not in top_categorie_par_region:
+            top_categorie_par_region[nom_region] = (
+                ligne['produit__categorie__nom'] or "Non catégorisé"
+            )
+
+    for nom_region, entry in stats_par_region.items():
+        entry['top_categorie'] = top_categorie_par_region.get(nom_region, "—")
 
     return sorted(
         stats_par_region.values(),
