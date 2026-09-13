@@ -79,6 +79,9 @@
       <li class="nav-item">
         <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Produits</a>
       </li>
+       <li class="nav-item">
+        <a class="nav-link" href="{% url 'sad:dashboard' %}">Dashboard </a>
+      </li>
       {% endif %}
 
       {% if user.is_authenticated and user.role == 'admin' %}
@@ -258,7 +261,7 @@
         </a>
       {% endif %}
 
-      {% if commercant_boutique %}
+      {% if commercant_boutique and user.role != 'commercant' and user.role != 'admin' %}
         <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
            target="_blank" rel="noopener"
            class="navbar-whatsapp-btn" title="Discuter sur WhatsApp">
