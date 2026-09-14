@@ -58,7 +58,21 @@ def dashboard(request):
     evenements_proches = [e for e in EvenementSAD.objects.all() if e.est_proche()]
     saison = get_saison_actuelle()
 
-    notifications = Notification.objects.filter(commercant=commercant, lu=False)[:2]
+    # Compteur total réel des notifications non lues (pour l'en-tête de
+    # la carte), séparé de l'aperçu affiché ci-dessous. Avant, le header
+    # utilisait la longueur de la liste déjà tronquée (voir plus bas),
+    # ce qui affichait un chiffre faux (toujours "2" ou "0" selon la
+    # limite codée en dur, jamais le vrai total).
+    notifications_non_lues_total = Notification.objects.filter(
+        commercant=commercant, lu=False
+    ).count()
+    # Aperçu : les 5 notifications non lues les plus récentes (déjà
+    # triées par date décroissante, voir Notification.Meta.ordering).
+    # Le lien "voir toutes" permet de consulter le reste.
+    notifications = list(
+        Notification.objects.filter(commercant=commercant, lu=False)[:5]
+    )
+    notifications_restantes = max(0, notifications_non_lues_total - len(notifications))
 
     repartition_geo = repartition_geographique_commandes(commercant)
 
@@ -85,6 +99,8 @@ def dashboard(request):
         'evenements_proches': evenements_proches,
         'saison': saison,
         'notifications': notifications,
+        'notifications_non_lues_total': notifications_non_lues_total,
+        'notifications_restantes': notifications_restantes,
         'ventes_par_jour_json': json.dumps(ventes_par_jour, cls=DjangoJSONEncoder),
         'repartition_geo': repartition_geo,
         'repartition_geo_json': json.dumps(

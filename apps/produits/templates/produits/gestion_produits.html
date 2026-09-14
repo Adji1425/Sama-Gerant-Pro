@@ -159,30 +159,38 @@
             {% endif %}
           </td>
           <td class="text-end">
-            <a href="{% url 'produits:fiche_produit' produit.pk %}"
-               class="btn-table-icon" title="Voir" target="_blank" rel="noopener">
-              <i class="bi bi-eye"></i>
-            </a>
-            <a href="{% url 'produits:modifier_produit' produit.pk %}"
-               class="btn-table-icon" title="Modifier">
-              <i class="bi bi-pencil"></i>
-            </a>
             {% if produit.statut == 'actif' %}
-            <a href="{% url 'produits:archiver_produit' produit.pk %}"
-               class="btn-table-icon danger" title="Archiver"
-               onclick="return confirm('Confirmer cette action ?');">
-              <i class="bi bi-archive"></i>
-            </a>
-            {% elif produit.statut == 'archive' %}
-            <a href="{% url 'produits:archiver_produit' produit.pk %}"
-               class="btn-table-icon" title="Réactiver"
-               onclick="return confirm('Confirmer cette action ?');">
-              <i class="bi bi-arrow-counterclockwise"></i>
-            </a>
-            <a href="{% url 'produits:supprimer_produit' produit.pk %}"
-               class="btn-table-icon danger" title="Supprimer">
-              <i class="bi bi-trash"></i>
-            </a>
+              <a href="{% url 'produits:fiche_produit' produit.pk %}"
+                 class="btn-table-icon" title="Voir" target="_blank" rel="noopener">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'produits:modifier_produit' produit.pk %}"
+                 class="btn-table-icon" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'produits:archiver_produit' produit.pk %}"
+                 class="btn-table-icon danger"
+                 title="Archiver"
+                 onclick="return confirm('Confirmer cette action ?');">
+                <i class="bi bi-archive"></i>
+              </a>
+            {% else %}
+              <!-- Produit archivé : uniquement Réactiver ou Supprimer
+                   (§5.2.1 du cahier des charges). La suppression est
+                   "douce" : l'historique (commandes, factures passées)
+                   n'est jamais perdu. -->
+              <a href="{% url 'produits:archiver_produit' produit.pk %}"
+                 class="btn-table-icon"
+                 title="Réactiver"
+                 onclick="return confirm('Réactiver ce produit ?');">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </a>
+              <a href="{% url 'produits:supprimer_produit' produit.pk %}"
+                 class="btn-table-icon danger"
+                 title="Supprimer"
+                 onclick="return confirm('Supprimer définitivement ce produit du catalogue ? (l\'historique de vos anciennes commandes sera conservé)');">
+                <i class="bi bi-trash"></i>
+              </a>
             {% endif %}
           </td>
         </tr>

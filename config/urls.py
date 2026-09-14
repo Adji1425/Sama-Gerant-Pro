@@ -68,7 +68,7 @@ def home(request):
         {
             # Clients distincts (pas juste le nombre d'avis) ayant laissé
             # une note de 4 ou 5 étoiles.
-            'valeur': f"{Avis.objects.filter(note__gte=4).values('client').distinct().count()}+",
+            'valeur': f"{Avis.objects.filter(note__gte=7).values('client').distinct().count()}+",
             'label': 'Clients satisfaits'
         },
         {

@@ -42,7 +42,7 @@ def categories(request):
 
 
 def catalogue(request):
-    produits = Produit.objects.exclude(statut='supprime').filter(
+    produits = Produit.objects.filter(
         statut='actif'
     ).prefetch_related('images').select_related('categorie')
 
@@ -112,8 +112,10 @@ def fiche_produit(request, pk):
 @commercant_required
 def gestion_produits(request):
     commercant = request.user.commercant
-    produits = Produit.objects.exclude(statut='supprime').filter(
+    produits = Produit.objects.filter(
         commercant=commercant
+    ).exclude(
+        statut='supprime'
     ).select_related('categorie').order_by('-date_creation')
 
     # KPI calculés sur l'ensemble des produits du commerçant, avant filtrage
@@ -227,11 +229,31 @@ def archiver_produit(request, pk):
     return redirect('produits:gestion_produits')
 
 
+@commercant_required
+def supprimer_produit(request, pk):
+    """
+    Suppression "douce" d'un produit archivé (§5.2.1 du cahier des
+    charges) : le produit passe au statut 'supprime' et disparaît de
+    tous les listings (catalogue, actifs, archivés), mais la ligne
+    reste en base. Les commandes/factures passées qui le référencent
+    restent donc intactes, et les statistiques historiques du SAD ne
+    sont pas faussées. Uniquement disponible depuis l'onglet "Archivés"
+    (on ne supprime jamais un produit encore en vente).
+    """
+    produit = get_object_or_404(
+        Produit, pk=pk, commercant=request.user.commercant, statut='archive'
+    )
+    produit.statut = 'supprime'
+    produit.save()
+    messages.success(request, f"'{produit.nom}' a été supprimé du catalogue.")
+    return redirect('produits:gestion_produits')
+
+
 # ── STOCK ─────────────────────────────────────────────────────────────────────
 @commercant_required
 def gestion_stock(request):
     commercant = request.user.commercant
-    tous_produits = Produit.objects.exclude(statut='supprime').filter(
+    tous_produits = Produit.objects.filter(
         commercant=commercant, statut='actif'
     ).order_by('quantite')
 
@@ -311,8 +333,9 @@ def ajouter_approvisionnement(request):
 # ── DÉPENSES ──────────────────────────────────────────────────────────────────
 @commercant_required
 def gestion_depenses(request):
-    from django.db.models import Sum, Count
-    from django.db.models.functions import TruncWeek, TruncMonth
+    import calendar
+    from datetime import date
+
     commercant = request.user.commercant
     toutes_depenses = Depense.objects.filter(commercant=commercant).order_by('-date')
 
@@ -329,16 +352,71 @@ def gestion_depenses(request):
             Q(type__icontains=recherche) | Q(description__icontains=recherche)
         )
 
-    vue_periode = request.GET.get('vue', 'semaine')
-    trunc = TruncWeek if vue_periode == 'semaine' else TruncMonth
-    depenses_groupees = depenses.annotate(periode=trunc('date')).values('periode').annotate(total_periode=Sum('montant'), nb_periode=Count('id')).order_by('-periode')
+    # ── Vue calendrier (façon Wave) : dépenses du mois affichées jour par
+    # jour, pour repérer d'un coup d'œil les périodes d'achat/réappro. ──
+    aujourdhui = date.today()
+    try:
+        mois = int(request.GET.get('mois', aujourdhui.month))
+        annee = int(request.GET.get('annee', aujourdhui.year))
+        date(annee, mois, 1)  # valide la combinaison mois/année
+    except (ValueError, TypeError):
+        mois, annee = aujourdhui.month, aujourdhui.year
+
+    depenses_du_mois = Depense.objects.filter(
+        commercant=commercant, date__year=annee, date__month=mois
+    )
+    depenses_par_jour = {}
+    for d in depenses_du_mois:
+        depenses_par_jour.setdefault(d.date.day, []).append(d)
+
+    cal = calendar.Calendar(firstweekday=0)  # semaine commence lundi
+    calendrier_semaines = []
+    for semaine in cal.monthdayscalendar(annee, mois):
+        jours_semaine = []
+        for jour in semaine:
+            if jour == 0:
+                jours_semaine.append(None)
+            else:
+                depenses_jour = depenses_par_jour.get(jour, [])
+                jours_semaine.append({
+                    'jour': jour,
+                    'depenses': depenses_jour,
+                    'total_jour': sum(d.montant for d in depenses_jour),
+                    'est_aujourdhui': (
+                        jour == aujourdhui.day
+                        and mois == aujourdhui.month
+                        and annee == aujourdhui.year
+                    ),
+                })
+        calendrier_semaines.append(jours_semaine)
+
+    mois_precedent = mois - 1 if mois > 1 else 12
+    annee_mois_precedent = annee if mois > 1 else annee - 1
+    mois_suivant = mois + 1 if mois < 12 else 1
+    annee_mois_suivant = annee if mois < 12 else annee + 1
+
+    noms_mois = [
+        '', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet',
+        'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+    ]
+
     return render(request, 'produits/gestion_depenses.html', {
         'depenses': depenses,
         'total': total,
         'nb_depenses': nb_depenses,
-        'vue_periode': vue_periode,
-        'depenses_groupees': depenses_groupees,
         'recherche': recherche,
+        'vue': request.GET.get('vue', 'calendrier'),
+        'calendrier_semaines': calendrier_semaines,
+        'mois_actuel': mois,
+        'annee_actuelle': annee,
+        'nom_mois_actuel': noms_mois[mois],
+        'mois_precedent': mois_precedent,
+        'annee_mois_precedent': annee_mois_precedent,
+        'mois_suivant': mois_suivant,
+        'annee_mois_suivant': annee_mois_suivant,
+        'total_mois': sum(d.montant for d in depenses_du_mois),
+        'est_mois_courant': (mois == aujourdhui.month and annee == aujourdhui.year),
+        'aujourdhui': aujourdhui,
     })
 
 
@@ -392,32 +470,3 @@ def mes_favoris(request):
     ).select_related('produit').prefetch_related('produit__images')
 
     return render(request, 'produits/mes_favoris.html', {'favoris': favoris})
-
-@commercant_required
-def supprimer_produit(request, pk):
-    """
-    Suppression 'douce' : le produit passe au statut 'supprime' au lieu
-    d'être réellement effacé, pour préserver l'historique des ventes
-    passées (DetailsCommande/LignePanier qui le référencent).
-    Uniquement possible depuis un produit déjà archivé, pour éviter
-    une suppression accidentelle d'un produit encore en vente.
-    """
-    produit = get_object_or_404(
-        Produit, pk=pk, commercant=request.user.commercant
-    )
-    if produit.statut != 'archive':
-        messages.error(
-            request,
-            "Seul un produit archivé peut être supprimé. Archivez-le d'abord."
-        )
-        return redirect('produits:gestion_produits')
-
-    if request.method == 'POST':
-        produit.statut = 'supprime'
-        produit.save()
-        messages.success(request, f"'{produit.nom}' a été supprimé.")
-        return redirect('produits:gestion_produits')
-
-    return render(request, 'produits/confirmer_suppression_produit.html', {
-        'produit': produit,
-    })
