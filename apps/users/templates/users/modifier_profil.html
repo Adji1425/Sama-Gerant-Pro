@@ -36,27 +36,15 @@
         {% endif %}
 
         {% if request.user.est_commercant %}
-        <hr class="my-4">
-        <h6 class="fw-semibold mb-3" style="color:#1B263B;">
-          <i class="bi bi-shop me-1"></i>Ma boutique
-        </h6>
-        <div class="mb-3">
+         <div class="mb-3">
           <label class="form-label fw-semibold small">Nom de la boutique</label>
           <input type="text" name="nom_boutique"
                  class="form-control"
                  value="{{ request.user.commercant.nom_boutique }}"
                  placeholder="Nom de votre boutique" required>
         </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold small">Logo de la boutique</label>
-          {% if request.user.commercant.logo %}
-            <div class="mb-2">
-              <img src="{{ request.user.commercant.logo.url }}" alt="Logo actuel"
-                   style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E8E2D8;">
-            </div>
-          {% endif %}
-         
-        </div>
+        
+      
         {% endif %}
 
         <div class="d-flex gap-2 mt-4">
