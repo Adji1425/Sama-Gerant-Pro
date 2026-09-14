@@ -42,7 +42,7 @@ def categories(request):
 
 
 def catalogue(request):
-    produits = Produit.objects.filter(
+    produits = Produit.objects.exclude(statut='supprime').filter(
         statut='actif'
     ).prefetch_related('images').select_related('categorie')
 
@@ -112,7 +112,7 @@ def fiche_produit(request, pk):
 @commercant_required
 def gestion_produits(request):
     commercant = request.user.commercant
-    produits = Produit.objects.filter(
+    produits = Produit.objects.exclude(statut='supprime').filter(
         commercant=commercant
     ).select_related('categorie').order_by('-date_creation')
 
@@ -231,7 +231,7 @@ def archiver_produit(request, pk):
 @commercant_required
 def gestion_stock(request):
     commercant = request.user.commercant
-    tous_produits = Produit.objects.filter(
+    tous_produits = Produit.objects.exclude(statut='supprime').filter(
         commercant=commercant, statut='actif'
     ).order_by('quantite')
 
@@ -311,6 +311,8 @@ def ajouter_approvisionnement(request):
 # ── DÉPENSES ──────────────────────────────────────────────────────────────────
 @commercant_required
 def gestion_depenses(request):
+    from django.db.models import Sum, Count
+    from django.db.models.functions import TruncWeek, TruncMonth
     commercant = request.user.commercant
     toutes_depenses = Depense.objects.filter(commercant=commercant).order_by('-date')
 
@@ -327,10 +329,15 @@ def gestion_depenses(request):
             Q(type__icontains=recherche) | Q(description__icontains=recherche)
         )
 
+    vue_periode = request.GET.get('vue', 'semaine')
+    trunc = TruncWeek if vue_periode == 'semaine' else TruncMonth
+    depenses_groupees = depenses.annotate(periode=trunc('date')).values('periode').annotate(total_periode=Sum('montant'), nb_periode=Count('id')).order_by('-periode')
     return render(request, 'produits/gestion_depenses.html', {
         'depenses': depenses,
         'total': total,
         'nb_depenses': nb_depenses,
+        'vue_periode': vue_periode,
+        'depenses_groupees': depenses_groupees,
         'recherche': recherche,
     })
 
@@ -385,3 +392,32 @@ def mes_favoris(request):
     ).select_related('produit').prefetch_related('produit__images')
 
     return render(request, 'produits/mes_favoris.html', {'favoris': favoris})
+
+@commercant_required
+def supprimer_produit(request, pk):
+    """
+    Suppression 'douce' : le produit passe au statut 'supprime' au lieu
+    d'être réellement effacé, pour préserver l'historique des ventes
+    passées (DetailsCommande/LignePanier qui le référencent).
+    Uniquement possible depuis un produit déjà archivé, pour éviter
+    une suppression accidentelle d'un produit encore en vente.
+    """
+    produit = get_object_or_404(
+        Produit, pk=pk, commercant=request.user.commercant
+    )
+    if produit.statut != 'archive':
+        messages.error(
+            request,
+            "Seul un produit archivé peut être supprimé. Archivez-le d'abord."
+        )
+        return redirect('produits:gestion_produits')
+
+    if request.method == 'POST':
+        produit.statut = 'supprime'
+        produit.save()
+        messages.success(request, f"'{produit.nom}' a été supprimé.")
+        return redirect('produits:gestion_produits')
+
+    return render(request, 'produits/confirmer_suppression_produit.html', {
+        'produit': produit,
+    })

@@ -19,6 +19,7 @@ class Produit(models.Model):
     STATUT_CHOICES = [
         ('actif', 'Actif'),
         ('archive', 'Archivé'),
+        ('supprime', 'Supprimé'),
     ]
     commercant = models.ForeignKey(
         Commercant, on_delete=models.CASCADE, related_name='produits'

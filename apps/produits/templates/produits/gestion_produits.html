@@ -167,16 +167,23 @@
                class="btn-table-icon" title="Modifier">
               <i class="bi bi-pencil"></i>
             </a>
+            {% if produit.statut == 'actif' %}
             <a href="{% url 'produits:archiver_produit' produit.pk %}"
-               class="btn-table-icon danger"
-               title="{% if produit.statut == 'actif' %}Archiver{% else %}Réactiver{% endif %}"
+               class="btn-table-icon danger" title="Archiver"
                onclick="return confirm('Confirmer cette action ?');">
-              {% if produit.statut == 'actif' %}
-                <i class="bi bi-archive"></i>
-              {% else %}
-                <i class="bi bi-arrow-counterclockwise"></i>
-              {% endif %}
+              <i class="bi bi-archive"></i>
             </a>
+            {% elif produit.statut == 'archive' %}
+            <a href="{% url 'produits:archiver_produit' produit.pk %}"
+               class="btn-table-icon" title="Réactiver"
+               onclick="return confirm('Confirmer cette action ?');">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+            <a href="{% url 'produits:supprimer_produit' produit.pk %}"
+               class="btn-table-icon danger" title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

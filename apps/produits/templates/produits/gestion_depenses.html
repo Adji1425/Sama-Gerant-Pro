@@ -44,6 +44,42 @@
   </div>
 </div>
 
+<!-- Vue par période (calendrier des dépenses, style Wave) -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <h6 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-calendar3 me-2"></i>Vue par période
+  </h6>
+  <div class="btn-group btn-group-sm" role="group">
+    <a href="?vue=semaine{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="btn {% if vue_periode == 'semaine' %}btn-dark{% else %}btn-outline-dark{% endif %}">Semaine</a>
+    <a href="?vue=mois{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="btn {% if vue_periode == 'mois' %}btn-dark{% else %}btn-outline-dark{% endif %}">Mois</a>
+  </div>
+</div>
+
+{% if depenses_groupees %}
+  <div class="dash-table-wrap mb-4">
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>{% if vue_periode == 'semaine' %}Semaine du{% else %}Mois{% endif %}</th>
+          <th>Nombre de dépenses</th>
+          <th class="text-end">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for groupe in depenses_groupees %}
+        <tr>
+          <td>{{ groupe.periode|date:"d/m/Y" }}</td>
+          <td>{{ groupe.nb_periode }}</td>
+          <td class="text-end fw-semibold" style="color:#C47B8A;">{{ groupe.total_periode|floatformat:0 }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
 <div class="d-flex justify-content-end align-items-center flex-wrap gap-3 mb-4">
 
   <!-- Recherche -->
