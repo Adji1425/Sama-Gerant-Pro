@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer un produit{% endblock %}
+{% block content %}
+<div class="mx-auto" style="max-width:500px;">
+  <h4 class="fw-bold mb-3" style="color:#1B263B;">
+    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirmer la suppression
+  </h4>
+  <p>
+    Voulez-vous vraiment supprimer <strong>« {{ produit.nom }} »</strong> ?
+  </p>
+  <p class="text-muted small">
+    Le produit ne sera plus visible dans votre catalogue, mais restera
+    consultable dans l'historique (onglet « Supprimés ») afin de préserver
+    la traçabilité de vos ventes passées.
+  </p>
+  <form method="post" class="d-flex gap-2 mt-4">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger fw-semibold px-4">
+      <i class="bi bi-trash me-1"></i>Confirmer la suppression
+    </button>
+    <a href="{% url 'produits:gestion_produits' %}" class="btn btn-outline-secondary px-4">
+      Annuler
+    </a>
+  </form>
+</div>
+{% endblock %}
