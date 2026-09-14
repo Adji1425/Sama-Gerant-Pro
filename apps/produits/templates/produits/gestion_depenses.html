@@ -44,141 +44,110 @@
   </div>
 </div>
 
-<!-- Bascule Calendrier / Liste -->
-<div class="depenses-view-toggle mb-4">
-  <a href="?vue=calendrier" class="dv-toggle-btn {% if vue == 'calendrier' %}active{% endif %}">
-    <i class="bi bi-calendar3 me-1"></i>Calendrier
-  </a>
-  <a href="?vue=liste" class="dv-toggle-btn {% if vue == 'liste' %}active{% endif %}">
-    <i class="bi bi-list-ul me-1"></i>Liste
-  </a>
+<!-- Vue par période (calendrier des dépenses, style Wave) -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <h6 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-calendar3 me-2"></i>Vue par période
+  </h6>
+  <div class="btn-group btn-group-sm" role="group">
+    <a href="?vue=semaine{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="btn {% if vue_periode == 'semaine' %}btn-dark{% else %}btn-outline-dark{% endif %}">Semaine</a>
+    <a href="?vue=mois{% if recherche %}&q={{ recherche }}{% endif %}"
+       class="btn {% if vue_periode == 'mois' %}btn-dark{% else %}btn-outline-dark{% endif %}">Mois</a>
+  </div>
 </div>
 
-{% if vue == 'liste' %}
-
-  <div class="d-flex justify-content-end align-items-center flex-wrap gap-3 mb-4">
-
-    <!-- Recherche -->
-    <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
-          style="flex:1 1 auto;max-width:340px;">
-      <input type="hidden" name="vue" value="liste">
-
-      <div class="position-relative" style="width:210px;">
-        <i class="bi bi-search"
-           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
-        <input type="text" name="q" value="{{ recherche }}"
-               placeholder="Type ou description"
-               class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
-      </div>
-
-      <button type="submit" class="btn btn-sm fw-semibold"
-              style="background-color:#1B263B;color:white;">
-        <i class="bi bi-search"></i>
-      </button>
-
-      {% if recherche %}
-        <a href="?vue=liste" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
-          <i class="bi bi-x-lg"></i>
-        </a>
-      {% endif %}
-    </form>
-
+{% if depenses_groupees %}
+  <div class="dash-table-wrap mb-4">
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>{% if vue_periode == 'semaine' %}Semaine du{% else %}Mois{% endif %}</th>
+          <th>Nombre de dépenses</th>
+          <th class="text-end">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for groupe in depenses_groupees %}
+        <tr>
+          <td>{{ groupe.periode|date:"d/m/Y" }}</td>
+          <td>{{ groupe.nb_periode }}</td>
+          <td class="text-end fw-semibold" style="color:#C47B8A;">{{ groupe.total_periode|floatformat:0 }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+{% endif %}
 
-  {% if depenses %}
-    <div class="dash-table-wrap">
-      <table class="dash-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th class="text-end">Montant</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for depense in depenses %}
-          <tr>
-            <td>{{ depense.date|date:"d/m/Y" }}</td>
-            <td>
-              <span class="dash-row-title">{{ depense.type }}</span>
-            </td>
-            <td class="text-muted">{{ depense.description|default:"—" }}</td>
-            <td class="text-end fw-semibold" style="color:#1B263B;">{{ depense.montant|floatformat:0 }} FCFA</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="text-center py-5 text-muted">
-      <i class="bi bi-cash-stack fs-1 d-block mb-3"></i>
-      {% if recherche %}
-        <h5>Aucune dépense ne correspond à votre recherche</h5>
-      {% else %}
-        <h5>Aucune dépense enregistrée</h5>
-        <p>Suivez ici vos frais (transport, emballage, publicité...)</p>
-        <a href="{% url 'produits:ajouter_depense' %}"
-           class="btn fw-semibold px-4"
-           style="background-color:#1B263B;color:white;">
-          <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
-        </a>
-      {% endif %}
-    </div>
-  {% endif %}
+<div class="d-flex justify-content-end align-items-center flex-wrap gap-3 mb-4">
 
+  <!-- Recherche -->
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center justify-content-end"
+        style="flex:1 1 auto;max-width:340px;">
+
+    <div class="position-relative" style="width:210px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" value="{{ recherche }}"
+             placeholder="Type ou description"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;">
+      <i class="bi bi-search"></i>
+    </button>
+
+    {% if recherche %}
+      <a href="{% url 'produits:gestion_depenses' %}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+
+</div>
+
+{% if depenses %}
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th class="text-end">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for depense in depenses %}
+        <tr>
+          <td>{{ depense.date|date:"d/m/Y" }}</td>
+          <td>
+            <span class="dash-row-title">{{ depense.type }}</span>
+          </td>
+          <td class="text-muted">{{ depense.description|default:"—" }}</td>
+          <td class="text-end fw-semibold" style="color:#1B263B;">{{ depense.montant|floatformat:0 }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% else %}
-
-  <!-- ══ VUE CALENDRIER (façon Wave) ═══════════════════════════════════════ -->
-  <div class="depenses-calendrier">
-    <div class="cal-nav">
-      <a href="?vue=calendrier&mois={{ mois_precedent }}&annee={{ annee_mois_precedent }}" class="cal-nav-btn">
-        <i class="bi bi-chevron-left"></i>
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-cash-stack fs-1 d-block mb-3"></i>
+    {% if recherche %}
+      <h5>Aucune dépense ne correspond à votre recherche</h5>
+    {% else %}
+      <h5>Aucune dépense enregistrée</h5>
+      <p>Suivez ici vos frais (transport, emballage, publicité...)</p>
+      <a href="{% url 'produits:ajouter_depense' %}"
+         class="btn fw-semibold px-4"
+         style="background-color:#1B263B;color:white;">
+        <i class="bi bi-plus-lg me-1"></i>Ajouter une dépense
       </a>
-      <div class="cal-nav-title">
-        {{ nom_mois_actuel }} {{ annee_actuelle }}
-        {% if not est_mois_courant %}
-          <a href="?vue=calendrier" class="cal-nav-today">Aujourd'hui</a>
-        {% endif %}
-      </div>
-      <a href="?vue=calendrier&mois={{ mois_suivant }}&annee={{ annee_mois_suivant }}" class="cal-nav-btn">
-        <i class="bi bi-chevron-right"></i>
-      </a>
-    </div>
-
-    <div class="cal-total-mois">
-      Total du mois : <strong>{{ total_mois|floatformat:0 }} FCFA</strong>
-    </div>
-
-    <div class="cal-grid">
-      <div class="cal-grid-header">
-        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
-      </div>
-      {% for semaine in calendrier_semaines %}
-        <div class="cal-grid-row">
-          {% for jour in semaine %}
-            {% if jour %}
-              <div class="cal-day {% if jour.est_aujourdhui %}cal-day-today{% endif %} {% if jour.depenses %}cal-day-has-data{% endif %}">
-                <div class="cal-day-number">{{ jour.jour }}</div>
-                {% for d in jour.depenses|slice:":2" %}
-                  <div class="cal-day-entry" title="{{ d.description|default:d.type }}">
-                    <span class="cal-entry-type">{{ d.type }}</span>
-                    <span class="cal-entry-montant">-{{ d.montant|floatformat:0 }}</span>
-                  </div>
-                {% endfor %}
-                {% if jour.depenses|length > 2 %}
-                  <div class="cal-day-more">+{{ jour.depenses|length|add:"-2" }} autre(s)</div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="cal-day cal-day-empty"></div>
-            {% endif %}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    </div>
+    {% endif %}
   </div>
-
 {% endif %}
 
 {% endblock %}
