@@ -63,15 +63,6 @@
   .info-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;}
   .info-sub{font-size:12px;color:var(--muted);line-height:1.5;}
 
-  .notif-item{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
-    padding:14px 16px;border-radius:var(--r-sm);background:var(--cream-light);
-    border-left:3px solid var(--gold);margin-bottom:10px;}
-  .notif-item:last-child{margin-bottom:0;}
-  .notif-title{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:3px;}
-  .notif-msg{font-size:12.5px;color:var(--muted);line-height:1.5;}
-  .notif-mark{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--gold);white-space:nowrap;
-    display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px;}
-  .notif-mark:hover{color:var(--brown);}
 
   #chart-ventes{margin:0 -6px;}
   #chart-ventes canvas{max-height:300px;}
@@ -292,35 +283,6 @@
       {% endif %}
     </div>
   </div>
-</div>
-
-<!-- ══ NOTIFICATIONS ═════════════════════════════════════════════════════════ -->
-<div class="sad-card mt-3 fade-up fade-up-3">
-  <div class="sad-card-title">
-    <h5>Notifications</h5>
-    <small>{{ notifications_non_lues_total }} non lue{{ notifications_non_lues_total|pluralize }}</small>
-  </div>
-  {% for n in notifications %}
-    <div class="notif-item">
-      <div>
-        <div class="notif-title">{{ n.titre }}</div>
-        <div class="notif-msg">{{ n.message }}</div>
-      </div>
-      <a href="{% url 'sad:notification_lue' n.pk %}" class="notif-mark">
-        <i class="bi bi-check2"></i> Marquer lue
-      </a>
-    </div>
-  {% empty %}
-    <p class="sad-empty">Aucune notification pour le moment.</p>
-  {% endfor %}
-
-  {% if notifications_restantes > 0 %}
-    <a href="{% url 'sad:toutes_notifications' %}"
-       class="btn btn-sm btn-link px-0 mt-1"
-       style="color:var(--gold);text-decoration:none;font-weight:600;font-size:12.5px;">
-      Voir plus ({{ notifications_restantes }}) <i class="bi bi-arrow-right"></i>
-    </a>
-  {% endif %}
 </div>
 
 {% endblock %}
