@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Paiement Wave{% endblock %}
+
+{% block extra_css %}
+<style>
+  .wave-card {
+    max-width: 440px;
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  .wave-header {
+    background: linear-gradient(135deg, #1DC8F2 0%, #0EA5D9 100%);
+    color: #ffffff;
+    padding: 28px 24px 22px;
+    text-align: center;
+  }
+  .wave-logo {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #0EA5D9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 24px;
+    margin: 0 auto 10px;
+  }
+  .wave-brand {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+  .wave-amount {
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 10px;
+  }
+  .wave-body {
+    background: #ffffff;
+    padding: 26px 24px 28px;
+  }
+  .wave-recap-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: #6b6b6b;
+    padding: 3px 0;
+  }
+  .wave-phone-input {
+    border: 1.5px solid #E3E3E3;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    width: 100%;
+  }
+  .wave-phone-input:focus {
+    outline: none;
+    border-color: #1DC8F2;
+  }
+  .btn-wave-pay {
+    background: #1DC8F2;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-weight: 700;
+    width: 100%;
+    font-size: 15px;
+    transition: background 0.15s ease;
+  }
+  .btn-wave-pay:hover { background: #0EA5D9; color: #fff; }
+  .btn-wave-pay:disabled { opacity: 0.7; }
+
+  .wave-processing-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.92);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .wave-spinner {
+    width: 52px;
+    height: 52px;
+    border: 4px solid #E3F7FC;
+    border-top-color: #1DC8F2;
+    border-radius: 50%;
+    animation: wave-spin 0.8s linear infinite;
+  }
+  @keyframes wave-spin { to { transform: rotate(360deg); } }
+  .wave-disclaimer {
+    font-size: 11px;
+    color: #9a9a9a;
+    text-align: center;
+    margin-top: 18px;
+    line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="wave-card">
+  <div class="wave-header">
+    <div class="wave-logo">W</div>
+    <div class="wave-brand">Wave</div>
+    <div class="wave-amount">{{ total|floatformat:0 }} FCFA</div>
+  </div>
+
+  <div class="wave-body">
+    <h6 class="fw-semibold mb-2" style="color:#1B263B;">Récapitulatif</h6>
+    {% for ligne in lignes %}
+      <div class="wave-recap-line">
+        <span>{{ ligne.produit.nom }} × {{ ligne.quantite }}</span>
+        <span>{{ ligne.sous_total|floatformat:0 }} FCFA</span>
+      </div>
+    {% endfor %}
+    <hr class="my-3">
+
+    <form method="POST" id="wave-form">
+      {% csrf_token %}
+
+      <label class="form-label fw-semibold small" style="color:#1B263B;">
+        Numéro Wave
+      </label>
+      <input type="text" class="wave-phone-input mb-3" name="numero_wave"
+             value="{{ telephone_client }}" placeholder="77 000 00 00" required>
+
+      <button type="submit" class="btn-wave-pay" id="wave-pay-btn">
+        <i class="bi bi-lock-fill me-1"></i>
+        Payer {{ total|floatformat:0 }} FCFA
+      </button>
+    </form>
+
+    <p class="wave-disclaimer">
+      Simulation de paiement — projet académique. Aucune transaction réelle
+      n'est effectuée, ni aucune donnée envoyée à Wave.
+    </p>
+  </div>
+</div>
+
+<div class="wave-processing-overlay" id="wave-overlay">
+  <div class="wave-spinner"></div>
+  <div class="fw-semibold" style="color:#1B263B;">Paiement en cours…</div>
+  <div class="text-muted small">Ne fermez pas cette page.</div>
+</div>
+
+<script>
+  document.getElementById('wave-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var form = this;
+    var btn = document.getElementById('wave-pay-btn');
+    var overlay = document.getElementById('wave-overlay');
+
+    btn.disabled = true;
+    overlay.style.display = 'flex';
+
+    // Simulation du temps de traitement d'un vrai paiement mobile money
+    setTimeout(function () {
+      form.submit();
+    }, 2200);
+  });
+</script>
+
+{% endblock %}

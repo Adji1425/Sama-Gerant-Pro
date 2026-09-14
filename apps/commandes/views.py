@@ -192,12 +192,75 @@ def valider_commande(request):
                 )
                 return redirect('commandes:voir_panier')
 
+        # On ne crée PAS encore la commande : les infos de livraison sont
+        # gardées en session le temps du paiement Wave (simulé). La
+        # commande n'est créée — et le commerçant notifié — qu'une fois le
+        # paiement "réussi" dans paiement_wave() ci-dessous.
+        request.session['livraison_pending'] = {
+            'adresse': adresse,
+            'telephone': telephone,
+            'commune': commune,
+            'region_id': region.id,
+        }
+        return redirect('commandes:paiement_wave')
+
+    context = {
+        'panier': panier,
+        'lignes': lignes,
+        'total': sum(l.sous_total() for l in lignes),
+        'client': client,
+        'regions': Region.objects.all(),
+    }
+    return render(request, 'commandes/recap_commande.html', context)
+
+
+@login_required
+def paiement_wave(request):
+    """
+    Simulation d'un paiement Wave avant la création définitive de la
+    commande. Aucun vrai appel à l'API Wave n'est fait ici (pas de clé
+    marchande dans ce projet académique) : on simule juste le temps de
+    traitement côté front (voir paiement_wave.html) puis on valide.
+    """
+    if not hasattr(request.user, 'client'):
+        messages.error(request, "Accès réservé aux clients.")
+        return redirect('home')
+
+    client = request.user.client
+    infos = request.session.get('livraison_pending')
+    if not infos:
+        messages.error(request, "Session de paiement expirée, veuillez réessayer.")
+        return redirect('commandes:voir_panier')
+
+    panier = get_or_create_panier(client)
+    lignes = panier.lignes.filter(commande=None)
+    if not lignes.exists():
+        messages.error(request, "Votre panier est vide.")
+        return redirect('commandes:voir_panier')
+
+    total = sum(l.sous_total() for l in lignes)
+
+    if request.method == 'POST':
+        # Revalidation du stock : le panier a pu changer depuis le récap
+        # (ex: un autre client a acheté la dernière unité entre-temps).
+        for ligne in lignes:
+            if ligne.produit and ligne.quantite > ligne.produit.quantite:
+                messages.error(
+                    request,
+                    f"Stock insuffisant pour {ligne.produit.nom}, "
+                    f"paiement annulé."
+                )
+                request.session.pop('livraison_pending', None)
+                return redirect('commandes:voir_panier')
+
+        region = Region.objects.filter(pk=infos['region_id']).first()
+
         commande = Commande.objects.create(
             client=client,
-            adresse_livraison_reel=adresse,
-            telephone=telephone,
+            adresse_livraison_reel=infos['adresse'],
+            telephone=infos['telephone'],
             region=region,
-            commune=commune,
+            commune=infos['commune'],
             statut='en_attente',
         )
 
@@ -213,20 +276,20 @@ def valider_commande(request):
         commande.calculer_montant()
         _notifier_commercant(commande)
 
+        request.session.pop('livraison_pending', None)
+
         messages.success(
             request,
-            f"✓ Commande #{commande.id} passée avec succès !"
+            f"✓ Paiement Wave accepté — commande #{commande.id} passée avec succès !"
         )
         return redirect('commandes:confirmation', commande_id=commande.id)
 
     context = {
-        'panier': panier,
+        'total': total,
         'lignes': lignes,
-        'total': sum(l.sous_total() for l in lignes),
-        'client': client,
-        'regions': Region.objects.all(),
+        'telephone_client': infos['telephone'],
     }
-    return render(request, 'commandes/recap_commande.html', context)
+    return render(request, 'commandes/paiement_wave.html', context)
 
 
 def _notifier_commercant(commande):
