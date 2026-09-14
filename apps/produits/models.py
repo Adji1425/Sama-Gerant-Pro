@@ -19,6 +19,13 @@ class Produit(models.Model):
     STATUT_CHOICES = [
         ('actif', 'Actif'),
         ('archive', 'Archivé'),
+        # Suppression "douce" (§5.2.1 du cahier des charges : "conserver
+        # l'historique des données pour ne pas fausser les analyses
+        # financières du SAD"). Le produit disparaît de tous les listings
+        # (catalogue, actifs, archivés) mais la ligne reste en base, donc
+        # les anciennes commandes/factures qui le référencent restent
+        # intactes et les statistiques historiques ne sont pas faussées.
+        ('supprime', 'Supprimé'),
     ]
     commercant = models.ForeignKey(
         Commercant, on_delete=models.CASCADE, related_name='produits'

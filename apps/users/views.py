@@ -193,6 +193,14 @@ def modifier_profil(request):
                 if adresse:
                     request.user.client.adresse_livraison = adresse
                     request.user.client.save()
+            # Mettre à jour le nom de la boutique (+ logo) si commerçant
+            if hasattr(request.user, 'commercant'):
+                nouveau_nom = request.POST.get('nom_boutique', '').strip()
+                if nouveau_nom:
+                    request.user.commercant.nom_boutique = nouveau_nom
+                if request.FILES.get('logo_boutique'):
+                    request.user.commercant.logo = request.FILES['logo_boutique']
+                request.user.commercant.save()
             messages.success(request, "Profil mis à jour avec succès !")
             return redirect('users:profil')
         else:
