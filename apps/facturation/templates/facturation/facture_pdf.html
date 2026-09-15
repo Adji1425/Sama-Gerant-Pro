@@ -131,8 +131,11 @@
       <td>
         <p class="infos-label">LIVRÉ À</p>
         <p class="infos-contenu">
-          {{ commande.adresse_livraison_reel }}<br/>
-          {% if commande.commune %}{{ commande.commune }}{% if commande.region %}, {% endif %}{% endif %}{% if commande.region %}{{ commande.region.nom }}{% endif %}
+          {% if commande.commune %}
+            {{ commande.commune }}{% if commande.region %}, {{ commande.region.nom }}{% endif %}
+          {% else %}
+            {{ commande.adresse_livraison_reel }}
+          {% endif %}
         </p>
       </td>
     </tr>
