@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Commande #{{ commande.id }} — Sama-Gérant Pro{% endblock %}
+{% block title %}Commande {{ commande.id }} — Sama-Gérant Pro{% endblock %}
 
 {% block content %}
 
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
   <h4 class="fw-bold mb-0" style="color:#1B263B;">
-    <i class="bi bi-receipt me-2"></i>Commande #{{ commande.id }}
+    <i class="bi bi-receipt me-2"></i>Commande {{ commande.id }}
   </h4>
   <a href="{% url 'commandes:commandes_commercant' %}" class="btn-back-pill">
     <i class="bi bi-arrow-left"></i>Retour aux commandes

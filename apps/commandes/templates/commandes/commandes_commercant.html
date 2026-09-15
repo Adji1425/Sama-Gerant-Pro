@@ -107,7 +107,7 @@
       <tbody>
         {% for commande in commandes %}
         <tr>
-          <td>#{{ commande.id }}</td>
+          <td>{{ commande.id }}</td>
           <td>{{ commande.client.utilisateur.get_full_name }}</td>
           <td>{{ commande.date_commande|date:"d/m/Y H:i" }}</td>
           <td>

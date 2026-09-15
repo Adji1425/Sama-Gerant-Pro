@@ -109,7 +109,7 @@
         <p class="facture-titre">FACTURE</p>
         <p class="facture-numero">
           N° <strong>FAC-{{ facture.id|stringformat:"06d" }}</strong><br/>
-          Commande <strong>#{{ commande.id }}</strong><br/>
+          Commande <strong>{{ commande.id }}</strong><br/>
           Date : {{ facture.date_facture|date:"d/m/Y" }}
         </p>
       </td>

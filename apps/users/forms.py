@@ -101,7 +101,7 @@ class InscriptionForm(UserCreationForm):
         return email
 
     def clean_telephone(self):
-        """Le téléphone doit contenir exactement 9 chiffres"""
+        """Le téléphone doit contenir exactement 9 chiffres, et être unique"""
         telephone = self.cleaned_data.get('telephone', '').strip()
         if not telephone.isdigit():
             raise ValidationError(
@@ -110,6 +110,10 @@ class InscriptionForm(UserCreationForm):
         if len(telephone) != 9:
             raise ValidationError(
                 "Le numéro de téléphone doit contenir exactement 9 chiffres."
+            )
+        if Utilisateur.objects.filter(telephone=telephone).exists():
+            raise ValidationError(
+                "Un compte existe déjà avec ce numéro de téléphone."
             )
         return telephone
 
@@ -253,6 +257,10 @@ class InscriptionCommercantForm(UserCreationForm):
             raise ValidationError(
                 "Le numéro de téléphone doit contenir exactement 9 chiffres."
             )
+        if Utilisateur.objects.filter(telephone=telephone).exists():
+            raise ValidationError(
+                "Un compte existe déjà avec ce numéro de téléphone."
+            )
         return telephone
 
     def clean_password1(self):
@@ -361,6 +369,10 @@ class InscriptionAdminForm(UserCreationForm):
         if len(telephone) != 9:
             raise ValidationError(
                 "Le numéro de téléphone doit contenir exactement 9 chiffres."
+            )
+        if Utilisateur.objects.filter(telephone=telephone).exists():
+            raise ValidationError(
+                "Un compte existe déjà avec ce numéro de téléphone."
             )
         return telephone
 
@@ -485,7 +497,7 @@ class ModifierProfilForm(forms.ModelForm):
         return email
 
     def clean_telephone(self):
-        """Le téléphone doit contenir exactement 9 chiffres"""
+        """Le téléphone doit contenir exactement 9 chiffres, et rester unique (hors compte courant)"""
         telephone = self.cleaned_data.get('telephone', '').strip()
         if telephone:
             if not telephone.isdigit():
@@ -495,5 +507,12 @@ class ModifierProfilForm(forms.ModelForm):
             if len(telephone) != 9:
                 raise ValidationError(
                     "Le numéro de téléphone doit contenir exactement 9 chiffres."
+                )
+            qs = Utilisateur.objects.filter(telephone=telephone)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise ValidationError(
+                    "Un autre compte utilise déjà ce numéro de téléphone."
                 )
         return telephone
