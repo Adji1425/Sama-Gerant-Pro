@@ -1,19 +1,31 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Sama-Gérant Pro — Boutique en ligne au Sénégal{% endblock %}
+{% block body_class %}has-hero-navbar{% endblock %}
 
 {% block full_content %}
 
 <!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
-<section class="hero">
+<section class="hero" style="--hero-bg-image:url('{% static "img/hero-bg.png" %}');">
   <div class="container">
     <div class="hero-content fade-up">
-      <span class="hero-label">Sama-Gérant Pro</span>
-      <h1>Gérez votre boutique<br>intelligemment</h1>
-      <p>Découvrez nos produits de qualité, livrés rapidement<br>
-         partout au Sénégal.</p>
-      <a href="{% url 'produits:catalogue' %}" class="btn-hero">
-        DÉCOUVRIR &nbsp;→
-      </a>
+      {% if user.is_authenticated and user.role == 'commercant' %}
+        <span class="hero-label">Sama-Gérant Pro</span>
+        <h1>Gérez votre boutique<br>intelligemment</h1>
+        <p>Suivez vos ventes, votre stock et vos performances<br>
+           en un coup d'œil.</p>
+        <a href="{% url 'sad:dashboard' %}" class="btn-hero">
+          MON TABLEAU DE BORD &nbsp;→
+        </a>
+      {% else %}
+        <span class="hero-label">Sama-Gérant Pro</span>
+        <h1>Trouvez ce qu'il vous faut,<br>livré vite</h1>
+        <p>Découvrez nos produits de qualité, livrés rapidement<br>
+           partout au Sénégal.</p>
+        <a href="{% url 'produits:catalogue' %}" class="btn-hero">
+          DÉCOUVRIR &nbsp;→
+        </a>
+      {% endif %}
     </div>
   </div>
   <!-- Dots carrousel décoratifs

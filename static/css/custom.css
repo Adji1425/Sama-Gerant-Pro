@@ -79,7 +79,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* Logo carré */
-/* .navbar-logo-box {
+.navbar-logo-box {
   width: 44px;
   height: 44px;
   background: var(--gold-light);
@@ -94,25 +94,21 @@ img { max-width: 100%; display: block; }
   color: var(--brown);
   letter-spacing: 0.02em;
   flex-shrink: 0;
-} */
- 
- /* Logo navbar (image) */
+}
 .navbar-logo-box {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--white);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 50%;
 }
 
 .navbar-logo-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .navbar-brand {
   padding: 0 !important;
@@ -269,10 +265,65 @@ img { max-width: 100%; display: block; }
 .dropdown-divider { border-color: var(--border); margin: 6px 0; }
 
 /* ══════════════════════════════════════════════════════════════
-   HERO
+   NAVBAR TRANSPARENT SUR LE HERO (page d'accueil uniquement)
    ══════════════════════════════════════════════════════════════ */
+/* Le navbar est déjà "sticky-top" (Bootstrap) sur toutes les pages — ce
+   bloc ne change que son fond, et uniquement quand body porte la classe
+   .has-hero-navbar (posée par home.html). Sur toutes les autres pages,
+   rien ne change : navbar crème, statique, comportement d'origine. */
+
+body.has-hero-navbar .hero {
+  /* Remonte le hero de la hauteur du navbar (68px) pour qu'il s'étende
+     jusqu'au tout haut de la fenêtre, "derrière" le navbar transparent —
+     puis on compense avec le padding pour ne pas décaler le contenu. */
+  margin-top: -68px;
+  padding-top: 68px;
+}
+
+body.has-hero-navbar .navbar {
+  background: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Dès que .scrolled est posée par le JS existant (scroll > 60px), le
+   navbar redevient identique à toutes les autres pages. */
+body.has-hero-navbar .navbar.scrolled {
+  background: var(--cream-light) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+/* Texte, logo et icônes en blanc tant que le navbar est transparent sur
+   la photo — repassent en couleur normale dès .scrolled. Le !important
+   est nécessaire pour battre le style inline du nom de marque et les
+   !important déjà présents sur .nav-link. */
+body.has-hero-navbar .navbar:not(.scrolled) .navbar-brand span,
+body.has-hero-navbar .navbar:not(.scrolled) .navbar-nav .nav-link,
+body.has-hero-navbar .navbar:not(.scrolled) .nav-icon-btn {
+  color: #ffffff !important;
+}
+
+body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
+  background: rgba(255,255,255,0.35);
+}
+
+@media (max-width: 991px) {
+  body.has-hero-navbar .hero { margin-top: -68px; padding-top: 68px; }
+}
+
+
 .hero {
-  background: linear-gradient(135deg, #3D1F0D 0%, #5C2E10 50%, #3D1F0D 100%);
+  /* 3 couches superposées : voile brun semi-transparent (lisibilité du
+     texte) + photo de fond (--hero-bg-image, injectée en inline depuis
+     home.html via {% static %}) + dégradé brun d'origine en tout dernier
+     recours si la variable n'est pas définie ou si l'image ne charge pas. */
+  background-image:
+    linear-gradient(135deg, rgba(61,31,13,0.82) 0%, rgba(92,46,16,0.66) 50%, rgba(61,31,13,0.82) 100%),
+    var(--hero-bg-image, none),
+    linear-gradient(135deg, #3D1F0D 0%, #5C2E10 50%, #3D1F0D 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   min-height: 520px;
   display: flex;
   align-items: center;

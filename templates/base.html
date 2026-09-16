@@ -39,36 +39,22 @@
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
 <!-- ══ NAVBAR ════════════════════════════════════════════════════════════════ -->
 <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
   <div class="container">
 
     <!-- Logo -->    
-    <!-- <a class="navbar-brand" href="{% url 'home' %}">
-      <div class="navbar-logo-box">SG</div>
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <div class="navbar-logo-box">
+        <img src="{% static 'img/SGP-LOGO.png' %}" alt="Sama-Gérant Pro">
+      </div>
       <span style="font-family:'Playfair Display',serif;font-size:15px;
                    color:var(--text);font-weight:700;">
         Sama-Gérant Pro
       </span>
-    </a> -->
-
-    <a class="navbar-brand" href="{% url 'home' %}">
-  <div class="navbar-logo-box">
-    <img src="{% static 'img/SGP-LOGO.png' %}" alt="Sama-Gérant Pro">
-  </div>
-  <span style="font-family:'Playfair Display',serif;font-size:15px;
-               color:var(--text);font-weight:700;">
-    Sama-Gérant Pro
-  </span>
-</a>
-
-
-
-
-
-
+    </a>
     <!-- Liens centre (desktop) -->
     <ul class="navbar-nav mx-auto d-none d-lg-flex">
       <li class="nav-item">
