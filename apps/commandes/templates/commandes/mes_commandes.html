@@ -65,7 +65,7 @@
         <div class="col-md-4">
           <span class="text-muted small">
             {% for ligne in commande.lignes.all|slice:":2" %}
-              {{ ligne.produit.nom|default:"Produit supprimé" }}
+              {{ ligne.produit|default:"Produit supprimé" }}
               {% if not forloop.last %}, {% endif %}
             {% endfor %}
             {% if commande.lignes.count > 2 %}

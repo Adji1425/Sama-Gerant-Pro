@@ -27,6 +27,19 @@ class Produit(models.Model):
         # intactes et les statistiques historiques ne sont pas faussées.
         ('supprime', 'Supprimé'),
     ]
+
+    # Chaque variante (couleur/taille) d'un article est enregistrée comme
+    # un produit à part entière, avec son propre stock et ses propres
+    # images. Ces deux champs sont optionnels : un article sans
+    # déclinaison (ex: un jouet) peut les laisser vides.
+    TAILLE_CHOICES = [
+        ('', 'Sans taille'),
+        ('S', 'S'),
+        ('M', 'M'),
+        ('L', 'L'),
+        ('XL', 'XL'),
+        ('XXL', 'XXL'),
+    ]
     commercant = models.ForeignKey(
         Commercant, on_delete=models.CASCADE, related_name='produits'
     )
@@ -45,7 +58,20 @@ class Produit(models.Model):
     # ✅ Attribut ajouté selon le diagramme
     attribut = models.CharField(
         max_length=255, blank=True,
-        help_text="Ex: Taille, Couleur, Matière..."
+        help_text="Ex: Matière, marque, particularité..."
+    )
+    # Couleur et taille de CETTE fiche produit : si un article existe en
+    # plusieurs couleurs/tailles, le commerçant crée une fiche par
+    # déclinaison (ex: "Sac Lacoste" en marron ET "Sac Lacoste" en bleu),
+    # chacune avec son propre stock et ses propres photos. Cela permet au
+    # commerçant de savoir exactement quelle déclinaison a été commandée.
+    couleur = models.CharField(
+        max_length=50, blank=True,
+        help_text="Ex: Marron, Bleu, Rose... (laisser vide si non applicable)"
+    )
+    taille = models.CharField(
+        max_length=10, choices=TAILLE_CHOICES, blank=True,
+        help_text="Laisser vide si l'article n'a pas de taille (ex: jouet)"
     )
     # Stock intégré
     quantite = models.IntegerField(default=0)
@@ -60,7 +86,8 @@ class Produit(models.Model):
         ordering = ['-date_creation']
 
     def __str__(self):
-        return self.nom
+        variante = self.variante_affichee()
+        return f"{self.nom} ({variante})" if variante else self.nom
 
     def marge_nette(self):
         return round(self.prix_vente - self.prix_achat - self.frais_packaging, 2)
@@ -76,6 +103,10 @@ class Produit(models.Model):
 
     def image_principale(self):
         return self.images.first()
+
+    def variante_affichee(self):
+        """Ex: 'Marron' / 'M' / 'Marron · M' / '' si aucun des deux."""
+        return " · ".join(filter(None, [self.couleur, self.taille]))
 
 
 class ImageProd(models.Model):

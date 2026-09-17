@@ -57,6 +57,22 @@
     <!-- Nom -->
     <h1 class="fp-titre">{{ produit.nom }}</h1>
 
+    <!-- Couleur / Taille -->
+    {% if produit.couleur or produit.taille %}
+      <div class="fp-variante-bloc mb-3">
+        {% if produit.couleur %}
+          <span class="fp-badge-variante">
+            <i class="bi bi-palette-fill me-1"></i>{{ produit.couleur }}
+          </span>
+        {% endif %}
+        {% if produit.taille %}
+          <span class="fp-badge-variante">
+            <i class="bi bi-rulers me-1"></i>Taille {{ produit.taille }}
+          </span>
+        {% endif %}
+      </div>
+    {% endif %}
+
     <!-- Note moyenne -->
     <div class="d-flex align-items-center gap-2 mb-3">
       <span class="stars fs-6">
@@ -306,6 +322,24 @@
   color: var(--text);
   margin-bottom: 14px;
   line-height: 1.15;
+}
+
+.fp-variante-bloc {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fp-badge-variante {
+  display: inline-flex;
+  align-items: center;
+  background: var(--cream);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 50px;
 }
 
 .fp-prix-bloc {

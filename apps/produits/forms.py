@@ -23,7 +23,8 @@ class ProduitForm(forms.ModelForm):
         fields = [
             'nom', 'categorie', 'description',
             'prix_achat', 'prix_vente', 'frais_packaging',
-            'attribut', 'quantite', 'seuil_alerte', 'seuil_dormant'
+            'couleur', 'taille', 'attribut',
+            'quantite', 'seuil_alerte', 'seuil_dormant'
         ]
         widgets = {
             'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nom du produit'}),
@@ -31,7 +32,9 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'prix_vente': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'frais_packaging': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
-            'attribut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Taille S/M/L, Couleur...'}),
+            'couleur': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Marron (laisser vide si non applicable)'}),
+            'taille': forms.Select(attrs={'class': 'form-select'}),
+            'attribut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Matière, marque...'}),
             'quantite': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'seuil_alerte': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
             'seuil_dormant': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
@@ -41,7 +44,9 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': "Prix d'achat (FCFA)",
             'prix_vente': 'Prix de vente (FCFA)',
             'frais_packaging': 'Frais packaging (FCFA)',
-            'attribut': 'Attribut (taille, couleur...)',
+            'couleur': 'Couleur',
+            'taille': 'Taille',
+            'attribut': 'Autre attribut (optionnel)',
             'quantite': 'Quantité initiale en stock',
             'seuil_alerte': "Seuil d'alerte stock bas",
             'seuil_dormant': 'Jours sans vente (stock dormant)',
@@ -138,6 +143,7 @@ class ProduitModifierForm(ProduitForm):
         fields = [
             'nom', 'categorie', 'description',
             'prix_achat', 'prix_vente',
+            'couleur', 'taille',
             'quantite', 'seuil_alerte', 'seuil_dormant'
         ]
 

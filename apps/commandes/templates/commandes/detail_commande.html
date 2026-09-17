@@ -140,7 +140,7 @@
 
         <div class="flex-grow-1">
           <div class="fw-semibold" style="color:#1B263B;">
-            {{ ligne.produit.nom|default:"Produit supprimé" }}
+            {{ ligne.produit|default:"Produit supprimé" }}
           </div>
           <div class="text-muted small">
             {{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA

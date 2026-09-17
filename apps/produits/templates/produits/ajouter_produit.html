@@ -54,10 +54,28 @@
             {% if form.frais_packaging.errors %}<div class="text-danger small">{{ form.frais_packaging.errors }}</div>{% endif %}
           </div>
 
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">{{ form.couleur.label }}</label>
+            {{ form.couleur }}
+            {% if form.couleur.errors %}<div class="text-danger small">{{ form.couleur.errors }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">{{ form.taille.label }}</label>
+            {{ form.taille }}
+            {% if form.taille.errors %}<div class="text-danger small">{{ form.taille.errors }}</div>{% endif %}
+          </div>
+
           <div class="col-md-6">
             <label class="form-label fw-semibold small">{{ form.attribut.label }}</label>
             {{ form.attribut }}
             {% if form.attribut.errors %}<div class="text-danger small">{{ form.attribut.errors }}</div>{% endif %}
+            <div class="form-text small mt-1">
+              Astuce : si cet article existe en plusieurs couleurs ou tailles,
+              créez une fiche produit par déclinaison (ex: "Sac Lacoste" en
+              Marron, puis une autre fiche "Sac Lacoste" en Bleu). Chaque
+              fiche garde ainsi son propre stock et ses propres photos.
+            </div>
           </div>
 
           <div class="col-md-2">
