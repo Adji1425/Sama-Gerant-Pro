@@ -263,15 +263,23 @@
         </a>
       {% endif %}
 
-      {% if commercant_boutique and user.role != 'commercant' and user.role != 'admin' %}
-        <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
+
+        <!-- {% if commercant_boutique and user.role != 'commercant' and user.role != 'admin' %}
+        <a href="{% url 'messagerie:liste_conversations' %}"
            target="_blank" rel="noopener"
-           class="navbar-whatsapp-btn" title="Discuter sur WhatsApp">
-          <i class="bi bi-whatsapp"></i>
-          <span>WhatsApp</span>
+           class="whatsapp-float" title="Demander au commercant ">
+          <i class="bi bi-chat-dots me-2"></i>
+          <span  class="d-none d-md-inline">Demander au commercant</span>
+        </a>      
+      {% endif %} -->
+
+      {% if commercant_boutique and user.role != 'commercant' and user.role != 'admin' %}
+        <a href="{% url 'messagerie:liste_conversations' %}"
+           target="_blank" rel="noopener"
+           class="navbar-whatsapp-btn" title="Demander au commercant">
+            <span>Contacter commercant</span>
         </a>      
       {% endif %}
-
     </div>
 
     <!-- Toggler mobile -->
@@ -292,15 +300,6 @@
           </div>
         </form>
 
-        {% if commercant_boutique %}
-          <a href="https://wa.me/221{{ commercant_boutique.utilisateur.telephone }}"
-             target="_blank" rel="noopener"
-             class="navbar-whatsapp-btn d-flex justify-content-center mb-3"
-             style="width:100%;">
-            <i class="bi bi-whatsapp"></i>
-            <span>WhatsApp</span>
-          </a>
-        {% endif %}
 
         <ul class="list-unstyled mb-0">
           <li class="mb-1">
@@ -454,16 +453,6 @@
     </div>
   {% endfor %}
 </div>
-{% endif %}
-
-<!-- ══ BULLE WHATSAPP FLOTTANTE (accueil uniquement) ═══════════════════════════ -->
-{% if commercant_boutique and request.resolver_match.url_name == 'home' and user.role != 'admin' and user.role != 'commercant' %}
-  <a  href="{% url 'messagerie:liste_conversations' %}"
-     target="_blank" rel="noopener"
-     class="whatsapp-float" title="Demander au Commercant">
-    <i class="bi bi-chat-dots me-2"></i>
-    <span class="d-none d-md-inline">Demander au Commercant</span>
-  </a>
 {% endif %}
 
 <!-- ══ CONTENU ═══════════════════════════════════════════════════════════════ -->

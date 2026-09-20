@@ -31,7 +31,12 @@
           <tbody>
             {% for ligne in lignes %}
             <tr>
-              <td>{{ ligne.produit|default:"Produit supprimé" }}</td>
+              <td>
+                {{ ligne.produit.nom|default:"Produit supprimé" }}
+                {% if ligne.variante_label %}
+                  <br><span class="text-muted small">{{ ligne.variante_label }}</span>
+                {% endif %}
+              </td>
               <td>{{ ligne.quantite }}</td>
               <td>{{ ligne.prix_unitaire_vente|floatformat:0 }} FCFA</td>
               <td class="text-end fw-semibold">{{ ligne.sous_total|floatformat:0 }} FCFA</td>

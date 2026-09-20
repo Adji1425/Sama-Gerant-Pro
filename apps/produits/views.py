@@ -105,6 +105,8 @@ def fiche_produit(request, pk):
         'peut_noter': peut_noter,
         'note_moyenne': produit.note_moyenne(),
         'est_favori': est_favori,
+        'liste_couleurs': produit.liste_couleurs(),
+        'liste_tailles': produit.liste_tailles(),
     })
 
 
@@ -164,12 +166,14 @@ def gestion_produits(request):
 def ajouter_produit(request):
     if request.method == 'POST':
         form = ProduitForm(request.POST)
+
         if form.is_valid():
             produit = form.save(commit=False)
             produit.commercant = request.user.commercant
             produit.save()
 
-            # Gérer les images uploadées
+            # Gérer les images uploadées (photos générales, sans couleur
+            # précise — associables à une couleur depuis la modification)
             images = request.FILES.getlist('images')
             for i, img in enumerate(images):
                 ImageProd.objects.create(
@@ -185,7 +189,9 @@ def ajouter_produit(request):
     else:
         form = ProduitForm()
 
-    return render(request, 'produits/ajouter_produit.html', {'form': form})
+    return render(request, 'produits/ajouter_produit.html', {
+        'form': form,
+    })
 
 
 @commercant_required
@@ -196,21 +202,28 @@ def modifier_produit(request, pk):
 
     if request.method == 'POST':
         form = ProduitModifierForm(request.POST, instance=produit)
+
         if form.is_valid():
             form.save()
 
-            # Nouvelles images
+            # Nouvelles images — associées à une couleur si précisée
+            couleur_photo = request.POST.get('photo_couleur', '').strip()
             nouvelles_images = request.FILES.getlist('images')
             for img in nouvelles_images:
-                ImageProd.objects.create(produit=produit, image=img)
+                ImageProd.objects.create(
+                    produit=produit, image=img, couleur=couleur_photo
+                )
 
             messages.success(request, "✓ Produit modifié avec succès !")
-            return redirect('produits:gestion_produits')
+            return redirect('produits:modifier_produit', pk=produit.pk)
+        else:
+            messages.error(request, "Veuillez corriger les erreurs.")
     else:
         form = ProduitModifierForm(instance=produit)
 
     return render(request, 'produits/modifier_produit.html', {
-        'form': form, 'produit': produit
+        'form': form,
+        'produit': produit,
     })
 
 

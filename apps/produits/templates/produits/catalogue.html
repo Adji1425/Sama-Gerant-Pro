@@ -116,11 +116,6 @@
           <a href="{% url 'produits:fiche_produit' produit.pk %}" class="produit-card-nom-link">
             <p class="produit-card-nom">{{ produit.nom }}</p>
           </a>
-          {% with variante=produit.variante_affichee %}
-            {% if variante %}
-              <p class="produit-card-variante mb-1">{{ variante }}</p>
-            {% endif %}
-          {% endwith %}
 
           <!-- Note étoiles -->
           <div class="mb-2">

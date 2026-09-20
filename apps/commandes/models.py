@@ -70,6 +70,11 @@ class LignePanier(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
+    # Couleur/taille choisies par le client, capturées telles quelles au
+    # moment de l'ajout au panier (pas de table séparée : ce sont de
+    # simples champs texte, comme le stock du produit est global).
+    couleur_choisie = models.CharField(max_length=50, blank=True)
+    taille_choisie = models.CharField(max_length=10, blank=True)
     quantite = models.IntegerField(default=1)
     # Prix figé au moment de l'ajout au panier
     prix_unitaire_vente = models.FloatField()
@@ -83,6 +88,10 @@ class LignePanier(models.Model):
 
     def sous_total(self):
         return round(self.quantite * self.prix_unitaire_vente, 2)
+
+    def variante_label(self):
+        """Couleur/taille choisies, à afficher côté commerçant et client."""
+        return " · ".join(filter(None, [self.couleur_choisie, self.taille_choisie]))
 
     def save(self, *args, **kwargs):
         # Capture automatique du prix au moment de l'ajout

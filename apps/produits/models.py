@@ -28,12 +28,8 @@ class Produit(models.Model):
         ('supprime', 'Supprimé'),
     ]
 
-    # Chaque variante (couleur/taille) d'un article est enregistrée comme
-    # un produit à part entière, avec son propre stock et ses propres
-    # images. Ces deux champs sont optionnels : un article sans
-    # déclinaison (ex: un jouet) peut les laisser vides.
+    # Tailles proposées au choix (liste fixe, simple à cocher)
     TAILLE_CHOICES = [
-        ('', 'Sans taille'),
         ('S', 'S'),
         ('M', 'M'),
         ('L', 'L'),
@@ -60,20 +56,21 @@ class Produit(models.Model):
         max_length=255, blank=True,
         help_text="Ex: Matière, marque, particularité..."
     )
-    # Couleur et taille de CETTE fiche produit : si un article existe en
-    # plusieurs couleurs/tailles, le commerçant crée une fiche par
-    # déclinaison (ex: "Sac Lacoste" en marron ET "Sac Lacoste" en bleu),
-    # chacune avec son propre stock et ses propres photos. Cela permet au
-    # commerçant de savoir exactement quelle déclinaison a été commandée.
-    couleur = models.CharField(
-        max_length=50, blank=True,
-        help_text="Ex: Marron, Bleu, Rose... (laisser vide si non applicable)"
+    # Liste simple des couleurs proposées pour cet article, séparées par
+    # des virgules (ex: "Marron,Bleu,Rose"). Pas de stock par couleur :
+    # le commerçant retire lui-même une couleur de la liste quand elle
+    # est épuisée. Reste vide si l'article n'a pas de couleur au choix.
+    couleurs_disponibles = models.CharField(
+        max_length=255, blank=True,
+        help_text="Ex: Marron, Bleu, Rose (séparées par des virgules)"
     )
-    taille = models.CharField(
-        max_length=10, choices=TAILLE_CHOICES, blank=True,
-        help_text="Laisser vide si l'article n'a pas de taille (ex: jouet)"
+    # Liste simple des tailles proposées (parmi S/M/L/XL/XXL), séparées
+    # par des virgules (ex: "S,M,L"). Reste vide si non applicable.
+    tailles_disponibles = models.CharField(
+        max_length=100, blank=True,
+        help_text="Ex: S,M,L (laisser vide si l'article n'a pas de taille)"
     )
-    # Stock intégré
+    # Stock intégré (global, quel que soit le nombre de couleurs/tailles)
     quantite = models.IntegerField(default=0)
     seuil_alerte = models.IntegerField(default=5)
     seuil_dormant = models.IntegerField(default=60)
@@ -86,8 +83,7 @@ class Produit(models.Model):
         ordering = ['-date_creation']
 
     def __str__(self):
-        variante = self.variante_affichee()
-        return f"{self.nom} ({variante})" if variante else self.nom
+        return self.nom
 
     def marge_nette(self):
         return round(self.prix_vente - self.prix_achat - self.frais_packaging, 2)
@@ -104,15 +100,24 @@ class Produit(models.Model):
     def image_principale(self):
         return self.images.first()
 
-    def variante_affichee(self):
-        """Ex: 'Marron' / 'M' / 'Marron · M' / '' si aucun des deux."""
-        return " · ".join(filter(None, [self.couleur, self.taille]))
+    def liste_couleurs(self):
+        """['Marron', 'Bleu', 'Rose'] à partir du champ texte."""
+        return [c.strip() for c in self.couleurs_disponibles.split(',') if c.strip()]
+
+    def liste_tailles(self):
+        """['S', 'M', 'L'] à partir du champ texte."""
+        return [t.strip() for t in self.tailles_disponibles.split(',') if t.strip()]
 
 
 class ImageProd(models.Model):
     produit = models.ForeignKey(
         Produit, on_delete=models.CASCADE, related_name='images'
     )
+    # Si renseignée, cette photo n'apparaît que lorsque cette couleur est
+    # sélectionnée par le client (ex: photos du sac en bleu). Si vide,
+    # la photo est considérée comme générale et s'affiche pour toutes
+    # les couleurs.
+    couleur = models.CharField(max_length=50, blank=True)
     image = models.ImageField(upload_to='produits/')
     nom = models.CharField(max_length=100, blank=True)
     est_principale = models.BooleanField(default=False)

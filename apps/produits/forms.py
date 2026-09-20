@@ -1,5 +1,5 @@
 from django import forms
-from .models import Produit,Depense, Approvisionnement, Categorie
+from .models import Produit, Depense, Approvisionnement, Categorie
 
 
 class ProduitForm(forms.ModelForm):
@@ -17,13 +17,21 @@ class ProduitForm(forms.ModelForm):
         }),
         label='',
     )
+    # Tailles : simples cases à cocher (comme les catégories), stockées
+    # ensuite comme texte "S,M,L" sur le produit — pas de table séparée.
+    tailles_disponibles = forms.MultipleChoiceField(
+        choices=Produit.TAILLE_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label='Tailles disponibles',
+    )
 
     class Meta:
         model = Produit
         fields = [
             'nom', 'categorie', 'description',
             'prix_achat', 'prix_vente', 'frais_packaging',
-            'couleur', 'taille', 'attribut',
+            'attribut', 'couleurs_disponibles', 'tailles_disponibles',
             'quantite', 'seuil_alerte', 'seuil_dormant'
         ]
         widgets = {
@@ -32,9 +40,11 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'prix_vente': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'frais_packaging': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
-            'couleur': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Marron (laisser vide si non applicable)'}),
-            'taille': forms.Select(attrs={'class': 'form-select'}),
             'attribut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Matière, marque...'}),
+            'couleurs_disponibles': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: Marron, Bleu, Rose (laisser vide si non applicable)'
+            }),
             'quantite': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'seuil_alerte': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
             'seuil_dormant': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '1'}),
@@ -44,13 +54,18 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': "Prix d'achat (FCFA)",
             'prix_vente': 'Prix de vente (FCFA)',
             'frais_packaging': 'Frais packaging (FCFA)',
-            'couleur': 'Couleur',
-            'taille': 'Taille',
             'attribut': 'Autre attribut (optionnel)',
-            'quantite': 'Quantité initiale en stock',
+            'couleurs_disponibles': 'Couleurs disponibles',
+            'quantite': 'Quantité en stock',
             'seuil_alerte': "Seuil d'alerte stock bas",
             'seuil_dormant': 'Jours sans vente (stock dormant)',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pré-cocher les tailles déjà enregistrées, en modification
+        if self.instance and self.instance.pk:
+            self.fields['tailles_disponibles'].initial = self.instance.liste_tailles()
 
     # -- Nombres entiers positifs uniquement (pas de virgule, pas de négatif) --
     def _positif_entier(self, nom_champ, label):
@@ -125,6 +140,9 @@ class ProduitForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.categorie = self.cleaned_data.get('categorie')
+        instance.tailles_disponibles = ','.join(
+            self.cleaned_data.get('tailles_disponibles') or []
+        )
         if commit:
             instance.save()
         return instance
@@ -143,7 +161,7 @@ class ProduitModifierForm(ProduitForm):
         fields = [
             'nom', 'categorie', 'description',
             'prix_achat', 'prix_vente',
-            'couleur', 'taille',
+            'couleurs_disponibles', 'tailles_disponibles',
             'quantite', 'seuil_alerte', 'seuil_dormant'
         ]
 

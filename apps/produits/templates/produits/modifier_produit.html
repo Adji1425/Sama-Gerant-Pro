@@ -14,9 +14,12 @@
       {% if produit.images.all %}
         <div class="d-flex gap-2 mb-3 flex-wrap">
           {% for img in produit.images.all %}
-            <img src="{{ img.image.url }}"
-                 style="width:70px;height:70px;object-fit:cover;border-radius:8px;
-                        {% if img.est_principale %}border:2px solid #E0A458;{% else %}border:1px solid #D6E4EC;{% endif %}">
+            <div class="text-center">
+              <img src="{{ img.image.url }}"
+                   style="width:70px;height:70px;object-fit:cover;border-radius:8px;
+                          {% if img.est_principale %}border:2px solid #E0A458;{% else %}border:1px solid #D6E4EC;{% endif %}">
+              <div class="small text-muted">{{ img.couleur|default:"Général" }}</div>
+            </div>
           {% endfor %}
         </div>
       {% endif %}
@@ -59,21 +62,10 @@
           </div>
 
           <div class="col-md-4">
-            <label class="form-label fw-semibold small">{{ form.couleur.label }}</label>
-            {{ form.couleur }}
-            {% if form.couleur.errors %}<div class="text-danger small">{{ form.couleur.errors }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label fw-semibold small">{{ form.taille.label }}</label>
-            {{ form.taille }}
-            {% if form.taille.errors %}<div class="text-danger small">{{ form.taille.errors }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-4">
             <label class="form-label fw-semibold small">{{ form.quantite.label }}</label>
             {{ form.quantite }}
             {% if form.quantite.errors %}<div class="text-danger small">{{ form.quantite.errors }}</div>{% endif %}
+            <div class="form-text small">Utilisé seulement si aucune couleur/taille ci-dessous.</div>
           </div>
 
           <div class="col-md-4">
@@ -88,9 +80,41 @@
             {% if form.seuil_dormant.errors %}<div class="text-danger small">{{ form.seuil_dormant.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-12">
+          <!-- ── Couleurs / tailles disponibles (simple, comme une catégorie) ── -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{{ form.couleurs_disponibles.label }}</label>
+            {{ form.couleurs_disponibles }}
+            {% if form.couleurs_disponibles.errors %}<div class="text-danger small">{{ form.couleurs_disponibles.errors }}</div>{% endif %}
+            <div class="form-text small">
+              Laisser vide si l'article n'a pas de couleur au choix. Pour
+              retirer une couleur épuisée, effacez-la simplement de la liste.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small d-block">{{ form.tailles_disponibles.label }}</label>
+            <div class="d-flex gap-3 flex-wrap mt-1">
+              {% for checkbox in form.tailles_disponibles %}
+                <label class="form-check form-check-inline">
+                  {{ checkbox.tag }}
+                  <span class="form-check-label small">{{ checkbox.choice_label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% if form.tailles_disponibles.errors %}<div class="text-danger small">{{ form.tailles_disponibles.errors }}</div>{% endif %}
+            <div class="form-text small">Décochez une taille pour la retirer.</div>
+          </div>
+
+          <div class="col-12 mt-3">
             <label class="form-label fw-semibold small">Ajouter des photos</label>
-            <input type="file" name="images" multiple accept="image/*" class="form-control">
+            <input type="file" name="images" multiple accept="image/*" class="form-control mb-2">
+            <label class="form-label fw-semibold small">Ces photos sont pour :</label>
+            <select name="photo_couleur" class="form-select">
+              <option value="">Général (toutes couleurs)</option>
+              {% for couleur in produit.liste_couleurs %}
+                <option value="{{ couleur }}">{{ couleur }}</option>
+              {% endfor %}
+            </select>
           </div>
 
         </div>

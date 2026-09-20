@@ -42,6 +42,9 @@
           <h6 class="fw-semibold mb-1" style="color:var(--text);">
             {{ ligne.produit }}
           </h6>
+          {% if ligne.variante_label %}
+            <span class="text-muted small d-block mb-1">{{ ligne.variante_label }}</span>
+          {% endif %}
           <span class="text-muted small">
             {{ ligne.prix_unitaire_snapshot|floatformat:0 }} FCFA / unité
           </span>

@@ -57,24 +57,45 @@ def ajouter_panier(request, produit_id):
             messages.error(request, "La quantité doit être d'au moins 1.")
             return redirect('produits:fiche_produit', pk=produit_id)
 
-        if quantite > produit.quantite:
+        # ── Couleur / taille choisies (simples champs texte, stock global) ──
+        couleur = request.POST.get('couleur', '').strip()
+        taille = request.POST.get('taille', '').strip()
+
+        if couleur and couleur not in produit.liste_couleurs():
+            messages.error(request, "Couleur invalide.")
+            return redirect('produits:fiche_produit', pk=produit_id)
+        if taille and taille not in produit.liste_tailles():
+            messages.error(request, "Taille invalide.")
+            return redirect('produits:fiche_produit', pk=produit_id)
+        if produit.liste_couleurs() and not couleur:
+            messages.error(request, "Veuillez choisir une couleur.")
+            return redirect('produits:fiche_produit', pk=produit_id)
+        if produit.liste_tailles() and not taille:
+            messages.error(request, "Veuillez choisir une taille.")
+            return redirect('produits:fiche_produit', pk=produit_id)
+
+        stock_disponible = produit.quantite
+
+        if quantite > stock_disponible:
             messages.error(
                 request,
                 f"Stock insuffisant. Seulement "
-                f"{produit.quantite} unité(s) disponible(s)."
+                f"{stock_disponible} unité(s) disponible(s)."
             )
             return redirect('produits:fiche_produit', pk=produit_id)
 
         panier = get_or_create_panier(request.user.client)
 
-        # ✅ Chercher ligne existante sans commande (dans le panier actif)
+        # ✅ Chercher ligne existante sans commande (dans le panier actif),
+        # en tenant compte de la couleur/taille choisies
         ligne_existante = panier.lignes.filter(
-            produit=produit, commande=None
+            produit=produit, couleur_choisie=couleur,
+            taille_choisie=taille, commande=None
         ).first()
 
         if ligne_existante:
             nouvelle_qte = ligne_existante.quantite + quantite
-            if nouvelle_qte > produit.quantite:
+            if nouvelle_qte > stock_disponible:
                 messages.error(
                     request,
                     f"Vous avez déjà {ligne_existante.quantite} de ce "
@@ -87,17 +108,24 @@ def ajouter_panier(request, produit_id):
             LignePanier.objects.create(
                 panier=panier,
                 produit=produit,
+                couleur_choisie=couleur,
+                taille_choisie=taille,
                 quantite=quantite,
                 # ✅ CORRIGÉ : prix_unitaire_vente
                 prix_unitaire_vente=produit.prix_vente,
             )
+
+        libelle = produit.nom
+        variante_label = " · ".join(filter(None, [couleur, taille]))
+        if variante_label:
+            libelle = f"{produit.nom} ({variante_label})"
 
         messages.success(
             request,
             format_html(
                 '✓ {} ajouté au panier ! '
                 '<a href="{}" class="alert-link-right">Voir le panier <i class="bi bi-arrow-right"></i></a>',
-                produit.nom, reverse('commandes:voir_panier')
+                libelle, reverse('commandes:voir_panier')
             )
         )
         return redirect('produits:fiche_produit', pk=produit_id)
@@ -268,7 +296,7 @@ def paiement_wave(request):
             ligne.commande = commande
             ligne.save()
 
-            # Décrémenter le stock
+            # Décrémenter le stock global du produit
             if ligne.produit:
                 ligne.produit.quantite -= ligne.quantite
                 ligne.produit.save()

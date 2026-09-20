@@ -29,9 +29,10 @@
       </div>
       <!-- Miniatures -->
       {% if images|length > 1 %}
-      <div class="fp-thumbs">
+      <div class="fp-thumbs" id="fp-thumbs">
         {% for img in images %}
           <img src="{{ img.image.url }}"
+               data-couleur="{{ img.couleur }}"
                class="fp-thumb {% if forloop.first %}active{% endif %}"
                onclick="document.getElementById('img-principale').src=this.src;
                         document.querySelectorAll('.fp-thumb').forEach(t=>t.classList.remove('active'));
@@ -58,18 +59,41 @@
     <h1 class="fp-titre">{{ produit.nom }}</h1>
 
     <!-- Couleur / Taille -->
-    {% if produit.couleur or produit.taille %}
-      <div class="fp-variante-bloc mb-3">
-        {% if produit.couleur %}
-          <span class="fp-badge-variante">
-            <i class="bi bi-palette-fill me-1"></i>{{ produit.couleur }}
-          </span>
+    {% if liste_couleurs or liste_tailles %}
+      <div class="fp-variante-bloc mb-3" id="fp-variante-selecteur">
+        {% if liste_couleurs %}
+          <div class="mb-2">
+            <span class="fp-variante-label">Couleur :
+              <strong id="fp-couleur-choisie">à choisir</strong>
+            </span>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+              {% for c in liste_couleurs %}
+                <button type="button" class="fp-swatch-btn" data-couleur="{{ c }}"
+                        onclick="fpChoisirCouleur('{{ c|escapejs }}')">
+                  {{ c }}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
         {% endif %}
-        {% if produit.taille %}
-          <span class="fp-badge-variante">
-            <i class="bi bi-rulers me-1"></i>Taille {{ produit.taille }}
-          </span>
+        {% if liste_tailles %}
+          <div class="mb-2">
+            <span class="fp-variante-label">Taille :
+              <strong id="fp-taille-choisie">à choisir</strong>
+            </span>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+              {% for t in liste_tailles %}
+                <button type="button" class="fp-swatch-btn" data-taille="{{ t }}"
+                        onclick="fpChoisirTaille('{{ t|escapejs }}')">
+                  {{ t }}
+                </button>
+              {% endfor %}
+            </div>
+          </div>
         {% endif %}
+        <div id="fp-variante-erreur" class="text-danger small d-none">
+          Veuillez choisir {% if liste_couleurs and liste_tailles %}une couleur et une taille{% elif liste_couleurs %}une couleur{% else %}une taille{% endif %}.
+        </div>
       </div>
     {% endif %}
 
@@ -102,16 +126,14 @@
 
     <!-- Stock -->
     <div class="mb-4">
-      {% if produit.quantite > 0 %}
-        <span class="fp-stock-pill en-stock">
+      <span class="fp-stock-pill {% if produit.quantite > 0 %}en-stock{% else %}rupture{% endif %}" id="fp-stock-pill">
+        {% if produit.quantite > 0 %}
           <i class="bi bi-check-circle-fill"></i>En stock
-          <span class="fp-stock-count">· {{ produit.quantite }} disponible{{ produit.quantite|pluralize }}</span>
-        </span>
-      {% else %}
-        <span class="fp-stock-pill rupture">
+          <span class="fp-stock-count" id="fp-stock-count">· {{ produit.quantite }} disponible{{ produit.quantite|pluralize }}</span>
+        {% else %}
           <i class="bi bi-x-circle-fill"></i>Rupture de stock
-        </span>
-      {% endif %}
+        {% endif %}
+      </span>
     </div>
 
     <!-- Bouton Ajouter au panier -->
@@ -125,10 +147,12 @@
         </a>
       </div>
     {% elif produit.quantite > 0 %}
-    
+
       {% if user.is_authenticated %}
-        <form method="POST" action="{% url 'commandes:ajouter_panier' produit.pk %}">
+        <form method="POST" action="{% url 'commandes:ajouter_panier' produit.pk %}" id="fp-form-panier">
           {% csrf_token %}
+          <input type="hidden" name="couleur" id="fp-input-couleur" value="">
+          <input type="hidden" name="taille" id="fp-input-taille" value="">
           <div class="fp-qty-selector mb-3">
             <span class="fp-qty-label">Quantité</span>
             <div class="fp-qty-stepper">
@@ -141,10 +165,11 @@
                 <i class="bi bi-plus"></i>
               </button>
             </div>
-            <span class="fp-qty-restants">{{ produit.quantite }} restant{{ produit.quantite|pluralize }}</span>
+            <span class="fp-qty-restants" id="fp-qty-restants">{{ produit.quantite }} restant{{ produit.quantite|pluralize }}</span>
           </div>
           <div class="d-flex flex-column gap-2">
-            <button type="submit" class="btn-fp-panier">
+            <button type="submit" class="btn-fp-panier" id="fp-btn-ajouter"
+                    {% if liste_couleurs or liste_tailles %}disabled{% endif %}>
               <i class="bi bi-bag-plus-fill me-2"></i>Ajouter au panier
             </button>
             {% if user.est_client %}
@@ -340,6 +365,31 @@
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 50px;
+}
+
+.fp-variante-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fp-swatch-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.fp-swatch-btn:hover { border-color: var(--gold); }
+
+.fp-swatch-btn.selected {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
 }
 
 .fp-prix-bloc {
@@ -581,6 +631,76 @@ function fpQtyStep(delta) {
   if (val < min) val = min;
   if (val > max) val = max;
   input.value = val;
+}
+
+// ── Sélection couleur / taille (stock global, pas de stock par choix) ──
+const fpAvecCouleur = {{ liste_couleurs|length|default:0 }} > 0;
+const fpAvecTaille = {{ liste_tailles|length|default:0 }} > 0;
+let fpCouleurChoisie = null;
+let fpTailleChoisie = null;
+
+function fpChoisirCouleur(couleur) {
+  fpCouleurChoisie = couleur;
+  document.getElementById('fp-couleur-choisie').textContent = couleur;
+  document.querySelectorAll('#fp-variante-selecteur [data-couleur]').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.couleur === couleur);
+  });
+  // Filtrer les miniatures : on montre les photos de cette couleur, ainsi
+  // que les photos générales (sans couleur précisée)
+  const thumbs = document.querySelectorAll('#fp-thumbs .fp-thumb');
+  let premiereVisible = null;
+  thumbs.forEach(img => {
+    const c = img.dataset.couleur || '';
+    const visible = (c === '' || c === couleur);
+    img.style.display = visible ? '' : 'none';
+    if (visible && !premiereVisible) premiereVisible = img;
+  });
+  if (premiereVisible) {
+    document.getElementById('img-principale').src = premiereVisible.src;
+    thumbs.forEach(t => t.classList.remove('active'));
+    premiereVisible.classList.add('active');
+  }
+  fpVerifierSelection();
+}
+
+function fpChoisirTaille(taille) {
+  fpTailleChoisie = taille;
+  document.getElementById('fp-taille-choisie').textContent = taille;
+  document.querySelectorAll('#fp-variante-selecteur [data-taille]').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.taille === taille);
+  });
+  fpVerifierSelection();
+}
+
+function fpVerifierSelection() {
+  const couleurOk = !fpAvecCouleur || fpCouleurChoisie !== null;
+  const tailleOk = !fpAvecTaille || fpTailleChoisie !== null;
+  const btn = document.getElementById('fp-btn-ajouter');
+  const erreurEl = document.getElementById('fp-variante-erreur');
+
+  document.getElementById('fp-input-couleur').value = fpCouleurChoisie || '';
+  document.getElementById('fp-input-taille').value = fpTailleChoisie || '';
+
+  if (couleurOk && tailleOk) {
+    if (btn) btn.disabled = false;
+    if (erreurEl) erreurEl.classList.add('d-none');
+  } else {
+    if (btn) btn.disabled = true;
+  }
+}
+
+// Empêche l'envoi du formulaire si couleur/taille manquantes
+const fpForm = document.getElementById('fp-form-panier');
+if (fpForm && (fpAvecCouleur || fpAvecTaille)) {
+  fpForm.addEventListener('submit', function (e) {
+    const couleurOk = !fpAvecCouleur || fpCouleurChoisie !== null;
+    const tailleOk = !fpAvecTaille || fpTailleChoisie !== null;
+    if (!couleurOk || !tailleOk) {
+      e.preventDefault();
+      const erreurEl = document.getElementById('fp-variante-erreur');
+      if (erreurEl) erreurEl.classList.remove('d-none');
+    }
+  });
 }
 </script>
 {% endblock %}

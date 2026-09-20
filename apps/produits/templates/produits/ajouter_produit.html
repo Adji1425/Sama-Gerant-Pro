@@ -54,28 +54,10 @@
             {% if form.frais_packaging.errors %}<div class="text-danger small">{{ form.frais_packaging.errors }}</div>{% endif %}
           </div>
 
-          <div class="col-md-3">
-            <label class="form-label fw-semibold small">{{ form.couleur.label }}</label>
-            {{ form.couleur }}
-            {% if form.couleur.errors %}<div class="text-danger small">{{ form.couleur.errors }}</div>{% endif %}
-          </div>
-
-          <div class="col-md-3">
-            <label class="form-label fw-semibold small">{{ form.taille.label }}</label>
-            {{ form.taille }}
-            {% if form.taille.errors %}<div class="text-danger small">{{ form.taille.errors }}</div>{% endif %}
-          </div>
-
           <div class="col-md-6">
             <label class="form-label fw-semibold small">{{ form.attribut.label }}</label>
             {{ form.attribut }}
             {% if form.attribut.errors %}<div class="text-danger small">{{ form.attribut.errors }}</div>{% endif %}
-            <div class="form-text small mt-1">
-              Astuce : si cet article existe en plusieurs couleurs ou tailles,
-              créez une fiche produit par déclinaison (ex: "Sac Lacoste" en
-              Marron, puis une autre fiche "Sac Lacoste" en Bleu). Chaque
-              fiche garde ainsi son propre stock et ses propres photos.
-            </div>
           </div>
 
           <div class="col-md-2">
@@ -96,11 +78,35 @@
             {% if form.seuil_dormant.errors %}<div class="text-danger small">{{ form.seuil_dormant.errors }}</div>{% endif %}
           </div>
 
+          <!-- ── Couleurs / tailles disponibles (simple, comme une catégorie) ── -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">{{ form.couleurs_disponibles.label }}</label>
+            {{ form.couleurs_disponibles }}
+            {% if form.couleurs_disponibles.errors %}<div class="text-danger small">{{ form.couleurs_disponibles.errors }}</div>{% endif %}
+            <div class="form-text small">Laisser vide si l'article n'a pas de couleur au choix.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small d-block">{{ form.tailles_disponibles.label }}</label>
+            <div class="d-flex gap-3 flex-wrap mt-1">
+              {% for checkbox in form.tailles_disponibles %}
+                <label class="form-check form-check-inline">
+                  {{ checkbox.tag }}
+                  <span class="form-check-label small">{{ checkbox.choice_label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {% if form.tailles_disponibles.errors %}<div class="text-danger small">{{ form.tailles_disponibles.errors }}</div>{% endif %}
+            <div class="form-text small">Laisser tout décoché si non applicable (ex: un jouet).</div>
+          </div>
+
           <div class="col-12">
             <label class="form-label fw-semibold small">Photos du produit</label>
             <input type="file" name="images" multiple accept="image/*" class="form-control">
             <div class="text-muted small mt-1">
-              Vous pouvez sélectionner plusieurs images. La première sera utilisée comme image principale.
+              Ajoutez ici toutes les photos (toutes couleurs confondues). Vous
+              pourrez ensuite, depuis la page de modification, associer des
+              photos précises à chaque couleur.
             </div>
           </div>
 
