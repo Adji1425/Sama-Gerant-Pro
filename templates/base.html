@@ -273,11 +273,18 @@
         </a>      
       {% endif %} -->
 
-      {% if commercant_boutique and user.role != 'commercant' and user.role != 'admin' %}
+      {% if commercant_boutique and user.role == 'client' %}
         <a href="{% url 'messagerie:liste_conversations' %}"
            target="_blank" rel="noopener"
            class="navbar-whatsapp-btn" title="Demander au commercant">
             <span>Contacter commercant</span>
+        </a>      
+      {% endif %}
+       {% if commercant_boutique and user.role != 'client' and user.role != 'commercant' and user.role != 'admin' %}
+        <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}" 
+           target="_blank" rel="noopener"
+           class="navbar-whatsapp-btn" title="Demander au commercant">
+            <span>Inscription/ Connexion</span>
         </a>      
       {% endif %}
     </div>
