@@ -97,9 +97,14 @@ def home(request):
     })
 
 
+def apropos(request):
+    return render(request, 'apropos.html')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
+    path('a-propos/', apropos, name='apropos'),
     path('users/', include('apps.users.urls', namespace='users')),
     path('produits/', include('apps.produits.urls', namespace='produits')),
     path('commandes/', include('apps.commandes.urls', namespace='commandes')),

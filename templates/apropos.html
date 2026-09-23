@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}À propos — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+<div class="apropos-page">
+
+  <!-- ── En-tête ─────────────────────────────────────────────── -->
+  <div class="apropos-hero">
+    <span class="apropos-label">Notre histoire</span>
+    <h1>À propos de Sama-Gérant Pro</h1>
+    <p>
+      Une plateforme pensée pour les commerçants indépendants du Sénégal,
+      pour les aider à vendre, suivre leur stock et piloter leur activité
+      depuis un seul endroit.
+    </p>
+  </div>
+
+  <!-- ── Le constat ──────────────────────────────────────────── -->
+  <section class="apropos-section">
+    <h2>Pourquoi Sama-Gérant Pro ?</h2>
+    <p>
+      Au Sénégal, des milliers de commerçants vendent aujourd'hui via
+      WhatsApp, Instagram ou TikTok. Mais derrière cette vitrine numérique,
+      la gestion réelle du commerce — les stocks, les commandes, les
+      clients — repose encore souvent sur des cahiers ou sur la mémoire.
+      Cette méthode entraîne des erreurs, des pertes de marchandises, et
+      une vision floue de la rentabilité réelle de l'activité.
+    </p>
+    <p>
+      <strong>Sama-Gérant Pro</strong> ("Mon Gérant Pro" en wolof) est né
+      de ce constat simple : donner aux commerçants un outil numérique
+      aussi accessible que WhatsApp, mais pensé pour vraiment gérer une
+      boutique — du catalogue jusqu'à la facture.
+    </p>
+  </section>
+
+  <!-- ── Ce que la plateforme apporte ───────────────────────────── -->
+  <section class="apropos-section">
+    <h2>Ce que nous apportons</h2>
+    <div class="apropos-grid">
+      <div class="apropos-card">
+        <i class="bi bi-shop"></i>
+        <h3>Une boutique en ligne</h3>
+        <p>Un catalogue clair, une commande simple, et un suivi transparent pour chaque client.</p>
+      </div>
+      <div class="apropos-card">
+        <i class="bi bi-boxes"></i>
+        <h3>Un stock maîtrisé</h3>
+        <p>Le stock se met à jour automatiquement à chaque vente, avec des alertes avant la rupture.</p>
+      </div>
+      <div class="apropos-card">
+        <i class="bi bi-graph-up-arrow"></i>
+        <h3>Une aide à la décision</h3>
+        <p>Marge réelle, produits les plus vendus, stocks dormants : des chiffres clairs pour décider vite.</p>
+      </div>
+      <div class="apropos-card">
+        <i class="bi bi-calendar-event"></i>
+        <h3>Un calendrier adapté au Sénégal</h3>
+        <p>Des rappels avant les grandes fêtes et les saisons, pour anticiper la demande.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── L'équipe ────────────────────────────────────────────── -->
+  <section class="apropos-section apropos-equipe">
+    <h2>L'équipe derrière le projet</h2>
+    <p class="apropos-equipe-intro">
+      Sama-Gérant Pro est un projet de fin d'année réalisé par deux
+      étudiantes en Licence 3 Informatique à la Faculté des Sciences et
+      Techniques de l'Université Cheikh Anta Diop de Dakar, sous la
+      direction du Dr Modou Gueye.
+    </p>
+    <div class="apropos-team-row">
+      <div class="apropos-team-card">
+        <div class="apropos-avatar">AN</div>
+        <h4>Adji Mbaw Ndiaye</h4>
+        <span>Co-fondatrice</span>
+      </div>
+      <div class="apropos-team-card">
+        <div class="apropos-avatar">MV</div>
+        <h4>Mame Diarra Bousso Vilane</h4>
+        <span>Co-fondatrice</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Appel à l'action ────────────────────────────────────── -->
+  <section class="apropos-cta">
+    <h2>Envie de découvrir la boutique ?</h2>
+    <a href="{% url 'produits:catalogue' %}" class="btn-hero">
+      VOIR LE CATALOGUE &nbsp;→
+    </a>
+  </section>
+
+</div>
+
+<style>
+.apropos-page { max-width: 900px; margin: 0 auto; padding: 20px 0 60px; }
+
+.apropos-hero { text-align: center; padding: 20px 0 40px; }
+.apropos-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 14px;
+}
+.apropos-hero h1 {
+  font-family: 'Playfair Display', serif; font-size: 2.4rem;
+  color: var(--brown); margin-bottom: 16px;
+}
+.apropos-hero p { color: var(--muted); max-width: 560px; margin: 0 auto; font-size: 16px; }
+
+.apropos-section { margin: 48px 0; }
+.apropos-section h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.6rem;
+  color: var(--brown); margin-bottom: 16px;
+}
+.apropos-section p { color: var(--text); line-height: 1.7; margin-bottom: 14px; }
+
+.apropos-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px; margin-top: 20px;
+}
+.apropos-card {
+  background: var(--cream-light); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 24px 20px;
+}
+.apropos-card i { font-size: 26px; color: var(--gold); margin-bottom: 12px; display: block; }
+.apropos-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.apropos-card p { font-size: 14px; color: var(--muted); margin: 0; }
+
+.apropos-equipe-intro { max-width: 640px; }
+.apropos-team-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 24px; }
+.apropos-team-card {
+  background: var(--cream-light); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 24px; text-align: center; flex: 1 1 200px;
+}
+.apropos-avatar {
+  width: 60px; height: 60px; border-radius: 50%; background: var(--gold-light);
+  color: var(--brown); font-weight: 700; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+}
+.apropos-team-card h4 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
+.apropos-team-card span { font-size: 12px; color: var(--muted); }
+
+.apropos-cta { text-align: center; padding: 40px 0 0; border-top: 1px solid var(--border); }
+.apropos-cta h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.5rem;
+  color: var(--brown); margin-bottom: 20px;
+}
+
+@media (max-width: 576px) {
+  .apropos-hero h1 { font-size: 1.8rem; }
+}
+</style>
+{% endblock %}
