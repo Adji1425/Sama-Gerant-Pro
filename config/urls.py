@@ -52,7 +52,7 @@ def home(request):
     # Derniers avis 2 étoiles et +
     derniers_avis = Avis.objects.select_related(
         'client__utilisateur', 'produit'
-    ).filter(note__gte=2).order_by('-date_avis')[:3]
+    ).filter(note__gte=2).order_by('-date_avis')[:2]
 
     # Stats
        # Stats — calculées à partir des vraies données (aucune valeur figée)
