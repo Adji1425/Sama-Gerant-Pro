@@ -61,6 +61,10 @@
         <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
            href="{% url 'home' %}">Accueil</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link"
+           href="{% url 'apropos' %}">Présentation</a>
+      </li>
 
       {% if user.role != 'commercant' %}
       <li class="nav-item">
@@ -106,13 +110,12 @@
       </form>
 
       {% if user.is_authenticated %}
-      {% if user.is_authenticated and user.role != 'commercant' and user.role != 'admin'  %}
+      {% if user.role == 'client'  %}
         <!-- Favoris (visiteur redirigé vers connexion si non client) -->
         <a href="{% url 'produits:mes_favoris' %}"
            class="nav-icon-btn" title="Mes favoris">
           <i class="bi bi-heart"></i>
         </a>
-
         <!-- Panier (visiteur redirigé vers connexion si non client) -->
         <a href="{% url 'commandes:voir_panier' %}"
            class="nav-icon-btn nav-icon-btn-cart" title="Mon panier">
@@ -157,7 +160,7 @@
                 {% else %}Administrateur{% endif %}
               </span>
             </li>
-      {% if user.is_authenticated and user.role != 'commercant' and user.role != 'admin' %}
+      {% if user.is_authenticated and user.role != 'commercant' and user.role != 'admin'  %}
             <li>
               <a class="dropdown-item" href="{% url 'users:compte' %}">
                 <i class="bi bi-person-vcard me-2" style="color:var(--gold);"></i>
@@ -253,14 +256,17 @@
            class="nav-icon-btn" title="Mes favoris">
           <i class="bi bi-heart"></i>
         </a>
-        <a href="{% url 'users:compte' %}"
-           class="nav-icon-btn" title="Mon compte">
-          <i class="bi bi-person"></i>
-        </a>
+
         <a href="{% url 'commandes:voir_panier' %}"
            class="nav-icon-btn nav-icon-btn-cart" title="Mon panier">
           <i class="bi bi-bag"></i>
         </a>
+         <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}" 
+           target="_blank" rel="noopener"
+           class="navbar-whatsapp-btn" title="Demander au commercant">
+            <span>Connexion</span>
+        </a>  
+
       {% endif %}
 
 
@@ -281,10 +287,10 @@
         </a>      
       {% endif %}
        {% if commercant_boutique and user.role != 'client' and user.role != 'commercant' and user.role != 'admin' %}
-        <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}" 
+        <a href="{% url 'users:register' %}?next={{ request.path|urlencode }}" 
            target="_blank" rel="noopener"
            class="navbar-whatsapp-btn" title="Demander au commercant">
-            <span>Inscription/ Connexion</span>
+            <span>Inscription</span>
         </a>      
       {% endif %}
     </div>

@@ -3,10 +3,12 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from django.views.decorators.cache import never_cache
 from apps.produits.models import Produit, Categorie, Favori
 from apps.avis.models import Avis
 
 
+@never_cache
 def home(request):
     categories = Categorie.objects.all().prefetch_related('produits__images')
 
@@ -52,7 +54,7 @@ def home(request):
     # Derniers avis 2 étoiles et +
     derniers_avis = Avis.objects.select_related(
         'client__utilisateur', 'produit'
-    ).filter(note__gte=2).order_by('-date_avis')[:2]
+    ).filter(note__gte=2).order_by('-date_avis')[:3]
 
     # Stats
        # Stats — calculées à partir des vraies données (aucune valeur figée)
@@ -95,10 +97,9 @@ def home(request):
             Favori.objects.filter(client=request.user.client).values_list('produit_id', flat=True)
         ) if request.user.is_authenticated and hasattr(request.user, 'client') else [],
     })
-
-
 def apropos(request):
     return render(request, 'apropos.html')
+
 
 
 urlpatterns = [

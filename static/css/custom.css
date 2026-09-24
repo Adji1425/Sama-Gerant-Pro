@@ -128,14 +128,14 @@ img { max-width: 100%; display: block; }
 /* Liens nav */
 .navbar-nav .nav-link {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--text) !important;
   padding: 4px 0 !important;
   position: relative;
   margin-right: 28px;
 }
 .nav-item{
-  margin-left: 5px;
+  margin-left: 4px;
 }
 .navbar-nav .nav-link::after {
   content: '';
@@ -192,7 +192,7 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 220px;
+  margin-left: 105px;
   flex-shrink: 0;
 }
 
@@ -1029,6 +1029,7 @@ body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
   }
 }
 /* ══ BOUTON WHATSAPP DANS LA NAVBAR ═════════════════════════════════════════ */
+/*connexion */
 .navbar-whatsapp-btn {
   display: flex;
   align-items: center;
@@ -1039,7 +1040,25 @@ body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
   border-radius: 50px;
   text-decoration: none;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 510;
+  transition: background 0.2s, transform 0.2s;
+  white-space: nowrap;
+  margin-right: 5px;
+}
+
+/*inscription */
+.navbar-whatsapp-btn1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #1d462c;
+  color: var(--white);
+  padding: 11px 14px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
   font-weight: 510;
   transition: background 0.2s, transform 0.2s;
   white-space: nowrap;
