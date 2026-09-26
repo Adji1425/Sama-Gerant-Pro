@@ -58,14 +58,6 @@ class Message(models.Model):
     contenu = models.TextField()
     date_heure = models.DateTimeField(auto_now_add=True)
     lu = models.BooleanField(default=False)
-    produit = models.ForeignKey(
-        Produit,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='messages',
-        help_text="Produit concerné si ce message provient d'un clic 'Contacter le vendeur'."
-    )
 
     class Meta:
         verbose_name = "Message"

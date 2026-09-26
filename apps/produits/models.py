@@ -51,11 +51,6 @@ class Produit(models.Model):
     statut = models.CharField(
         max_length=10, choices=STATUT_CHOICES, default='actif'
     )
-    # ✅ Attribut ajouté selon le diagramme
-    attribut = models.CharField(
-        max_length=255, blank=True,
-        help_text="Ex: Matière, marque, particularité..."
-    )
     # Liste simple des couleurs proposées pour cet article, séparées par
     # des virgules (ex: "Marron,Bleu,Rose"). Pas de stock par couleur :
     # le commerçant retire lui-même une couleur de la liste quand elle
@@ -119,7 +114,6 @@ class ImageProd(models.Model):
     # les couleurs.
     couleur = models.CharField(max_length=50, blank=True)
     image = models.ImageField(upload_to='produits/')
-    nom = models.CharField(max_length=100, blank=True)
     est_principale = models.BooleanField(default=False)
 
     class Meta:
