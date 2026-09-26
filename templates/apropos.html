@@ -34,6 +34,36 @@
     </p>
   </section>
 
+  <!-- ── Comment fonctionne l'application ───────────────────────── -->
+  <section class="apropos-section">
+    <h2>Comment fonctionne l'application ?</h2>
+    <div class="apropos-comment-grid">
+
+      <div class="apropos-comment-col">
+        <span class="apropos-comment-label">Côté client</span>
+        <ol class="apropos-steps">
+          <li><strong>Parcourir le catalogue</strong> — par catégorie ou via la recherche, sans besoin de créer un compte.</li>
+          <li><strong>Ajouter au panier</strong> — choisir la couleur/taille si le produit en propose, puis la quantité.</li>
+          <li><strong>Valider la commande</strong> — se connecter (ou s'inscrire), confirmer l'adresse de livraison et le téléphone.</li>
+          <li><strong>Payer avec Wave</strong> — simulation de paiement mobile intégrée directement au tunnel de commande.</li>
+          <li><strong>Suivre la commande</strong> — depuis son profil, jusqu'à la livraison, avec le reçu envoyé par email.</li>
+        </ol>
+      </div>
+
+      <div class="apropos-comment-col">
+        <span class="apropos-comment-label">Côté commerçant</span>
+        <ol class="apropos-steps">
+          <li><strong>Créer sa boutique</strong> — inscription, logo, informations de contact.</li>
+          <li><strong>Ajouter ses produits</strong> — photos, prix, catégorie, couleurs/tailles et stock.</li>
+          <li><strong>Recevoir les commandes</strong> — notification instantanée dès qu'un client commande.</li>
+          <li><strong>Gérer le stock et les livraisons</strong> — mise à jour automatique du stock, statut de commande.</li>
+          <li><strong>Piloter l'activité</strong> — tableau de bord SAD : marge réelle, top produits, alertes stock, graphiques de ventes.</li>
+        </ol>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ── Ce que la plateforme apporte ───────────────────────────── -->
   <section class="apropos-section">
     <h2>Ce que nous apportons</h2>
@@ -114,6 +144,37 @@
   color: var(--brown); margin-bottom: 16px;
 }
 .apropos-section p { color: var(--text); line-height: 1.7; margin-bottom: 14px; }
+
+.apropos-comment-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px; margin-top: 20px;
+}
+.apropos-comment-col {
+  background: var(--cream-light); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 24px 22px;
+}
+.apropos-comment-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 14px;
+}
+.apropos-steps { list-style: none; counter-reset: apropos-step; margin: 0; padding: 0; }
+.apropos-steps li {
+  counter-increment: apropos-step;
+  position: relative;
+  padding-left: 34px;
+  font-size: 14px; color: var(--text); line-height: 1.6;
+  margin-bottom: 16px;
+}
+.apropos-steps li:last-child { margin-bottom: 0; }
+.apropos-steps li::before {
+  content: counter(apropos-step);
+  position: absolute; left: 0; top: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--gold); color: white;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.apropos-steps li strong { color: var(--brown); }
 
 .apropos-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

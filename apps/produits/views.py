@@ -206,13 +206,10 @@ def modifier_produit(request, pk):
         if form.is_valid():
             form.save()
 
-            # Nouvelles images — associées à une couleur si précisée
-            couleur_photo = request.POST.get('photo_couleur', '').strip()
+            # Nouvelles images (générales, sans distinction de couleur)
             nouvelles_images = request.FILES.getlist('images')
             for img in nouvelles_images:
-                ImageProd.objects.create(
-                    produit=produit, image=img, couleur=couleur_photo
-                )
+                ImageProd.objects.create(produit=produit, image=img)
 
             messages.success(request, "✓ Produit modifié avec succès !")
             return redirect('produits:modifier_produit', pk=produit.pk)
@@ -225,6 +222,21 @@ def modifier_produit(request, pk):
         'form': form,
         'produit': produit,
     })
+
+
+@commercant_required
+def supprimer_image_produit(request, pk):
+    """Supprime une photo existante d'un produit (bouton "x" en
+    modification). Le fichier est retiré du disque en plus de la ligne
+    en base, via ImageProd.image.delete()."""
+    image = get_object_or_404(
+        ImageProd, pk=pk, produit__commercant=request.user.commercant
+    )
+    produit_pk = image.produit_id
+    image.image.delete(save=False)
+    image.delete()
+    messages.success(request, "Photo supprimée.")
+    return redirect('produits:modifier_produit', pk=produit_pk)
 
 
 @commercant_required

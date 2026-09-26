@@ -31,7 +31,7 @@ class ProduitForm(forms.ModelForm):
         fields = [
             'nom', 'categorie', 'description',
             'prix_achat', 'prix_vente', 'frais_packaging',
-            'attribut', 'couleurs_disponibles', 'tailles_disponibles',
+            'couleurs_disponibles', 'tailles_disponibles',
             'quantite', 'seuil_alerte', 'seuil_dormant'
         ]
         widgets = {
@@ -40,7 +40,6 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'prix_vente': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
             'frais_packaging': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0', 'min': '0', 'step': '1'}),
-            'attribut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Matière, marque...'}),
             'couleurs_disponibles': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ex: Marron, Bleu, Rose (laisser vide si non applicable)'
@@ -54,7 +53,6 @@ class ProduitForm(forms.ModelForm):
             'prix_achat': "Prix d'achat (FCFA)",
             'prix_vente': 'Prix de vente (FCFA)',
             'frais_packaging': 'Frais packaging (FCFA)',
-            'attribut': 'Autre attribut (optionnel)',
             'couleurs_disponibles': 'Couleurs disponibles',
             'quantite': 'Quantité en stock',
             'seuil_alerte': "Seuil d'alerte stock bas",
@@ -151,10 +149,9 @@ class ProduitForm(forms.ModelForm):
 class ProduitModifierForm(ProduitForm):
     """Formulaire de modification d'un produit existant.
 
-    Reprend ProduitForm mais sans les champs 'attribut' et
-    'frais_packaging' (retirés du formulaire de modification), et rend
-    tous les champs restants obligatoires (ex: description, qui est
-    optionnelle à la création).
+    Reprend ProduitForm mais sans 'frais_packaging' (retiré du
+    formulaire de modification), et rend tous les champs restants
+    obligatoires (ex: description, qui est optionnelle à la création).
     """
 
     class Meta(ProduitForm.Meta):

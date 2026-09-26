@@ -106,15 +106,28 @@
           </div>
 
           <div class="col-12 mt-3">
+            {% if produit.images.all %}
+              <label class="form-label fw-semibold small d-block">Photos actuelles</label>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for img in produit.images.all %}
+                  <div class="position-relative" style="width:90px;height:90px;">
+                    <img src="{{ img.image.url }}" alt=""
+                         class="w-100 h-100 rounded border" style="object-fit:cover;">
+                    <a href="{% url 'produits:supprimer_image_produit' img.pk %}"
+                       class="position-absolute d-flex align-items-center justify-content-center"
+                       style="top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;
+                              background:#C47B8A;color:white;font-size:12px;line-height:1;"
+                       title="Supprimer cette photo"
+                       onclick="return confirm('Supprimer cette photo ?');">
+                      <i class="bi bi-x-lg"></i>
+                    </a>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
             <label class="form-label fw-semibold small">Ajouter des photos</label>
             <input type="file" name="images" multiple accept="image/*" class="form-control mb-2">
-            <label class="form-label fw-semibold small">Ces photos sont pour :</label>
-            <select name="photo_couleur" class="form-select">
-              <option value="">Général (toutes couleurs)</option>
-              {% for couleur in produit.liste_couleurs %}
-                <option value="{{ couleur }}">{{ couleur }}</option>
-              {% endfor %}
-            </select>
           </div>
 
         </div>
