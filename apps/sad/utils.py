@@ -219,6 +219,80 @@ def identifier_stocks_dormants(commercant, jours=60):
     return dormants
 
 
+def calculer_temps_vente(produit):
+    """
+    Temps moyen et temps minimum (en jours) entre deux ventes
+    consécutives d'un produit, à partir de ses commandes livrées.
+    Retourne (temps_moyen, temps_minimum), ou (None, None) si le produit
+    a moins de 2 ventes livrées (pas assez d'historique pour calculer un
+    écart).
+    """
+    from apps.commandes.models import LignePanier
+
+    dates = list(
+        LignePanier.objects.filter(
+            produit=produit,
+            commande__isnull=False,
+            commande__statut='livree'
+        )
+        .order_by('commande__date_commande')
+        .values_list('commande__date_commande', flat=True)
+    )
+    if len(dates) < 2:
+        return None, None
+
+    ecarts = [
+        (dates[i] - dates[i - 1]).days
+        for i in range(1, len(dates))
+    ]
+    ecarts = [e for e in ecarts if e >= 0]
+    if not ecarts:
+        return None, None
+
+    temps_moyen = round(sum(ecarts) / len(ecarts), 1)
+    temps_minimum = min(ecarts)
+    return temps_moyen, temps_minimum
+
+
+def suggerer_reapprovisionnement(commercant, limite=5):
+    """
+    §5.4 du cahier des charges : "Sur la base de ces calculs (temps
+    minimum et moyen de vente), il suggère au commerçant des
+    réapprovisionnements prioritaires."
+
+    Un produit est jugé prioritaire quand il se vend régulièrement
+    (temps moyen de vente connu, ≤ 15 jours entre deux ventes) ET que
+    son stock actuel est bas ou proche du seuil d'alerte : c'est un
+    produit qui rapporte, mais qui risque la rupture avant le prochain
+    réapprovisionnement si rien n'est fait.
+    """
+    from apps.produits.models import Produit
+
+    suggestions = []
+    produits = Produit.objects.filter(commercant=commercant, statut='actif')
+
+    for produit in produits:
+        temps_moyen, temps_minimum = calculer_temps_vente(produit)
+        if temps_moyen is None:
+            continue  # pas assez de ventes livrées pour ce produit
+
+        stock_bas_ou_proche = produit.quantite <= (produit.seuil_alerte * 2)
+        se_vend_vite = temps_moyen <= 15
+
+        if stock_bas_ou_proche and se_vend_vite:
+            suggestions.append({
+                'produit': produit,
+                'temps_moyen': temps_moyen,
+                'temps_minimum': temps_minimum,
+                'stock_actuel': produit.quantite,
+            })
+
+    # Priorité aux produits qui se vendent le plus vite (temps moyen le
+    # plus court), c'est-à-dire les plus urgents à réapprovisionner.
+    suggestions.sort(key=lambda s: s['temps_moyen'])
+    return suggestions[:limite]
+
+
 def calculer_chiffre_affaires(commercant, periode_jours=30):
     from apps.commandes.models import Commande
     from apps.users.models import Client

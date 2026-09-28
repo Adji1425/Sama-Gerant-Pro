@@ -34,7 +34,6 @@ html {
 
 body {
   max-width: 100%;
-  overflow-x: hidden;
   background: var(--cream-light);
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
@@ -984,7 +983,18 @@ body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
   white-space: nowrap;
 }
 .alert-link-right:hover { opacity: 0.8; }
-
+.django-messages-wrap {
+  position: absolute;
+  top: 68px;
+  left: 0;
+  right: 0;
+  z-index: 1040;
+  padding-top: 14px;
+  pointer-events: none;
+}
+.django-messages-wrap .alert {
+  pointer-events: auto;
+}
 /* ══════════════════════════════════════════════════════════════
    NAVBAR SCROLL JS — ajoute .scrolled via JavaScript
    ══════════════════════════════════════════════════════════════ */

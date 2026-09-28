@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Agenda des événements — Sama-Gérant Pro{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-calendar-event me-2"></i>Agenda des événements
+  </h4>
+  <a href="{% url 'sad:dashboard' %}" class="btn btn-outline-secondary fw-semibold px-4">
+    <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+  </a>
+</div>
+
+<p class="text-muted small mb-4">
+  Calendrier des événements sociaux et religieux (Tabaski, Magal, Korité,
+  Tamkharit...) configuré par l'administrateur. Vous recevez aussi une
+  notification automatique 15 à 30 jours avant chaque échéance, mais vous
+  pouvez consulter ici l'ensemble du calendrier à tout moment pour anticiper
+  vos réapprovisionnements.
+</p>
+
+<h6 class="fw-semibold mb-3" style="color:#1B263B;">À venir</h6>
+
+{% if evenements_a_venir %}
+  <div class="dash-table-wrap mb-4">
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>Événement</th>
+          <th>Début</th>
+          <th>Fin</th>
+          <th>Conseil</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for evenement in evenements_a_venir %}
+        <tr>
+          <td><span class="dash-row-title">{{ evenement.nom_evenement }}</span></td>
+          <td>{{ evenement.date_debut|date:"d/m/Y" }}</td>
+          <td>{{ evenement.date_fin|date:"d/m/Y" }}</td>
+          <td class="text-muted">{{ evenement.conseil_affiche }}</td>
+          <td>
+            {% if evenement.est_en_cours %}
+              <span class="statut-badge statut-badge-livree">En cours</span>
+            {% elif evenement.est_proche %}
+              <span class="statut-badge statut-badge-attente">Bientôt</span>
+            {% else %}
+              <span class="statut-badge statut-badge-preparation">À venir</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-4 text-muted mb-4">
+    <i class="bi bi-calendar-check fs-2 d-block mb-2"></i>
+    Aucun événement à venir pour le moment.
+  </div>
+{% endif %}
+
+{% if evenements_passes %}
+  <h6 class="fw-semibold mb-3 text-muted">Passés</h6>
+  <div class="dash-table-wrap" style="opacity:.7;">
+    <table class="dash-table">
+      <tbody>
+        {% for evenement in evenements_passes %}
+        <tr>
+          <td><span class="dash-row-title">{{ evenement.nom_evenement }}</span></td>
+          <td>{{ evenement.date_debut|date:"d/m/Y" }} — {{ evenement.date_fin|date:"d/m/Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% endblock %}

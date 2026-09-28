@@ -20,6 +20,7 @@ from .utils import (
     calculer_marge_nette, identifier_top_produits, identifier_stocks_dormants,
     get_saison_actuelle, repartition_geographique_commandes,
     generer_notifications_stock, generer_notifications_evenements,
+    suggerer_reapprovisionnement,
 )
 
 
@@ -54,6 +55,7 @@ def dashboard(request):
     top_produits = identifier_top_produits(commercant)
     stocks_dormants = identifier_stocks_dormants(commercant)
     produits_alerte = [p for p in produits if p.est_en_alerte()]
+    suggestions_reappro = suggerer_reapprovisionnement(commercant)
 
     evenements_proches = [e for e in EvenementSAD.objects.all() if e.est_proche()]
     saison = get_saison_actuelle()
@@ -96,6 +98,7 @@ def dashboard(request):
         'top_produits': top_produits,
         'stocks_dormants': stocks_dormants,
         'produits_alerte': produits_alerte,
+        'suggestions_reappro': suggestions_reappro,
         'evenements_proches': evenements_proches,
         'saison': saison,
         'notifications': notifications,

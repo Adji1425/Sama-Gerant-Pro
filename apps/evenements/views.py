@@ -1,9 +1,34 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.utils import timezone
 
 from apps.users.views import admin_required
+from apps.produits.views import commercant_required
 from .models import EvenementSAD
 from .forms import EvenementSADForm
+
+
+@commercant_required
+def agenda_commercant(request):
+    """
+    Consultation en lecture seule, par le commerçant, du calendrier
+    complet des événements (§ cas d'utilisation Commerçant : "Suivre
+    l'agenda des événements"). Le commerçant ne peut ni créer ni modifier
+    ni supprimer un événement — c'est réservé à l'administrateur
+    (§5.3.2) — il consulte seulement ce qui arrive et les conseils
+    associés.
+    """
+    aujourdhui = timezone.now().date()
+    evenements_a_venir = EvenementSAD.objects.filter(
+        date_fin__gte=aujourdhui
+    ).order_by('date_debut')
+    evenements_passes = EvenementSAD.objects.filter(
+        date_fin__lt=aujourdhui
+    ).order_by('-date_debut')
+    return render(request, 'evenements/agenda_commercant.html', {
+        'evenements_a_venir': evenements_a_venir,
+        'evenements_passes': evenements_passes,
+    })
 
 
 @admin_required
