@@ -372,7 +372,9 @@ def _envoyer_email_nouvelle_commande(commercant, commande):
     if not destinataire:
         return False
 
-    lien_commande = reverse(
+    # Lien ABSOLU (http://domaine/...) : un chemin relatif ne fonctionne pas
+    # dans un email, Gmail le transforme en "http:///commandes/...".
+    lien_commande = settings.SITE_URL + reverse(
         'commandes:detail_commande_commercant', args=[commande.id]
     )
 

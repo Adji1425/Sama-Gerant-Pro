@@ -3,95 +3,93 @@
 
 {% block content %}
 
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-  <h4 class="fw-bold mb-0" style="color:#1B263B;">
-    <i class="bi bi-shield-check me-2"></i>Espace Administrateur
-  </h4>
-  <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'users:liste_clients' %}"
-       class="btn btn-outline-secondary fw-semibold px-4">
-      <i class="bi bi-people me-1"></i>Voir tous les clients
-    </a>
-    <a href="{% url 'evenements:liste_evenements' %}"
-       class="btn btn-outline-secondary fw-semibold px-4">
-      <i class="bi bi-calendar-event me-1"></i>Calendrier des événements
-    </a>
-    <a href="{% url 'sad:liste_climats' %}"
-       class="btn btn-outline-secondary fw-semibold px-4">
-      <i class="bi bi-cloud-sun me-1"></i>Configuration climatique
-    </a>
-    {% if not commercant %}
-      <a href="{% url 'users:creer_commercant' %}"
-         class="btn fw-semibold px-4"
-         style="background-color:#E0A458;color:white;">
-        <i class="bi bi-shop me-1"></i>Créer le commerçant
-      </a>
-    {% endif %}
-    <a href="{% url 'users:register_admin' %}"
-       class="btn fw-semibold px-4"
-       style="background-color:#1B263B;color:white;">
-      <i class="bi bi-person-plus me-1"></i>Inscrire un administrateur
-    </a>
-  </div>
-</div>
+<span class="section-label-small d-block mb-1">Administration</span>
+<h2 class="mb-4" style="font-size:1.7rem;">Espace Administrateur</h2>
 
-<!-- Stats -->
+<!-- ══ KPI ═══════════════════════════════════════════════════════════════════ -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">Clients</div>
-      <div class="fs-3 fw-bold" style="color:#1B263B;">{{ stats.total_clients }}</div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Clients inscrits</div>
+      <div class="dash-kpi-value">{{ stats.total_clients }}</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">Administrateurs</div>
-      <div class="fs-3 fw-bold" style="color:#E0A458;">{{ stats.total_admins }}</div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Administrateurs</div>
+      <div class="dash-kpi-value">{{ stats.total_admins }}</div>
     </div>
   </div>
   <div class="col-12 col-md-4">
-    <div class="card border-0 shadow-sm p-3">
-      <div class="text-muted small">Statut de la boutique</div>
-      <div class="fs-5 fw-bold"
-           style="color:{% if commercant.utilisateur.is_active %}#2E7D32{% else %}#E05555{% endif %};">
-        {% if not commercant %}
-          Non créée
-        {% elif commercant.utilisateur.is_active %}
-          Actif
-        {% else %}
-          Bloqué
-        {% endif %}
-      </div>
+    <div class="dash-kpi-card">
+      <div class="dash-kpi-label">Statut de la boutique</div>
+      {% if not commercant %}
+        <div class="dash-kpi-value" style="font-size:1.3rem;color:var(--muted);">Non créée</div>
+      {% elif commercant.utilisateur.is_active %}
+        <div class="dash-kpi-value" style="font-size:1.3rem;color:#2E7D32;">Active</div>
+      {% else %}
+        <div class="dash-kpi-value" style="font-size:1.3rem;color:#C47B8A;">Bloquée</div>
+      {% endif %}
     </div>
   </div>
 </div>
 
-<h6 class="fw-semibold mb-3" style="color:#1B263B;">Le commerçant</h6>
+<!-- ══ ACTIONS ═══════════════════════════════════════════════════════════════ -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a href="{% url 'users:liste_clients' %}" class="filter-pill">
+    <i class="bi bi-people me-2"></i>Tous les clients
+  </a>
+  <a href="{% url 'evenements:liste_evenements' %}" class="filter-pill">
+    <i class="bi bi-calendar-event me-2"></i>Calendrier des événements
+  </a>
+  <a href="{% url 'sad:liste_climats' %}" class="filter-pill">
+    <i class="bi bi-cloud-sun me-2"></i>Configuration climatique
+  </a>
+  {% if not commercant %}
+    <a href="{% url 'users:creer_commercant' %}" class="btn-table-action">
+      <i class="bi bi-shop"></i>Créer le commerçant
+    </a>
+  {% endif %}
+  <a href="{% url 'users:register_admin' %}" class="btn-table-action">
+    <i class="bi bi-person-plus"></i>Inscrire un administrateur
+  </a>
+</div>
+
+<!-- ══ LE COMMERÇANT ═════════════════════════════════════════════════════════ -->
+<div class="d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-shop" style="color:var(--gold);"></i>
+  <h6 class="fw-semibold mb-0" style="color:var(--text);">Le commerçant</h6>
+</div>
 
 {% if commercant %}
-  <div class="card border-0 shadow-sm p-4">
+  <div class="detail-panel">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div class="d-flex align-items-center gap-3">
         {% if commercant.logo %}
           <img src="{{ commercant.logo.url }}"
-               style="width:56px;height:56px;object-fit:cover;border-radius:50%;">
+               style="width:58px;height:58px;object-fit:cover;border-radius:50%;
+                      border:1px solid var(--border);">
         {% else %}
           <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-               style="width:56px;height:56px;background:#D6E4EC;color:#1B263B;font-size:20px;">
+               style="width:58px;height:58px;background:var(--gold-light);color:var(--brown);
+                      font-size:22px;font-family:'Playfair Display',serif;flex-shrink:0;">
             {{ commercant.nom_boutique|first|upper }}
           </div>
         {% endif %}
         <div>
-          <div class="fw-bold fs-5" style="color:#1B263B;">
+          <div class="client-info-line" style="margin-bottom:4px;">
             {{ commercant.nom_boutique }}
           </div>
-          <div class="text-muted small">
-            {{ commercant.utilisateur.get_full_name }} —
-            {{ commercant.utilisateur.email }} —
-            {{ commercant.utilisateur.telephone }}
+          <div class="client-info-line">
+            <i class="bi bi-person"></i>{{ commercant.utilisateur.get_full_name }}
           </div>
-          <div class="text-muted small">
-            Inscrit le {{ commercant.utilisateur.date_joined|date:"d/m/Y" }}
+          <div class="client-info-line">
+            <i class="bi bi-envelope"></i>{{ commercant.utilisateur.email }}
+            <span class="text-muted mx-1">·</span>
+            <i class="bi bi-telephone"></i>{{ commercant.utilisateur.telephone }}
+          </div>
+          <div class="client-info-line">
+            <i class="bi bi-calendar3"></i>Inscrit le {{ commercant.utilisateur.date_joined|date:"d/m/Y" }}
           </div>
         </div>
       </div>
@@ -102,30 +100,30 @@
               onsubmit="return confirm('Confirmer cette action ?');">
           {% csrf_token %}
           <button type="submit"
-                  class="btn btn-sm {% if commercant.utilisateur.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                  class="btn-table-icon {% if commercant.utilisateur.is_active %}danger{% endif %}"
+                  title="{% if commercant.utilisateur.is_active %}Bloquer{% else %}Débloquer{% endif %}">
             {% if commercant.utilisateur.is_active %}
-              <i class="bi bi-slash-circle me-1"></i>Bloquer
+              <i class="bi bi-slash-circle"></i>
             {% else %}
-              <i class="bi bi-check-circle me-1"></i>Débloquer
+              <i class="bi bi-check-circle"></i>
             {% endif %}
           </button>
         </form>
         <a href="{% url 'users:reinitialiser_mot_de_passe' commercant.utilisateur.pk %}"
-           class="btn btn-sm btn-outline-secondary"
+           class="btn-table-icon" title="Réinitialiser le mot de passe"
            onclick="return confirm('Réinitialiser le mot de passe du commerçant et lui envoyer par email ?');">
-          <i class="bi bi-key me-1"></i>Réinitialiser mdp
+          <i class="bi bi-key"></i>
         </a>
       </div>
     </div>
   </div>
 {% else %}
-  <div class="text-center py-5 text-muted">
-    <i class="bi bi-shop fs-1 d-block mb-3"></i>
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-shop"></i></div>
     <h5>Aucun commerçant créé pour l'instant</h5>
-    <a href="{% url 'users:creer_commercant' %}"
-       class="btn fw-semibold px-4 mt-2"
-       style="background-color:#E0A458;color:white;">
-      <i class="bi bi-shop me-1"></i>Créer le commerçant
+    <p class="text-muted small">Une seule boutique commerçante par instance de l'application.</p>
+    <a href="{% url 'users:creer_commercant' %}" class="btn-table-action">
+      <i class="bi bi-shop"></i>Créer le commerçant
     </a>
   </div>
 {% endif %}

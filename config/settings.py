@@ -140,6 +140,15 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 if not DEFAULT_FROM_EMAIL:
     DEFAULT_FROM_EMAIL = 'admin@sama-gerant.local'
 
+# Adresse affichée publiquement (factures PDF...) : celle de Sama-Gérant Pro,
+# pas celle du commerçant. À renseigner dans .env (PLATEFORME_EMAIL=...).
+PLATEFORME_EMAIL = os.getenv('PLATEFORME_EMAIL', DEFAULT_FROM_EMAIL)
+
+# URL de base du site, utilisée pour construire des liens ABSOLUS dans les
+# emails (sans elle, le lien devient "http:///commandes/..." et ne marche pas).
+# En local : http://127.0.0.1:8000 — en production : https://votre-domaine.com
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+
 # --- Fin Configuration Email ---
 
 # Logging — rend visibles en console les erreurs d'envoi d'email

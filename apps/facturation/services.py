@@ -26,6 +26,9 @@ def generer_pdf_facture(commande, commercant):
 
     html = render_to_string('facturation/facture_pdf.html', {
         'commande': commande, 'facture': facture, 'commercant': commercant,
+        # Logo + email de Sama-Gérant Pro (et non ceux de la boutique)
+        'logo_plateforme': str(settings.BASE_DIR / 'static' / 'img' / 'SGP-LOGO-facture.png'),
+        'email_plateforme': settings.PLATEFORME_EMAIL,
     })
 
     buffer = io.BytesIO()

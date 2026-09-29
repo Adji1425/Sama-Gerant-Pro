@@ -23,7 +23,7 @@
   .header-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; }
   .header-table td { border: none; padding: 0; vertical-align: top; }
 
-  .logo-box { width: 46px; height: 46px; border-radius: 4px; }
+  .logo-box { width: 56px; height: 56px; }
   .boutique-nom { font-size: 17px; font-weight: bold; color: #2C2C2C; margin: 0 0 3px 0; }
   .boutique-contact { font-size: 9px; color: #6B6B6B; line-height: 1.5; }
 
@@ -95,14 +95,12 @@
   <table class="header-table">
     <tr>
       <td style="width: 60%;">
-        {% if commercant.logo %}
-          <img src="{{ commercant.logo.path }}" class="logo-box"/><br/>
-        {% endif %}
+        <img src="{{ logo_plateforme }}" class="logo-box"/><br/>
         <p class="boutique-nom">{{ commercant.nom_boutique }}</p>
         <p class="boutique-contact">
           {% if commercant.utilisateur.adresse %}{{ commercant.utilisateur.adresse }}<br/>{% endif %}
           {% if commercant.utilisateur.telephone %}Tél : {{ commercant.utilisateur.telephone }}<br/>{% endif %}
-          {% if commercant.utilisateur.email %}{{ commercant.utilisateur.email }}{% endif %}
+          {% if email_plateforme %}{{ email_plateforme }}{% endif %}
         </p>
       </td>
       <td style="width: 40%;">
