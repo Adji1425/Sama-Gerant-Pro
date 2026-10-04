@@ -65,7 +65,7 @@ def envoyer_email_alerte(commercant, sujet, message):
         send_mail(
             subject=f"[Sama-Gérant Pro] {sujet}",
             message=message,
-            from_email=settings.EMAIL_HOST_USER or None,
+            from_email=settings.EMAIL_FROM,
             recipient_list=[destinataire],
             fail_silently=False,
         )
@@ -353,63 +353,106 @@ def verifier_alertes_stock(commercant):
 
 # --- Génération automatique des notifications (déclenchée à chaque visite du dashboard SAD) ---
 
-def generer_notifications_stock(commercant):
+def _alerte_deja_envoyee(commercant, type_alerte, titre, jours):
     """
-    Crée une Notification (in-app) + envoie un email pour chaque produit
-    en alerte de stock bas OU en stock dormant (évite les doublons non lus).
+    Anti-doublon basé sur la DATE d'envoi (jamais sur « lu / non lu ») :
+    vrai si la même alerte (même type, même titre exact) a déjà été envoyée
+    à ce commerçant dans les `jours` derniers jours. La table Notification
+    sert uniquement de journal des alertes envoyées.
     """
-    from apps.produits.models import Produit
     from apps.notifications.models import Notification
 
-    produits = Produit.objects.filter(commercant=commercant, statut='actif')
+    depuis = timezone.now() - timedelta(days=jours)
+    return Notification.objects.filter(
+        commercant=commercant, type=type_alerte, titre=titre,
+        date_envoi__gte=depuis,
+    ).exists()
 
-    for produit in produits:
-        # --- Stock bas ---
-        if produit.est_en_alerte():
-            deja_notifie = Notification.objects.filter(
-                commercant=commercant, type='stock_bas', lu=False,
-                titre__icontains=produit.nom,
-            ).exists()
-            if not deja_notifie:
-                message = (
-                    f"Il reste {produit.quantite} unité(s) de {produit.nom} "
-                    f"(seuil : {produit.seuil_alerte})."
-                )
-                Notification.objects.create(
-                    commercant=commercant,
-                    titre=f"Stock bas : {produit.nom}",
-                    message=message,
-                    type='stock_bas',
-                )
-                envoyer_email_alerte(
-                    commercant,
-                    sujet=f"Stock bas — {produit.nom}",
-                    message=message,
-                )
 
-    # --- Stock dormant ---
+def _envoyer_alerte(commercant, type_alerte, titre, sujet, message):
+    """Journalise l'alerte puis envoie l'email au commerçant."""
+    from apps.notifications.models import Notification
+
+    Notification.objects.create(
+        commercant=commercant, titre=titre, message=message, type=type_alerte,
+    )
+    envoyer_email_alerte(commercant, sujet=sujet, message=message)
+
+
+def verifier_stock_produit(produit, ancienne_quantite=None):
+    """
+    Stock bas : envoie l'email d'alerte au commerçant.
+
+    - Appelée depuis une VENTE (`ancienne_quantite` renseignée) : l'email
+      part au moment précis où le stock FRANCHIT le seuil, puis une seconde
+      fois s'il tombe à 0 (rupture).
+    - Appelée sans `ancienne_quantite` (ouverture du tableau de bord) :
+      rappel au plus une fois tous les 7 jours tant que le produit reste
+      en stock bas.
+
+    Retourne True si un email a été envoyé.
+    """
+    if produit.statut != 'actif' or not produit.est_en_alerte():
+        return False
+
+    titre = f"Stock bas : {produit.nom}"
+
+    if ancienne_quantite is None:
+        envoyer = not _alerte_deja_envoyee(
+            produit.commercant, 'stock_bas', titre, jours=7
+        )
+    else:
+        franchit_seuil = ancienne_quantite > produit.seuil_alerte
+        rupture = produit.quantite <= 0 < ancienne_quantite
+        envoyer = franchit_seuil or rupture
+
+    if not envoyer:
+        return False
+
+    if produit.quantite <= 0:
+        message = (
+            f"{produit.nom} est en rupture de stock (seuil : "
+            f"{produit.seuil_alerte}). Réapprovisionnez-le rapidement pour "
+            f"ne pas perdre de ventes."
+        )
+    else:
+        message = (
+            f"Il reste {produit.quantite} unité(s) de {produit.nom} "
+            f"(seuil : {produit.seuil_alerte}). Pensez à réapprovisionner."
+        )
+    _envoyer_alerte(
+        produit.commercant, 'stock_bas', titre,
+        f"Stock bas — {produit.nom}", message,
+    )
+    return True
+
+
+def generer_notifications_stock(commercant):
+    """
+    Envoie les alertes email de stock bas ET de stock dormant pour les
+    produits du commerçant. Anti-doublon par date (voir
+    `_alerte_deja_envoyee`) : un produit ne génère jamais plus d'un rappel
+    par période, quelle que soit la lecture des notifications.
+    """
+    from apps.produits.models import Produit
+
+    for produit in Produit.objects.filter(commercant=commercant, statut='actif'):
+        verifier_stock_produit(produit)
+
+    # --- Stock dormant : rappel au plus une fois tous les 30 jours ---
     for produit in identifier_stocks_dormants(commercant):
-        deja_notifie = Notification.objects.filter(
-            commercant=commercant, type='stock_dormant', lu=False,
-            titre__icontains=produit.nom,
-        ).exists()
-        if not deja_notifie:
-            message = (
-                f"'{produit.nom}' n'a pas été vendu depuis plus de "
-                f"{produit.seuil_dormant} jours. Pensez à faire une promotion "
-                f"ou à libérer de la trésorerie sur ce produit."
-            )
-            Notification.objects.create(
-                commercant=commercant,
-                titre=f"Stock dormant : {produit.nom}",
-                message=message,
-                type='stock_dormant',
-            )
-            envoyer_email_alerte(
-                commercant,
-                sujet=f"Stock dormant — {produit.nom}",
-                message=message,
-            )
+        titre = f"Stock dormant : {produit.nom}"
+        if _alerte_deja_envoyee(commercant, 'stock_dormant', titre, jours=30):
+            continue
+        message = (
+            f"'{produit.nom}' n'a pas été vendu depuis plus de "
+            f"{produit.seuil_dormant} jours. Pensez à faire une promotion "
+            f"ou à libérer de la trésorerie sur ce produit."
+        )
+        _envoyer_alerte(
+            commercant, 'stock_dormant', titre,
+            f"Stock dormant — {produit.nom}", message,
+        )
 
 
 def repartition_geographique_commandes(commercant):
@@ -476,21 +519,115 @@ def repartition_geographique_commandes(commercant):
     )
 
 
+def historique_evenement(commercant, evenement, jours_avant=21, limite=5):
+    """
+    Bilan des ventes du commerçant lors de la DERNIÈRE édition passée du
+    même événement (ex : Tabaski de l'an dernier), pour lui suggérer de
+    bien se réapprovisionner quand l'événement revient.
+
+    Les éditions sont reconnues par le nom : l'administrateur ajoute une
+    nouvelle ligne chaque année avec le même nom (« Tabaski »...).
+    La période analysée commence `jours_avant` jours AVANT le début de
+    l'événement passé, car les achats se font surtout dans la phase de
+    préparation. Les commandes annulées sont ignorées.
+
+    Retourne None s'il n'y a pas d'édition passée ou pas de ventes.
+    """
+    from apps.evenements.models import EvenementSAD
+    from apps.commandes.models import LignePanier
+
+    precedent = (
+        EvenementSAD.objects
+        .filter(nom_evenement__iexact=evenement.nom_evenement,
+                date_fin__lt=evenement.date_debut)
+        .order_by('-date_debut')
+        .first()
+    )
+    if precedent is None:
+        return None
+
+    debut = precedent.date_debut - timedelta(days=jours_avant)
+    lignes = (
+        LignePanier.objects
+        .filter(
+            produit__commercant=commercant,
+            commande__isnull=False,
+            commande__date_commande__date__range=(debut, precedent.date_fin),
+        )
+        .exclude(commande__statut='annulee')
+        .values('produit__id', 'produit__nom', 'produit__quantite')
+        .annotate(total_vendu=Sum('quantite'))
+        .order_by('-total_vendu')[:limite]
+    )
+
+    produits = []
+    for l in lignes:
+        vendu = l['total_vendu']
+        stock = l['produit__quantite']
+        produits.append(SimpleNamespace(
+            nom=l['produit__nom'],
+            vendu=vendu,
+            stock=stock,
+            manque=max(vendu - stock, 0),
+        ))
+    if not produits:
+        return None
+
+    return SimpleNamespace(
+        precedent=precedent, debut=debut, fin=precedent.date_fin,
+        produits=produits,
+        a_reapprovisionner=[p for p in produits if p.manque > 0],
+    )
+
+
+def texte_historique_evenement(historique):
+    """Version texte (pour les notifications) du bilan ci-dessus."""
+    if not historique:
+        return ""
+    p = historique.precedent
+    lignes = [
+        f"📊 Lors de « {p.nom_evenement} » ({historique.debut:%d/%m/%Y} au "
+        f"{historique.fin:%d/%m/%Y}), vous aviez vendu :"
+    ]
+    for prod in historique.produits:
+        lignes.append(
+            f"• {prod.nom} : {prod.vendu} vendu(s) — stock actuel : {prod.stock}"
+        )
+    if historique.a_reapprovisionner:
+        conseils = ", ".join(
+            f"{prod.nom} (+{prod.manque})" for prod in historique.a_reapprovisionner
+        )
+        lignes.append(f"👉 Pensez à réapprovisionner : {conseils}.")
+    else:
+        lignes.append("✅ Votre stock actuel couvre déjà ces ventes.")
+    return "\n".join(lignes)
+
+
 def generer_notifications_evenements(commercant, jours=21):
-    """Alerte prévisionnelle 15-30 jours avant un événement (Tabaski, Magal, Korité...)."""
-    from apps.notifications.models import Notification
+    """
+    Alerte prévisionnelle avant un événement (Tabaski, Magal, Korité...),
+    avec le bilan des ventes de la dernière édition. Envoyée par email,
+    une seule fois par événement (fenêtre de 30 jours).
+    """
     from apps.evenements.models import EvenementSAD
 
     for evenement in EvenementSAD.objects.all():
-        if evenement.est_proche(jours=jours):
-            deja_notifie = Notification.objects.filter(
-                commercant=commercant, type='evenement', lu=False,
-                titre__icontains=evenement.nom_evenement,
-            ).exists()
-            if not deja_notifie:
-                Notification.objects.create(
-                    commercant=commercant,
-                    titre=f"Événement à venir : {evenement.nom_evenement}",
-                    message=evenement.conseil_affiche,
-                    type='evenement',
-                )
+        if not evenement.est_proche(jours=jours):
+            continue
+        titre = f"Événement à venir : {evenement.nom_evenement}"
+        if _alerte_deja_envoyee(commercant, 'evenement', titre, jours=30):
+            continue
+        _envoyer_alerte(
+            commercant, 'evenement', titre,
+            f"Événement à venir — {evenement.nom_evenement}",
+            _message_evenement(commercant, evenement),
+        )
+
+
+def _message_evenement(commercant, evenement):
+    """Conseil de l'admin + bilan des ventes de la dernière édition."""
+    texte = evenement.conseil_affiche
+    bilan = texte_historique_evenement(
+        historique_evenement(commercant, evenement)
+    )
+    return f"{texte}\n\n{bilan}" if bilan else texte

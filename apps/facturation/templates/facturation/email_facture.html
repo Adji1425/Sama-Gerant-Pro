@@ -47,6 +47,10 @@
                         <td align="right"><strong>{{ commande.id }}</strong></td>
                       </tr>
                       <tr>
+                        <td style="color:#6B6B6B;">Payé par</td>
+                        <td align="right"><strong>{{ commande.get_mode_paiement_display }}</strong></td>
+                      </tr>
+                      <tr>
                         <td style="color:#6B6B6B;">Date de livraison</td>
                         <td align="right"><strong>{{ facture.date_facture|date:"d/m/Y" }}</strong></td>
                       </tr>

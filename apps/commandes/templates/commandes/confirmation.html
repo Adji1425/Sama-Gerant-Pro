@@ -36,6 +36,10 @@
         {{ commande.montant_total|floatformat:0 }} FCFA
       </span>
     </div>
+    <div class="d-flex justify-content-between mb-2 text-muted small">
+      <span>Paiement</span>
+      <span>{{ commande.get_mode_paiement_display }}</span>
+    </div>
     <div class="d-flex justify-content-between text-muted small">
       <span>Statut</span>
       <span class="badge bg-warning text-dark">En attente</span>

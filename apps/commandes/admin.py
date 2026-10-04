@@ -11,8 +11,8 @@ class LignePanierInline(admin.TabularInline):
 
 @admin.register(Commande)
 class CommandeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'client', 'statut', 'region', 'commune', 'montant_total', 'date_commande')
-    list_filter = ('statut', 'region')
+    list_display = ('id', 'client', 'statut', 'region', 'commune', 'montant_total', 'mode_paiement', 'date_commande')
+    list_filter = ('statut', 'mode_paiement', 'region')
     inlines = [LignePanierInline]
 
 

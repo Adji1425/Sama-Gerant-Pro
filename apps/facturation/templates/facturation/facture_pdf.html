@@ -158,8 +158,12 @@
 
   <table class="totaux">
     <tr class="total-final">
-      <td class="label">TOTAL À PAYER</td>
+      <td class="label">TOTAL PAYÉ</td>
       <td class="valeur">{{ commande.montant_total|floatformat:0 }} FCFA</td>
+    </tr>
+    <tr class="mode-paiement">
+      <td class="label">Payé par</td>
+      <td class="valeur"><strong>{{ commande.get_mode_paiement_display }}</strong></td>
     </tr>
   </table>
 

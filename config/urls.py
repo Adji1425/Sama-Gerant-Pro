@@ -113,7 +113,6 @@ urlpatterns = [
     # Modules de Mame Diarra — urls.py encore vides, prêts à être remplis
     path('facturation/', include('apps.facturation.urls', namespace='facturation')),
     path('avis/', include('apps.avis.urls', namespace='avis')),
-    path('notifications/', include('apps.notifications.urls', namespace='notifications')),
     path('sad/', include('apps.sad.urls', namespace='sad')),
     path('evenements/', include('apps.evenements.urls', namespace='evenements')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -81,7 +81,7 @@ def envoyer_email_facture(facture):
         email = EmailMultiAlternatives(
             subject=f"Votre facture — Commande #{facture.commande.id} chez {commercant.nom_boutique}",
             body=texte_brut,
-            from_email=settings.EMAIL_HOST_USER or None,
+            from_email=settings.EMAIL_FROM,
             to=[client_email],
         )
         email.attach_alternative(html_body, "text/html")

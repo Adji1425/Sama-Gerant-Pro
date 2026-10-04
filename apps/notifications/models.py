@@ -3,6 +3,11 @@ from apps.users.models import Commercant
 
 
 class Notification(models.Model):
+    """
+    Journal des alertes envoyées au commerçant (stock bas, stock dormant,
+    événements, commandes). Il n'y a plus d'écran de lecture : le champ `lu`
+    n'est plus utilisé et aucune logique ne dépend de lui.
+    """
     TYPE_CHOICES = [
         ('stock_bas', '🔴 Stock bas'),
         ('stock_dormant', '🟡 Stock dormant'),

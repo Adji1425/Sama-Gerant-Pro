@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block title %}Paiement{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pay-card { max-width: 480px; margin: 0 auto; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); background: #fff; }
+  .pay-header { padding: 24px 24px 20px; text-align: center; color: #fff; background: var(--pay-color, #1DC8F2); transition: background .2s ease; }
+  .pay-header .pay-title { font-weight: 700; font-size: 16px; letter-spacing: .3px; opacity: .95; }
+  .pay-header .pay-amount { font-size: 30px; font-weight: 800; margin-top: 6px; }
+  .pay-body { padding: 22px 24px 26px; }
+
+  .pay-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .pay-method { position: relative; }
+  .pay-method input { position: absolute; opacity: 0; pointer-events: none; }
+  .pay-method label {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 6px; border: 1.5px solid #E3E3E3; border-radius: 12px;
+    cursor: pointer; font-size: 12px; font-weight: 600; color: #1B263B; text-align: center;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .pay-method label:hover { border-color: #bdbdbd; }
+  .pay-method input:checked + label { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, #fff); box-shadow: 0 0 0 1px var(--c); }
+  .pay-method input:focus-visible + label { outline: 2px solid var(--c); outline-offset: 2px; }
+  .pay-badge { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; background: var(--c); }
+
+  .pay-recap-line { display: flex; justify-content: space-between; font-size: 12.5px; color: #6b6b6b; padding: 3px 0; }
+  .pay-input { border: 1.5px solid #E3E3E3; border-radius: 10px; padding: 12px 14px; font-size: 15px; width: 100%; }
+  .pay-input:focus { outline: none; border-color: var(--pay-color, #1DC8F2); }
+  .pay-input.is-invalid { border-color: #dc3545; }
+  .pay-error { color: #dc3545; font-size: 12px; margin-top: -8px; margin-bottom: 10px; display: none; }
+  .btn-pay { background: var(--pay-color, #1DC8F2); color: #fff; border: none; border-radius: 10px; padding: 13px; font-weight: 700; width: 100%; font-size: 15px; transition: filter .15s ease; }
+  .btn-pay:hover { filter: brightness(.92); color: #fff; }
+  .btn-pay:disabled { opacity: .7; }
+
+  .pay-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+  .pay-spinner { width: 52px; height: 52px; border: 4px solid #eee; border-top-color: var(--pay-color, #1DC8F2); border-radius: 50%; animation: pay-spin .8s linear infinite; }
+  @keyframes pay-spin { to { transform: rotate(360deg); } }
+  .pay-disclaimer { font-size: 11px; color: #9a9a9a; text-align: center; margin-top: 18px; line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="pay-card" id="pay-card" style="--pay-color:#1DC8F2;">
+  <div class="pay-header">
+    <div class="pay-title" id="pay-title">Paiement Wave</div>
+    <div class="pay-amount">{{ total|floatformat:0 }} FCFA</div>
+  </div>
+
+  <div class="pay-body">
+    <h6 class="fw-semibold mb-2" style="color:#1B263B;">Récapitulatif</h6>
+    {% for ligne in lignes %}
+      <div class="pay-recap-line">
+        <span>{{ ligne.produit }}{% if ligne.variante_label %} ({{ ligne.variante_label }}){% endif %} × {{ ligne.quantite }}</span>
+        <span>{{ ligne.sous_total|floatformat:0 }} FCFA</span>
+      </div>
+    {% endfor %}
+    <hr class="my-3">
+
+    <form method="POST" id="pay-form" novalidate>
+      {% csrf_token %}
+
+      <h6 class="fw-semibold mb-2" style="color:#1B263B;">Moyen de paiement</h6>
+      <div class="pay-methods">
+        <div class="pay-method" style="--c:#1DC8F2;">
+          <input type="radio" name="mode_paiement" id="m-wave" value="wave" {% if mode_choisi == 'wave' %}checked{% endif %}>
+          <label for="m-wave"><span class="pay-badge">W</span>Wave</label>
+        </div>
+        <div class="pay-method" style="--c:#FF7900;">
+          <input type="radio" name="mode_paiement" id="m-om" value="orange_money" {% if mode_choisi == 'orange_money' %}checked{% endif %}>
+          <label for="m-om"><span class="pay-badge">OM</span>Orange Money</label>
+        </div>
+        <div class="pay-method" style="--c:#1B263B;">
+          <input type="radio" name="mode_paiement" id="m-carte" value="carte" {% if mode_choisi == 'carte' %}checked{% endif %}>
+          <label for="m-carte"><span class="pay-badge"><i class="bi bi-credit-card-2-front"></i></span>Carte bancaire</label>
+        </div>
+      </div>
+
+      <!-- Mobile money (Wave / Orange Money) -->
+      <div id="panel-mobile">
+        <label class="form-label fw-semibold small" style="color:#1B263B;" id="numero-label">Numéro Wave</label>
+        <input type="tel" class="pay-input mb-3" name="numero" id="numero"
+               value="{{ numero_saisi }}" placeholder="77 000 00 00" autocomplete="tel">
+        <div class="pay-error" id="err-numero"></div>
+      </div>
+
+      <!-- Carte bancaire : ces champs n'ont volontairement PAS de name,
+           ils ne sont jamais envoyés au serveur. -->
+      <div id="panel-carte" style="display:none;">
+        <label class="form-label fw-semibold small" style="color:#1B263B;">Titulaire de la carte</label>
+        <input type="text" class="pay-input mb-3" id="c-nom" placeholder="Nom sur la carte" autocomplete="cc-name">
+
+        <label class="form-label fw-semibold small" style="color:#1B263B;">Numéro de carte</label>
+        <input type="text" class="pay-input mb-3" id="c-num" inputmode="numeric" maxlength="23"
+               placeholder="1234 5678 9012 3456" autocomplete="cc-number">
+        <div class="pay-error" id="err-num"></div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold small" style="color:#1B263B;">Expiration</label>
+            <input type="text" class="pay-input mb-3" id="c-exp" inputmode="numeric" maxlength="5"
+                   placeholder="MM/AA" autocomplete="cc-exp">
+            <div class="pay-error" id="err-exp"></div>
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold small" style="color:#1B263B;">CVV</label>
+            <input type="password" class="pay-input mb-3" id="c-cvv" inputmode="numeric" maxlength="4"
+                   placeholder="•••" autocomplete="cc-csc">
+            <div class="pay-error" id="err-cvv"></div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-pay" id="pay-btn">
+        <i class="bi bi-lock-fill me-1"></i>
+        <span id="pay-btn-text">Payer {{ total|floatformat:0 }} FCFA</span>
+      </button>
+    </form>
+
+    <p class="pay-disclaimer">
+      Simulation de paiement — projet académique. Aucune transaction réelle
+      n'est effectuée. Les informations de carte ne quittent jamais votre
+      navigateur.
+    </p>
+  </div>
+</div>
+
+<div class="pay-overlay" id="pay-overlay">
+  <div class="pay-spinner"></div>
+  <div class="fw-semibold" style="color:#1B263B;">Paiement en cours…</div>
+  <div class="text-muted small">Ne fermez pas cette page.</div>
+</div>
+
+<script>
+(function () {
+  var MODES = {
+    wave:         { color: '#1DC8F2', titre: 'Paiement Wave',         label: 'Numéro Wave' },
+    orange_money: { color: '#FF7900', titre: 'Paiement Orange Money', label: 'Numéro Orange Money' },
+    carte:        { color: '#1B263B', titre: 'Paiement par carte bancaire' }
+  };
+  var form = document.getElementById('pay-form');
+  var card = document.getElementById('pay-card');
+  var overlay = document.getElementById('pay-overlay');
+  var btn = document.getElementById('pay-btn');
+  var panelMobile = document.getElementById('panel-mobile');
+  var panelCarte = document.getElementById('panel-carte');
+  var numero = document.getElementById('numero');
+  var cNum = document.getElementById('c-num'), cExp = document.getElementById('c-exp'), cCvv = document.getElementById('c-cvv');
+
+  function mode() { return form.querySelector('input[name="mode_paiement"]:checked').value; }
+
+  function afficherMode() {
+    var m = mode(), cfg = MODES[m];
+    card.style.setProperty('--pay-color', cfg.color);
+    overlay.style.setProperty('--pay-color', cfg.color);
+    document.getElementById('pay-title').textContent = cfg.titre;
+    var mobile = (m !== 'carte');
+    panelMobile.style.display = mobile ? '' : 'none';
+    panelCarte.style.display = mobile ? 'none' : '';
+    if (mobile) document.getElementById('numero-label').textContent = cfg.label;
+    clearErrors();
+  }
+
+  function setError(input, errId, msg) {
+    var el = document.getElementById(errId);
+    input.classList.add('is-invalid'); el.textContent = msg; el.style.display = 'block';
+  }
+  function clearErrors() {
+    document.querySelectorAll('.pay-error').forEach(function (e) { e.style.display = 'none'; });
+    document.querySelectorAll('.pay-input').forEach(function (i) { i.classList.remove('is-invalid'); });
+  }
+
+  function luhn(num) {
+    var sum = 0, alt = false;
+    for (var i = num.length - 1; i >= 0; i--) {
+      var n = parseInt(num[i], 10);
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n; alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+
+  function valider() {
+    clearErrors();
+    var ok = true, m = mode();
+    if (m === 'carte') {
+      var digits = cNum.value.replace(/\D/g, '');
+      if (digits.length < 13 || digits.length > 19 || !luhn(digits)) { setError(cNum, 'err-num', 'Numéro de carte invalide.'); ok = false; }
+      var mm = cExp.value.match(/^(\d{2})\/(\d{2})$/);
+      if (!mm || +mm[1] < 1 || +mm[1] > 12) { setError(cExp, 'err-exp', 'Date invalide (MM/AA).'); ok = false; }
+      else {
+        var now = new Date(), y = 2000 + +mm[2];
+        if (y < now.getFullYear() || (y === now.getFullYear() && +mm[1] < now.getMonth() + 1)) { setError(cExp, 'err-exp', 'Carte expirée.'); ok = false; }
+      }
+      if (!/^\d{3,4}$/.test(cCvv.value)) { setError(cCvv, 'err-cvv', 'CVV invalide.'); ok = false; }
+    } else {
+      var n = numero.value.replace(/\D/g, '');
+      if (n.length === 12 && n.indexOf('221') === 0) n = n.slice(3);
+      if (n.length !== 9 || n[0] !== '7') { setError(numero, 'err-numero', 'Saisissez 9 chiffres (ex : 77 000 00 00).'); ok = false; }
+      else if (m === 'orange_money' && n.slice(0, 2) !== '77' && n.slice(0, 2) !== '78') {
+        setError(numero, 'err-numero', 'Un numéro Orange Money commence par 77 ou 78.'); ok = false;
+      }
+    }
+    return ok;
+  }
+
+  // Mise en forme de la saisie carte
+  cNum.addEventListener('input', function () {
+    var d = this.value.replace(/\D/g, '').slice(0, 19);
+    this.value = d.replace(/(.{4})/g, '$1 ').trim();
+  });
+  cExp.addEventListener('input', function () {
+    var d = this.value.replace(/\D/g, '').slice(0, 4);
+    this.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+  });
+  cCvv.addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 4); });
+
+  form.querySelectorAll('input[name="mode_paiement"]').forEach(function (r) { r.addEventListener('change', afficherMode); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!valider()) return;
+    btn.disabled = true;
+    overlay.style.display = 'flex';
+    // Les infos de carte ne doivent jamais partir vers le serveur
+    if (mode() === 'carte') { numero.disabled = true; cNum.value = cExp.value = cCvv.value = ''; }
+    // Simulation du temps de traitement d'un vrai paiement
+    setTimeout(function () { form.submit(); }, 2200);
+  });
+
+  afficherMode();
+})();
+</script>
+
+{% endblock %}

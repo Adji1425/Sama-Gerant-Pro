@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from email.utils import formataddr
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -135,14 +136,19 @@ EMAIL_USE_TLS = True
 
 # 2. TRÈS IMPORTANT pour Gmail : l'expéditeur DOIT être votre adresse Gmail
 # On force l'utilisation de EMAIL_HOST_USER comme expéditeur par défaut
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# Nom affiché comme expéditeur dans la boîte du destinataire : il voit
+# « Sama-Gérant Pro » au lieu de l'adresse Gmail. (Gmail impose que
+# l'adresse réelle reste celle du compte SMTP ; seul le NOM est libre.)
+EMAIL_FROM_NAME = os.getenv('EMAIL_FROM_NAME', 'Sama-Gérant Pro')
+EMAIL_FROM = (
+    formataddr((EMAIL_FROM_NAME, EMAIL_HOST_USER)) if EMAIL_HOST_USER else None
+)
 # Si EMAIL_HOST_USER est vide, on met une adresse bidon pour le mode console
-if not DEFAULT_FROM_EMAIL:
-    DEFAULT_FROM_EMAIL = 'admin@sama-gerant.local'
+DEFAULT_FROM_EMAIL = EMAIL_FROM or 'admin@sama-gerant.local'
 
 # Adresse affichée publiquement (factures PDF...) : celle de Sama-Gérant Pro,
 # pas celle du commerçant. À renseigner dans .env (PLATEFORME_EMAIL=...).
-PLATEFORME_EMAIL = os.getenv('PLATEFORME_EMAIL', DEFAULT_FROM_EMAIL)
+PLATEFORME_EMAIL = os.getenv('PLATEFORME_EMAIL', EMAIL_HOST_USER or 'admin@sama-gerant.local')
 
 # URL de base du site, utilisée pour construire des liens ABSOLUS dans les
 # emails (sans elle, le lien devient "http:///commandes/..." et ne marche pas).

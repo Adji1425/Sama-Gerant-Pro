@@ -122,6 +122,18 @@ class Commande(models.Model):
     telephone = models.CharField(max_length=20)
     montant_total = models.FloatField(default=0)
 
+    # Moyen de paiement choisi par le client (simulation, cf. views.paiement).
+    # Les commandes créées avant l'ajout du champ étaient toutes payées
+    # via Wave, d'où la valeur par défaut.
+    MODE_PAIEMENT_CHOICES = [
+        ('wave', 'Wave'),
+        ('orange_money', 'Orange Money'),
+        ('carte', 'Carte bancaire'),
+    ]
+    mode_paiement = models.CharField(
+        max_length=20, choices=MODE_PAIEMENT_CHOICES, default='wave'
+    )
+
     # Localisation structurée (§5.4) : permet l'analyse de répartition
     # géographique des commandes, en complément de l'adresse en texte
     # libre ci-dessus (conservée pour le détail de livraison).

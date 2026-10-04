@@ -12,7 +12,6 @@ from django.db.models.functions import TruncDay
 from apps.produits.models import Produit
 from apps.commandes.models import LignePanier
 from apps.evenements.models import EvenementSAD
-from apps.notifications.models import Notification
 from apps.users.views import admin_required
 from .models import ConfigurationClimatique
 from .forms import ConfigurationClimatiqueForm
@@ -60,22 +59,6 @@ def dashboard(request):
     evenements_proches = [e for e in EvenementSAD.objects.all() if e.est_proche()]
     saison = get_saison_actuelle()
 
-    # Compteur total réel des notifications non lues (pour l'en-tête de
-    # la carte), séparé de l'aperçu affiché ci-dessous. Avant, le header
-    # utilisait la longueur de la liste déjà tronquée (voir plus bas),
-    # ce qui affichait un chiffre faux (toujours "2" ou "0" selon la
-    # limite codée en dur, jamais le vrai total).
-    notifications_non_lues_total = Notification.objects.filter(
-        commercant=commercant, lu=False
-    ).count()
-    # Aperçu : les 5 notifications non lues les plus récentes (déjà
-    # triées par date décroissante, voir Notification.Meta.ordering).
-    # Le lien "voir toutes" permet de consulter le reste.
-    notifications = list(
-        Notification.objects.filter(commercant=commercant, lu=False)[:5]
-    )
-    notifications_restantes = max(0, notifications_non_lues_total - len(notifications))
-
     repartition_geo = repartition_geographique_commandes(commercant)
 
     date_limite = timezone.now() - timedelta(days=30)
@@ -101,9 +84,6 @@ def dashboard(request):
         'suggestions_reappro': suggestions_reappro,
         'evenements_proches': evenements_proches,
         'saison': saison,
-        'notifications': notifications,
-        'notifications_non_lues_total': notifications_non_lues_total,
-        'notifications_restantes': notifications_restantes,
         'ventes_par_jour_json': json.dumps(ventes_par_jour, cls=DjangoJSONEncoder),
         'repartition_geo': repartition_geo,
         'repartition_geo_json': json.dumps(
@@ -113,36 +93,6 @@ def dashboard(request):
             ],
             cls=DjangoJSONEncoder,
         ),
-    })
-
-
-@login_required
-def marquer_notification_lue(request, pk):
-    commercant = _commercant_required(request)
-    if not commercant:
-        return HttpResponseForbidden("Réservé aux commerçants.")
-
-    Notification.objects.filter(pk=pk, commercant=commercant).update(lu=True)
-
-    # Redirige vers la page d'où venait la demande (dashboard ou liste complète)
-    retour = request.META.get('HTTP_REFERER')
-    if retour:
-        return redirect(retour)
-    return redirect('sad:dashboard')
-
-
-@login_required
-def toutes_notifications(request):
-    commercant = _commercant_required(request)
-    if not commercant:
-        return HttpResponseForbidden("Réservé aux commerçants.")
-
-    notifications = Notification.objects.filter(
-        commercant=commercant, lu=False
-    ).order_by('-date_envoi')
-
-    return render(request, 'sad/notifications_liste.html', {
-        'notifications': notifications,
     })
 
 

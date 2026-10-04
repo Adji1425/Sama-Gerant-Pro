@@ -308,7 +308,7 @@ def reinitialiser_mot_de_passe(request, pk):
                 f"Nous vous recommandons de le changer dès votre prochaine "
                 f"connexion, depuis votre espace profil."
             ),
-            from_email=settings.EMAIL_HOST_USER or None,
+            from_email=settings.EMAIL_FROM,
             recipient_list=[utilisateur.email],
             fail_silently=True,
         ))

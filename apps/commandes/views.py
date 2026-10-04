@@ -1,3 +1,5 @@
+import logging
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -221,16 +223,16 @@ def valider_commande(request):
                 return redirect('commandes:voir_panier')
 
         # On ne crée PAS encore la commande : les infos de livraison sont
-        # gardées en session le temps du paiement Wave (simulé). La
+        # gardées en session le temps du paiement (simulé). La
         # commande n'est créée — et le commerçant notifié — qu'une fois le
-        # paiement "réussi" dans paiement_wave() ci-dessous.
+        # paiement "réussi" dans paiement() ci-dessous.
         request.session['livraison_pending'] = {
             'adresse': adresse,
             'telephone': telephone,
             'commune': commune,
             'region_id': region.id,
         }
-        return redirect('commandes:paiement_wave')
+        return redirect('commandes:paiement')
 
     context = {
         'panier': panier,
@@ -243,17 +245,22 @@ def valider_commande(request):
 
 
 @login_required
-def paiement_wave(request):
+def paiement(request):
     """
-    Simulation d'un paiement Wave avant la création définitive de la
-    commande. Aucun vrai appel à l'API Wave n'est fait ici (pas de clé
-    marchande dans ce projet académique) : on simule juste le temps de
-    traitement côté front (voir paiement_wave.html) puis on valide.
+    Simulation du paiement (Wave, Orange Money ou carte bancaire) avant la
+    création définitive de la commande. Aucun appel réel à une API de
+    paiement n'est fait (pas de clé marchande dans ce projet académique) :
+    le temps de traitement est simulé côté front (voir paiement.html).
+
+    Sécurité : les données de carte bancaire ne sont JAMAIS envoyées au
+    serveur (les champs du formulaire n'ont pas d'attribut name) ; seul le
+    moyen de paiement choisi est transmis et enregistré.
     """
     if not hasattr(request.user, 'client'):
         messages.error(request, "Accès réservé aux clients.")
         return redirect('home')
 
+    from apps.sad.utils import verifier_stock_produit
     client = request.user.client
     infos = request.session.get('livraison_pending')
     if not infos:
@@ -267,57 +274,107 @@ def paiement_wave(request):
         return redirect('commandes:voir_panier')
 
     total = sum(l.sous_total() for l in lignes)
+    modes = dict(Commande.MODE_PAIEMENT_CHOICES)
+    mode_choisi = 'wave'
+    numero_saisi = infos['telephone']
 
     if request.method == 'POST':
-        # Revalidation du stock : le panier a pu changer depuis le récap
-        # (ex: un autre client a acheté la dernière unité entre-temps).
-        for ligne in lignes:
-            if ligne.produit and ligne.quantite > ligne.produit.quantite:
-                messages.error(
-                    request,
-                    f"Stock insuffisant pour {ligne.produit.nom}, "
-                    f"paiement annulé."
+        mode_choisi = request.POST.get('mode_paiement', '')
+        numero_saisi = request.POST.get('numero', '').strip()
+
+        erreur = None
+        if mode_choisi not in modes:
+            erreur = "Veuillez choisir un moyen de paiement."
+            mode_choisi = 'wave'
+        elif mode_choisi in ('wave', 'orange_money'):
+            numero = _normaliser_numero_sn(numero_saisi)
+            if not numero:
+                erreur = (
+                    f"Numéro {modes[mode_choisi]} invalide : saisissez "
+                    f"9 chiffres (ex : 77 000 00 00)."
                 )
-                request.session.pop('livraison_pending', None)
-                return redirect('commandes:voir_panier')
+            elif mode_choisi == 'orange_money' and numero[:2] not in ('77', '78'):
+                erreur = (
+                    "Un numéro Orange Money commence par 77 ou 78. "
+                    "Choisissez Wave si votre numéro est différent."
+                )
 
-        region = Region.objects.filter(pk=infos['region_id']).first()
+        if erreur:
+            messages.error(request, erreur)
+        else:
+            # Revalidation du stock : le panier a pu changer depuis le récap
+            # (ex: un autre client a acheté la dernière unité entre-temps).
+            for ligne in lignes:
+                if ligne.produit and ligne.quantite > ligne.produit.quantite:
+                    messages.error(
+                        request,
+                        f"Stock insuffisant pour {ligne.produit.nom}, "
+                        f"paiement annulé."
+                    )
+                    request.session.pop('livraison_pending', None)
+                    return redirect('commandes:voir_panier')
 
-        commande = Commande.objects.create(
-            client=client,
-            adresse_livraison_reel=infos['adresse'],
-            telephone=infos['telephone'],
-            region=region,
-            commune=infos['commune'],
-            statut='en_attente',
-        )
+            region = Region.objects.filter(pk=infos['region_id']).first()
 
-        for ligne in lignes:
-            ligne.commande = commande
-            ligne.save()
+            commande = Commande.objects.create(
+                client=client,
+                adresse_livraison_reel=infos['adresse'],
+                telephone=infos['telephone'],
+                region=region,
+                commune=infos['commune'],
+                statut='en_attente',
+                mode_paiement=mode_choisi,
+            )
 
-            # Décrémenter le stock global du produit
-            if ligne.produit:
-                ligne.produit.quantite -= ligne.quantite
-                ligne.produit.save()
+            for ligne in lignes:
+                ligne.commande = commande
+                ligne.save()
 
-        commande.calculer_montant()
-        _notifier_commercant(commande)
+                # Décrémenter le stock global du produit
+                if ligne.produit:
+                    ligne.produit.quantite -= ligne.quantite
+                    ligne.produit.save()
+                    # Stock devenu bas ? Prévenir tout de suite le commerçant
+                    # (notification + email). Ne doit jamais bloquer la commande.
+                    try:
+                        verifier_stock_produit(ligne.produit)
+                    except Exception:
+                        logging.getLogger(__name__).exception(
+                            "Alerte stock bas impossible pour %s", ligne.produit
+                        )
 
-        request.session.pop('livraison_pending', None)
+            commande.calculer_montant()
+            _notifier_commercant(commande)
 
-        messages.success(
-            request,
-            f"✓ Paiement Wave accepté — commande #{commande.id} passée avec succès !"
-        )
-        return redirect('commandes:confirmation', commande_id=commande.id)
+            request.session.pop('livraison_pending', None)
+
+            messages.success(
+                request,
+                f"✓ Paiement {modes[mode_choisi]} accepté — "
+                f"commande #{commande.id} passée avec succès !"
+            )
+            return redirect('commandes:confirmation', commande_id=commande.id)
 
     context = {
         'total': total,
         'lignes': lignes,
-        'telephone_client': infos['telephone'],
+        'numero_saisi': numero_saisi,
+        'mode_choisi': mode_choisi,
     }
-    return render(request, 'commandes/paiement_wave.html', context)
+    return render(request, 'commandes/paiement.html', context)
+
+
+def _normaliser_numero_sn(brut):
+    """
+    Numéro mobile sénégalais -> 9 chiffres commençant par 7, ou None.
+    Accepte les espaces, tirets, et les préfixes +221 / 221.
+    """
+    chiffres = re.sub(r'\D', '', brut or '')
+    if len(chiffres) == 12 and chiffres.startswith('221'):
+        chiffres = chiffres[3:]
+    if len(chiffres) == 9 and chiffres.startswith('7'):
+        return chiffres
+    return None
 
 
 def _notifier_commercant(commande):
@@ -394,7 +451,7 @@ def _envoyer_email_nouvelle_commande(commercant, commande):
         email = EmailMultiAlternatives(
             subject=f"🛒 Nouvelle commande #{commande.id} — {commande.montant_total:.0f} FCFA",
             body=texte_brut,
-            from_email=settings.EMAIL_HOST_USER or None,
+            from_email=settings.EMAIL_FROM,
             to=[destinataire],
         )
         email.attach_alternative(html_body, "text/html")
