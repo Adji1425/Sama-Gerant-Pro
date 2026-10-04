@@ -96,10 +96,6 @@ def login_view(request):
         if form.is_valid():
             utilisateur = form.get_user()
             login(request, utilisateur)
-            messages.success(
-                request,
-                f"Bon retour, {utilisateur.first_name} !"
-            )
             # Priorité à la page d'origine (next), si elle est présente et
             # sûre (évite les redirections vers un autre site : "open
             # redirect"). Sinon, on retombe sur la redirection par rôle.
@@ -308,7 +304,7 @@ def reinitialiser_mot_de_passe(request, pk):
                 f"Nous vous recommandons de le changer dès votre prochaine "
                 f"connexion, depuis votre espace profil."
             ),
-            from_email=settings.EMAIL_FROM,
+            from_email=settings.EMAIL_HOST_USER or None,
             recipient_list=[utilisateur.email],
             fail_silently=True,
         ))

@@ -43,15 +43,30 @@ def dashboard(request):
 
     produits = Produit.objects.filter(commercant=commercant, statut='actif')
 
-    # ✅ CORRIGÉ : LignePanier au lieu de DetailsCommande
-    # commande__isnull=False -> uniquement les lignes rattachées à une vraie commande (pas le panier en cours)
+    # Ventes confirmées (commandes en préparation ou livrées) des 30 derniers
+    # jours. Le chiffre d'affaires et la marge nette partent de la MÊME base,
+    # pour que « marge = ventes − coûts » soit toujours vrai à l'écran.
+    depuis = timezone.now() - timedelta(days=30)
     lignes_vendues = LignePanier.objects.filter(
         produit__commercant=commercant,
         commande__isnull=False,
         commande__statut__in=['en_preparation', 'livree'],
-    )
-    chiffre_affaires = sum(ligne.sous_total() for ligne in lignes_vendues)
-    marge_totale = sum(calculer_marge_nette(p) for p in produits)
+        commande__date_commande__gte=depuis,
+    ).select_related('produit')
+
+    chiffre_affaires = cout_achat = frais_emballage = 0
+    commandes_vendues = set()
+    for ligne in lignes_vendues:
+        chiffre_affaires += ligne.sous_total()
+        cout_achat += ligne.produit.prix_achat * ligne.quantite
+        frais_emballage += ligne.produit.frais_packaging * ligne.quantite
+        commandes_vendues.add(ligne.commande_id)
+
+    # Marge nette réelle = ventes − prix d'achat − frais d'emballage
+    marge_totale = chiffre_affaires - cout_achat - frais_emballage
+    nb_ventes = len(commandes_vendues)
+    panier_moyen = chiffre_affaires / nb_ventes if nb_ventes else 0
+    taux_marge = marge_totale / chiffre_affaires * 100 if chiffre_affaires else 0
 
     top_produits = identifier_top_produits(commercant)
     stocks_dormants = identifier_stocks_dormants(commercant)
@@ -79,6 +94,11 @@ def dashboard(request):
 
     return render(request, 'sad/dashboard.html', {
         'chiffre_affaires': chiffre_affaires,
+        'cout_achat': cout_achat,
+        'frais_emballage': frais_emballage,
+        'nb_ventes': nb_ventes,
+        'panier_moyen': panier_moyen,
+        'taux_marge': taux_marge,
         'marge_totale': marge_totale,
         'top_produits': top_produits,
         'stocks_dormants': stocks_dormants,

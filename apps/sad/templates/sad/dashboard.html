@@ -86,6 +86,37 @@
   .chart-geo-legend .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
   .chart-geo-legend .nom{flex:1;font-weight:500;color:var(--text);}
   .chart-geo-legend .pct{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;}
+  /* ── Cartes KPI cliquables : petite fenêtre d'explication ── */
+  /* au-dessus des sections suivantes (graphiques...), sinon la fenêtre passe derrière */
+  .kpi-grid{position:relative;z-index:30;}
+  .kpi-toggle{position:relative;cursor:pointer;}
+  .kpi-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .kpi-toggle.open{z-index:40;}
+  .kpi-hint{position:absolute;top:16px;right:16px;font-size:15px;color:var(--muted);
+    display:flex;align-items:center;gap:4px;transition:color .2s;}
+  .kpi-hint .bi-chevron-down{font-size:11px;transition:transform .2s;}
+  .kpi-toggle.open .kpi-hint .bi-chevron-down{transform:rotate(180deg);}
+  .kpi-toggle:hover .kpi-hint,.kpi-toggle.open .kpi-hint{color:var(--gold);}
+  .kpi-primary .kpi-hint{color:rgba(255,255,255,.55);}
+  .kpi-primary:hover .kpi-hint,.kpi-primary.open .kpi-hint{color:var(--gold);}
+  .kpi-pop{display:none;position:absolute;top:calc(100% + 10px);left:0;width:100%;min-width:290px;max-width:390px;
+    background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);
+    box-shadow:0 14px 40px rgba(61,31,13,.18);padding:18px 20px;cursor:default;text-align:left;}
+  .kpi-pop::before{content:"";position:absolute;top:-7px;left:34px;width:12px;height:12px;background:var(--white);
+    border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg);}
+  .kpi-toggle.open .kpi-pop{display:block;animation:kpiPop .18s ease-out;}
+  @keyframes kpiPop{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  .kpi-pop h4{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;margin:0 0 6px;color:var(--text);}
+  .kpi-pop p{font-size:13px;line-height:1.55;color:var(--muted);margin:0 0 12px;}
+  .kpi-calc{border-top:1px solid var(--border);margin-top:4px;}
+  .kpi-calc-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:13px;
+    border-bottom:1px dashed var(--border);color:var(--text);}
+  .kpi-calc-row span:last-child{font-weight:600;white-space:nowrap;}
+  .kpi-calc-row.minus span:last-child{color:#B5525F;}
+  .kpi-calc-row.total{border-bottom:none;border-top:2px solid var(--text);margin-top:2px;padding-top:9px;font-weight:700;}
+  .kpi-calc-row.total span:last-child{color:var(--gold);font-size:14px;}
+  .kpi-pop .kpi-note{font-size:12px;color:var(--muted);background:var(--gold-light);border-radius:8px;
+    padding:8px 10px;margin:12px 0 0;line-height:1.5;}
 </style>
 {% endblock %}
 
@@ -99,18 +130,40 @@
 
 <!-- ══ KPI ═══════════════════════════════════════════════════════════════════ -->
 <div class="kpi-grid fade-up fade-up-1">
-  <div class="kpi-card kpi-primary">
+  <div class="kpi-card kpi-primary kpi-toggle" tabindex="0" role="button" aria-expanded="false" aria-controls="pop-ca">
     <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
+    <span class="kpi-hint" aria-hidden="true"><i class="bi bi-info-circle"></i><i class="bi bi-chevron-down"></i></span>
     <div class="kpi-label">Chiffre d'affaires</div>
     <div class="kpi-value">{{ chiffre_affaires|floatformat:0 }} FCFA</div>
-    <div class="kpi-sub">Commandes livrées — 30 derniers jours</div>
+    <div class="kpi-sub">Ventes confirmées — 30 derniers jours</div>
+    <div class="kpi-pop" id="pop-ca" role="region" aria-label="Explication du chiffre d'affaires">
+      <h4>Chiffre d'affaires</h4>
+      <p>C'est le <strong>total de l'argent que vos ventes ont rapporté</strong> sur les 30 derniers jours (commandes en préparation ou livrées), <strong>avant</strong> de retirer vos dépenses.</p>
+      <div class="kpi-calc">
+        <div class="kpi-calc-row"><span>Nombre de ventes</span><span>{{ nb_ventes }} commande{{ nb_ventes|pluralize }}</span></div>
+        <div class="kpi-calc-row"><span>Montant moyen par commande</span><span>{{ panier_moyen|floatformat:0 }} FCFA</span></div>
+      </div>
+      <div class="kpi-note">⚠️ Ce n'est <strong>pas</strong> votre bénéfice : ce qu'il vous reste vraiment se lit dans la « Marge nette ».</div>
+    </div>
   </div>
 
-  <div class="kpi-card">
+  <div class="kpi-card kpi-toggle" tabindex="0" role="button" aria-expanded="false" aria-controls="pop-marge">
     <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
-    <div class="kpi-label">Marge nette totale</div>
+    <span class="kpi-hint" aria-hidden="true"><i class="bi bi-info-circle"></i><i class="bi bi-chevron-down"></i></span>
+    <div class="kpi-label">Marge nette</div>
     <div class="kpi-value">{{ marge_totale|floatformat:0 }} FCFA</div>
-    <div class="kpi-sub">Sur vos produits actifs</div>
+    <div class="kpi-sub">Bénéfice sur vos ventes — 30 derniers jours</div>
+    <div class="kpi-pop" id="pop-marge" role="region" aria-label="Explication de la marge nette">
+      <h4>Marge nette</h4>
+      <p>C'est <strong>ce que vous gagnez vraiment</strong> : l'argent des ventes, moins ce que vous avez dépensé pour acheter et emballer les produits vendus.</p>
+      <div class="kpi-calc">
+        <div class="kpi-calc-row"><span>Ventes (chiffre d'affaires)</span><span>{{ chiffre_affaires|floatformat:0 }} FCFA</span></div>
+        <div class="kpi-calc-row minus"><span>− Prix d'achat des produits vendus</span><span>{{ cout_achat|floatformat:0 }} FCFA</span></div>
+        <div class="kpi-calc-row minus"><span>− Frais d'emballage</span><span>{{ frais_emballage|floatformat:0 }} FCFA</span></div>
+        <div class="kpi-calc-row total"><span>= Marge nette</span><span>{{ marge_totale|floatformat:0 }} FCFA</span></div>
+      </div>
+      <div class="kpi-note">Sur 100 FCFA vendus, il vous reste environ <strong>{{ taux_marge|floatformat:0 }} FCFA</strong>. Les frais de livraison ne sont pas comptés (assurée par un transporteur externe).</div>
+    </div>
   </div>
 
   <a href="{% url 'produits:gestion_stock' %}?etat=alerte"
@@ -474,4 +527,32 @@
   }
 </script>
 
+<script>
+  // ── Cartes KPI : ouvrir / fermer la petite explication ──
+  (function () {
+    var cartes = document.querySelectorAll('.kpi-toggle');
+    function fermerTout(sauf) {
+      cartes.forEach(function (c) {
+        if (c !== sauf) { c.classList.remove('open'); c.setAttribute('aria-expanded', 'false'); }
+      });
+    }
+    function basculer(carte) {
+      var ouvre = !carte.classList.contains('open');
+      fermerTout(carte);
+      carte.classList.toggle('open', ouvre);
+      carte.setAttribute('aria-expanded', ouvre ? 'true' : 'false');
+    }
+    cartes.forEach(function (carte) {
+      carte.addEventListener('click', function (e) {
+        if (e.target.closest('.kpi-pop')) return;      // un clic dans l'explication ne la ferme pas
+        basculer(carte);
+      });
+      carte.addEventListener('keydown', function (e) {
+        if (e.target === carte && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); basculer(carte); }
+      });
+    });
+    document.addEventListener('click', function (e) { if (!e.target.closest('.kpi-toggle')) fermerTout(null); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerTout(null); });
+  })();
+</script>
 {% endblock %}
