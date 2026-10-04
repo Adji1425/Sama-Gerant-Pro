@@ -82,35 +82,49 @@ def _recuperer_meteo_dakar():
     """
     Interroge l'API météo gratuite Open-Meteo (aucune clé requise) pour
     récupérer, pour Dakar, les précipitations et températures réelles
-    des 7 derniers jours. Résultat mis en cache 6h pour ne pas
-    solliciter l'API à chaque affichage du dashboard. Retourne None si
-    l'API est injoignable (pas de réseau, timeout, panne du service...).
+    des 7 derniers jours.
+
+    Robustesse (connexions lentes / instables) :
+    - délai de 5 s pour se connecter et 15 s pour lire la réponse,
+    - 3 tentatives avant d'abandonner,
+    - résultat frais mis en cache 6 h ; si l'API tombe, on réutilise la
+      DERNIÈRE réponse valide (conservée 7 jours) plutôt que d'afficher
+      « météo indisponible » ; ce sont des données réelles, pas une
+      prédiction par calendrier,
+    - la cause exacte de l'échec est journalisée.
+    Retourne None seulement si l'API est injoignable ET qu'aucune réponse
+    récente n'a jamais été obtenue.
     """
-    cle_cache = "sad_meteo_dakar"
+    cle_cache, cle_derniere = "sad_meteo_dakar", "sad_meteo_dakar_derniere"
     donnees = cache.get(cle_cache)
     if donnees is not None:
         return donnees
 
-    try:
-        reponse = requests.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": DAKAR_LATITUDE,
-                "longitude": DAKAR_LONGITUDE,
-                "daily": "precipitation_sum,temperature_2m_min",
-                "past_days": 7,
-                "forecast_days": 1,
-                "timezone": "Africa/Dakar",
-            },
-            timeout=5,
-        )
-        reponse.raise_for_status()
-        donnees = reponse.json()
-        cache.set(cle_cache, donnees, 6 * 60 * 60)  # 6h
-        return donnees
-    except requests.RequestException:
-        logger.warning("API météo Open-Meteo injoignable, saison non détectée.")
-        return None
+    derniere_erreur = None
+    for _ in range(3):
+        try:
+            reponse = requests.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params={
+                    "latitude": DAKAR_LATITUDE,
+                    "longitude": DAKAR_LONGITUDE,
+                    "daily": "precipitation_sum,temperature_2m_min",
+                    "past_days": 7,
+                    "forecast_days": 1,
+                    "timezone": "Africa/Dakar",
+                },
+                timeout=(5, 15),
+            )
+            reponse.raise_for_status()
+            donnees = reponse.json()
+            cache.set(cle_cache, donnees, 6 * 60 * 60)            # 6 h
+            cache.set(cle_derniere, donnees, 7 * 24 * 60 * 60)    # 7 jours
+            return donnees
+        except (requests.RequestException, ValueError) as exc:
+            derniere_erreur = exc
+
+    logger.warning("API météo Open-Meteo injoignable : %r", derniere_erreur)
+    return cache.get(cle_derniere)
 
 
 def get_saison_actuelle():
@@ -519,95 +533,12 @@ def repartition_geographique_commandes(commercant):
     )
 
 
-def historique_evenement(commercant, evenement, jours_avant=21, limite=5):
-    """
-    Bilan des ventes du commerçant lors de la DERNIÈRE édition passée du
-    même événement (ex : Tabaski de l'an dernier), pour lui suggérer de
-    bien se réapprovisionner quand l'événement revient.
-
-    Les éditions sont reconnues par le nom : l'administrateur ajoute une
-    nouvelle ligne chaque année avec le même nom (« Tabaski »...).
-    La période analysée commence `jours_avant` jours AVANT le début de
-    l'événement passé, car les achats se font surtout dans la phase de
-    préparation. Les commandes annulées sont ignorées.
-
-    Retourne None s'il n'y a pas d'édition passée ou pas de ventes.
-    """
-    from apps.evenements.models import EvenementSAD
-    from apps.commandes.models import LignePanier
-
-    precedent = (
-        EvenementSAD.objects
-        .filter(nom_evenement__iexact=evenement.nom_evenement,
-                date_fin__lt=evenement.date_debut)
-        .order_by('-date_debut')
-        .first()
-    )
-    if precedent is None:
-        return None
-
-    debut = precedent.date_debut - timedelta(days=jours_avant)
-    lignes = (
-        LignePanier.objects
-        .filter(
-            produit__commercant=commercant,
-            commande__isnull=False,
-            commande__date_commande__date__range=(debut, precedent.date_fin),
-        )
-        .exclude(commande__statut='annulee')
-        .values('produit__id', 'produit__nom', 'produit__quantite')
-        .annotate(total_vendu=Sum('quantite'))
-        .order_by('-total_vendu')[:limite]
-    )
-
-    produits = []
-    for l in lignes:
-        vendu = l['total_vendu']
-        stock = l['produit__quantite']
-        produits.append(SimpleNamespace(
-            nom=l['produit__nom'],
-            vendu=vendu,
-            stock=stock,
-            manque=max(vendu - stock, 0),
-        ))
-    if not produits:
-        return None
-
-    return SimpleNamespace(
-        precedent=precedent, debut=debut, fin=precedent.date_fin,
-        produits=produits,
-        a_reapprovisionner=[p for p in produits if p.manque > 0],
-    )
-
-
-def texte_historique_evenement(historique):
-    """Version texte (pour les notifications) du bilan ci-dessus."""
-    if not historique:
-        return ""
-    p = historique.precedent
-    lignes = [
-        f"📊 Lors de « {p.nom_evenement} » ({historique.debut:%d/%m/%Y} au "
-        f"{historique.fin:%d/%m/%Y}), vous aviez vendu :"
-    ]
-    for prod in historique.produits:
-        lignes.append(
-            f"• {prod.nom} : {prod.vendu} vendu(s) — stock actuel : {prod.stock}"
-        )
-    if historique.a_reapprovisionner:
-        conseils = ", ".join(
-            f"{prod.nom} (+{prod.manque})" for prod in historique.a_reapprovisionner
-        )
-        lignes.append(f"👉 Pensez à réapprovisionner : {conseils}.")
-    else:
-        lignes.append("✅ Votre stock actuel couvre déjà ces ventes.")
-    return "\n".join(lignes)
-
-
 def generer_notifications_evenements(commercant, jours=21):
     """
-    Alerte prévisionnelle avant un événement (Tabaski, Magal, Korité...),
-    avec le bilan des ventes de la dernière édition. Envoyée par email,
-    une seule fois par événement (fenêtre de 30 jours).
+    Alerte prévisionnelle par email quelques semaines avant un événement
+    (Tabaski, Magal, Korité...) : dates + conseil de l'administrateur pour
+    anticiper le stock (§5.4). Envoyée une seule fois par événement
+    (fenêtre de 30 jours).
     """
     from apps.evenements.models import EvenementSAD
 
@@ -620,14 +551,36 @@ def generer_notifications_evenements(commercant, jours=21):
         _envoyer_alerte(
             commercant, 'evenement', titre,
             f"Événement à venir — {evenement.nom_evenement}",
-            _message_evenement(commercant, evenement),
+            _message_evenement(evenement),
         )
 
 
-def _message_evenement(commercant, evenement):
-    """Conseil de l'admin + bilan des ventes de la dernière édition."""
-    texte = evenement.conseil_affiche
-    bilan = texte_historique_evenement(
-        historique_evenement(commercant, evenement)
+def _message_evenement(evenement):
+    """Texte de l'email de rappel : dates de l'événement + conseil de l'admin."""
+    if evenement.date_debut == evenement.date_fin:
+        dates = f"le {evenement.date_debut:%d/%m/%Y}"
+    else:
+        dates = f"du {evenement.date_debut:%d/%m/%Y} au {evenement.date_fin:%d/%m/%Y}"
+    return (
+        f"{evenement.nom_evenement} approche ({dates}).\n\n"
+        f"{evenement.conseil_affiche}"
     )
-    return f"{texte}\n\n{bilan}" if bilan else texte
+
+
+def generer_alerte_saison(commercant):
+    """
+    Alerte saisonnière par email (§5.4) : conseil lié à la saison détectée
+    (ex : hivernage -> mise en avant des articles de pluie). Une fois par
+    saison et par période de 45 jours. Rien n'est envoyé si la météo est
+    indisponible (on ne devine pas la saison).
+    """
+    saison = get_saison_actuelle()
+    if saison is None:
+        return False
+    titre = f"Alerte saison : {saison.nom}"
+    if _alerte_deja_envoyee(commercant, 'saison', titre, jours=45):
+        return False
+    _envoyer_alerte(
+        commercant, 'saison', titre, f"Saison — {saison.nom}", saison.conseil,
+    )
+    return True

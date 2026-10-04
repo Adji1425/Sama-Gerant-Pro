@@ -19,6 +19,7 @@ from .utils import (
     calculer_marge_nette, identifier_top_produits, identifier_stocks_dormants,
     get_saison_actuelle, repartition_geographique_commandes,
     generer_notifications_stock, generer_notifications_evenements,
+    generer_alerte_saison,
     suggerer_reapprovisionnement,
 )
 
@@ -38,6 +39,7 @@ def dashboard(request):
     # Génère les notifications avant d'afficher le tableau de bord
     generer_notifications_stock(commercant)
     generer_notifications_evenements(commercant)
+    generer_alerte_saison(commercant)
 
     produits = Produit.objects.filter(commercant=commercant, statut='actif')
 

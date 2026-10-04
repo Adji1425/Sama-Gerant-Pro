@@ -155,6 +155,12 @@ PLATEFORME_EMAIL = os.getenv('PLATEFORME_EMAIL', EMAIL_HOST_USER or 'admin@sama-
 # En local : http://127.0.0.1:8000 — en production : https://votre-domaine.com
 SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
 
+# Envoi automatique des alertes (stock, événements, saison) tant que le
+# serveur tourne. Mettre ALERTES_AUTO=0 dans .env pour le désactiver.
+ALERTES_AUTO = os.getenv('ALERTES_AUTO', '1') != '0'
+ALERTES_AUTO_INTERVALLE_HEURES = float(os.getenv('ALERTES_AUTO_INTERVALLE_HEURES', '6'))
+ALERTES_AUTO_DELAI_SECONDES = float(os.getenv('ALERTES_AUTO_DELAI_SECONDES', '30'))
+
 # --- Fin Configuration Email ---
 
 # Logging — rend visibles en console les erreurs d'envoi d'email
