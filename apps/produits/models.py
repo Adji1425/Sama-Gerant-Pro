@@ -191,10 +191,81 @@ class Approvisionnement(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new:
-            self.produit.quantite += self.quantite
-            if self.prix_achat_unitaire != self.produit.prix_achat:
-                self.produit.prix_achat = self.prix_achat_unitaire
-            self.produit.save()
+            # Mise à jour atomique côté base (F) : une vente ou un retrait qui
+            # a lieu au même instant n'est pas écrasé par une valeur périmée.
+            Produit.objects.filter(pk=self.produit_id).update(
+                quantite=models.F('quantite') + self.quantite,
+                prix_achat=self.prix_achat_unitaire,
+            )
+            self.produit.refresh_from_db(fields=['quantite', 'prix_achat'])
+
+class RetraitStock(models.Model):
+    """
+    Sortie MANUELLE de stock avec motif (cahier §5.2.2 « Retrait de produits ») :
+    produit endommagé, perdu/volé, périmé... Le stock baisse, l'événement est
+    journalisé et la perte est valorisée au prix d'achat, pour garder une
+    comptabilité exacte (ces unités n'ont pas été vendues).
+    """
+    MOTIF_CHOICES = [
+        ('dommage', 'Produit endommagé'),
+        ('perte', 'Perte ou vol'),
+        ('peremption', 'Péremption'),
+        ('autre', 'Autre motif'),
+    ]
+    commercant = models.ForeignKey(
+        Commercant, on_delete=models.CASCADE, related_name='retraits_stock'
+    )
+    produit = models.ForeignKey(
+        Produit, on_delete=models.CASCADE, related_name='retraits'
+    )
+    quantite = models.PositiveIntegerField(help_text="Nombre d'unités retirées du stock")
+    motif = models.CharField(max_length=20, choices=MOTIF_CHOICES)
+    note = models.TextField(blank=True, help_text="Précisions (optionnel)")
+    cout_unitaire = models.FloatField(
+        default=0, help_text="Prix d'achat unitaire au moment du retrait"
+    )
+    date_retrait = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Retrait de stock"
+        verbose_name_plural = "Retraits de stock"
+        ordering = ['-date_retrait']
+
+    def __str__(self):
+        return f"-{self.quantite} x {self.produit.nom} ({self.get_motif_display()})"
+
+    @property
+    def valeur_perdue(self):
+        return self.quantite * self.cout_unitaire
+
+    @classmethod
+    def enregistrer(cls, produit, quantite, motif, note=''):
+        """
+        Retire `quantite` unités du stock de façon ATOMIQUE (verrou sur la
+        ligne du produit : deux retraits ou une vente simultanés ne peuvent pas
+        faire passer le stock sous 0). Retourne (retrait, ancienne_quantite).
+        Lève ValueError si la quantité est invalide ou supérieure au stock.
+        """
+        from django.db import transaction
+
+        with transaction.atomic():
+            p = Produit.objects.select_for_update().get(pk=produit.pk)
+            if quantite < 1:
+                raise ValueError("La quantité à retirer doit être d'au moins 1.")
+            if quantite > p.quantite:
+                raise ValueError(
+                    f"Stock insuffisant : il ne reste que {p.quantite} unité(s) "
+                    f"de « {p.nom} »."
+                )
+            ancienne = p.quantite
+            p.quantite = ancienne - quantite
+            p.save()
+            retrait = cls.objects.create(
+                commercant=p.commercant, produit=p, quantite=quantite,
+                motif=motif, note=note, cout_unitaire=p.prix_achat,
+            )
+        return retrait, ancienne
+
 
 class Favori(models.Model):
     """Un produit mis en favori (liste de souhaits) par un client"""

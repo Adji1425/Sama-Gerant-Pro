@@ -21,6 +21,7 @@ urlpatterns = [
     path('dashboard/stock/', views.gestion_stock, name='gestion_stock'),
     path('dashboard/stock/<int:pk>/modifier/', views.modifier_stock, name='modifier_stock'),
     path('dashboard/approvisionnement/ajouter/', views.ajouter_approvisionnement, name='ajouter_appro'),
+    path('dashboard/stock/retirer/', views.retirer_stock, name='retirer_stock'),
     path('dashboard/depenses/', views.gestion_depenses, name='gestion_depenses'),
     path('dashboard/depense/ajouter/', views.ajouter_depense, name='ajouter_depense'),
 ]

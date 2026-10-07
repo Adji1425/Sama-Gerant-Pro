@@ -277,52 +277,6 @@
     </div>
   </div>
 </div>
-
-<!-- ══ SUGGESTIONS DE RÉAPPROVISIONNEMENT (§5.4) ═══════════════════════════════ -->
-<div class="row g-3 mt-1 fade-up fade-up-3">
-  <div class="col-12">
-    <div class="sad-card">
-      <div class="sad-card-title">
-        <h5>Réapprovisionnements suggérés</h5>
-        <small>Produits qui se vendent vite ET dont le stock est bas</small>
-      </div>
-      {% if suggestions_reappro %}
-        <div class="dash-table-wrap">
-          <table class="dash-table">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Stock actuel</th>
-                <th>Vente en moyenne tous les</th>
-                <th>Vente la plus rapide</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in suggestions_reappro %}
-              <tr>
-                <td><span class="dash-row-title">{{ s.produit.nom }}</span></td>
-                <td>{{ s.stock_actuel }} unité{{ s.stock_actuel|pluralize }}</td>
-                <td>{{ s.temps_moyen }} jour{{ s.temps_moyen|pluralize }}</td>
-                <td>{{ s.temps_minimum }} jour{{ s.temps_minimum|pluralize }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <p class="text-muted small mt-2 mb-0">
-          Ces produits se vendent régulièrement (au moins tous les 15 jours en
-          moyenne) et risquent la rupture avant votre prochain réapprovisionnement —
-          priorisez-les.
-        </p>
-      {% else %}
-        <p class="sad-empty">
-          Aucun réapprovisionnement urgent à suggérer pour le moment.
-        </p>
-      {% endif %}
-    </div>
-  </div>
-</div>
-
 <!-- ══ RÉPARTITION GÉOGRAPHIQUE DES COMMANDES (§5.4) ══════════════════════════ -->
 <div class="row g-3 mt-1 fade-up fade-up-3">
   <div class="col-lg-5">

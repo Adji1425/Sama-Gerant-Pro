@@ -1,5 +1,5 @@
 from django import forms
-from .models import Produit, Depense, Approvisionnement, Categorie
+from .models import Produit, Depense, Approvisionnement, Categorie, RetraitStock
 
 
 class ProduitForm(forms.ModelForm):
@@ -225,3 +225,26 @@ class ApprovisionnementForm(forms.ModelForm):
         if prix < 0:
             raise forms.ValidationError("Le prix ne peut pas être négatif.")
         return int(prix)
+
+
+class RetraitStockForm(forms.ModelForm):
+    class Meta:
+        model = RetraitStock
+        fields = ['produit', 'quantite', 'motif', 'note']
+        widgets = {
+            'produit': forms.Select(attrs={'class': 'form-select'}),
+            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'step': '1', 'placeholder': 'Nombre d\'unités'}),
+            'motif': forms.Select(attrs={'class': 'form-select'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Précisions (optionnel)'}),
+        }
+        labels = {'quantite': 'Quantité à retirer', 'motif': 'Motif du retrait'}
+
+    def clean(self):
+        data = super().clean()
+        produit, quantite = data.get('produit'), data.get('quantite')
+        if produit and quantite and quantite > produit.quantite:
+            self.add_error(
+                'quantite',
+                f"Stock insuffisant : il ne reste que {produit.quantite} unité(s)."
+            )
+        return data

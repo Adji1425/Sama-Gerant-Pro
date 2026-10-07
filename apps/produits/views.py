@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-from .models import Produit, Categorie, ImageProd, Depense, Approvisionnement, Favori
-from .forms import ProduitForm, ProduitModifierForm, DepenseForm, ApprovisionnementForm
+from .models import Produit, Categorie, ImageProd, Depense, Approvisionnement, Favori, RetraitStock
+from .forms import ProduitForm, ProduitModifierForm, DepenseForm, ApprovisionnementForm, RetraitStockForm
 from urllib.parse import urlencode
 
 # ── Décorateur commerçant ──────────────────────────────────────────────────────
@@ -300,6 +300,16 @@ def gestion_stock(request):
     elif etat_filtre == 'ok':
         produits = [p for p in produits if not p.est_en_alerte()]
 
+    from datetime import timedelta
+    from django.utils import timezone
+    retraits_recents = RetraitStock.objects.filter(
+        commercant=commercant
+    ).select_related('produit')[:8]
+    retraits_30j = RetraitStock.objects.filter(
+        commercant=commercant,
+        date_retrait__gte=timezone.now() - timedelta(days=30),
+    )
+
     return render(request, 'produits/gestion_stock.html', {
         'produits': produits,
         'total_produits': total_produits,
@@ -309,24 +319,85 @@ def gestion_stock(request):
         'approvisionnements': Approvisionnement.objects.filter(
             commercant=commercant
         ).select_related('produit').order_by('-date_approvisionnement')[:10],
+        'retraits': retraits_recents,
+        'perte_30j': sum(r.valeur_perdue for r in retraits_30j),
     })
 
 
 @commercant_required
 def modifier_stock(request, pk):
+    """Correction d'inventaire : fixe la quantité réelle comptée en rayon."""
     produit = get_object_or_404(
         Produit, pk=pk, commercant=request.user.commercant
     )
     if request.method == 'POST':
-        nouvelle_qte = request.POST.get('quantite')
-        if nouvelle_qte:
-            produit.quantite = int(nouvelle_qte)
-            produit.save()
-            messages.success(
-                request,
-                f"Stock de '{produit.nom}' mis à jour : {produit.quantite} unité(s)."
-            )
+        try:
+            nouvelle_qte = int(request.POST.get('quantite', ''))
+            if nouvelle_qte < 0:
+                raise ValueError
+        except ValueError:
+            messages.error(request, "Quantité invalide : saisissez un nombre entier positif ou nul.")
+            return redirect('produits:gestion_stock')
+        ancienne = produit.quantite
+        produit.quantite = nouvelle_qte
+        produit.save()
+        if nouvelle_qte < ancienne:
+            try:
+                from apps.sad.utils import verifier_stock_produit
+                verifier_stock_produit(produit, ancienne)
+            except Exception:
+                pass
+        messages.success(
+            request,
+            f"Stock de '{produit.nom}' mis à jour : {produit.quantite} unité(s)."
+        )
     return redirect('produits:gestion_stock')
+
+
+@commercant_required
+def retirer_stock(request):
+    """Sortie manuelle de stock avec motif (dommage, perte, péremption...)."""
+    from apps.sad.utils import verifier_stock_produit
+    import logging
+
+    commercant = request.user.commercant
+    produits_actifs = Produit.objects.filter(
+        commercant=commercant, statut='actif'
+    ).order_by('nom')
+
+    if request.method == 'POST':
+        form = RetraitStockForm(request.POST)
+        form.fields['produit'].queryset = produits_actifs
+        if form.is_valid():
+            try:
+                retrait, ancienne = RetraitStock.enregistrer(
+                    form.cleaned_data['produit'], form.cleaned_data['quantite'],
+                    form.cleaned_data['motif'], form.cleaned_data['note'],
+                )
+            except ValueError as erreur:
+                form.add_error('quantite', str(erreur))
+            else:
+                # Le retrait peut faire passer le produit sous son seuil :
+                # prévenir le commerçant par email, sans jamais bloquer.
+                try:
+                    verifier_stock_produit(retrait.produit, ancienne)
+                except Exception:
+                    logging.getLogger(__name__).exception("Alerte stock impossible")
+                messages.success(
+                    request,
+                    f"✓ {retrait.quantite} unité(s) de '{retrait.produit.nom}' retirée(s) "
+                    f"du stock ({retrait.get_motif_display().lower()}). "
+                    f"Il en reste {retrait.produit.quantite}."
+                )
+                return redirect('produits:gestion_stock')
+    else:
+        form = RetraitStockForm(initial={'produit': request.GET.get('produit')})
+        form.fields['produit'].queryset = produits_actifs
+
+    return render(request, 'produits/retirer_stock.html', {
+        'form': form,
+        'stocks': {p.pk: p.quantite for p in produits_actifs},
+    })
 
 
 @commercant_required

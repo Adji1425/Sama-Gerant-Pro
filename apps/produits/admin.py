@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categorie, Produit, ImageProd, Depense, Favori
+from .models import Categorie, Produit, ImageProd, Depense, Favori, RetraitStock
 
 
 @admin.register(Categorie)
@@ -35,3 +35,9 @@ class DepenseAdmin(admin.ModelAdmin):
 class FavoriAdmin(admin.ModelAdmin):
     list_display = ('client', 'produit', 'date_ajout')
     list_filter = ('date_ajout',)
+
+
+@admin.register(RetraitStock)
+class RetraitStockAdmin(admin.ModelAdmin):
+    list_display = ('produit', 'quantite', 'motif', 'commercant', 'date_retrait')
+    list_filter = ('motif',)

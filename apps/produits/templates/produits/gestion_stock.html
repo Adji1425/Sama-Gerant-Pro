@@ -7,11 +7,18 @@
   <h4 class="fw-bold mb-0" style="color:#1B263B;">
     <i class="bi bi-boxes me-2"></i>Gestion du stock
   </h4>
-  <a href="{% url 'produits:ajouter_appro' %}"
-     class="btn fw-semibold px-4"
-     style="background-color:#1B263B;color:white;">
-    <i class="bi bi-plus-lg me-1"></i>Ajouter un approvisionnement
-  </a>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'produits:retirer_stock' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:white;color:#B5525F;border:1.5px solid #B5525F;">
+      <i class="bi bi-box-arrow-up me-1"></i>Retirer du stock
+    </a>
+    <a href="{% url 'produits:ajouter_appro' %}"
+       class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter un approvisionnement
+    </a>
+  </div>
 </div>
 
 <!-- Sous-navigation dashboard -->
@@ -118,7 +125,7 @@
               <th>Quantité</th>
               <th>Seuil alerte</th>
               <th>Statut</th>
-              <!-- <th class="text-end">Ajuster</th> -->
+              <th class="text-end">Ajuster</th>
             </tr>
           </thead>
           <tbody>
@@ -141,18 +148,17 @@
                   <span class="statut-badge statut-badge-livree">OK</span>
                 {% endif %}
               </td>
-              <!-- <td class="text-end">
+              <td class="text-end">
                 <form method="POST"
                       action="{% url 'produits:modifier_stock' produit.pk %}"
                       class="d-flex justify-content-end gap-1">
                   {% csrf_token %}
-                  <input type="number" name="quantite" value="{{ produit.quantite }}"
-                         class="form-control form-control-sm" style="width:80px;" min="0">
-                  <button type="submit" class="btn-table-icon" title="Enregistrer">
-                    <i class="bi bi-check-lg"></i>
-                  </button>
+                  <a href="{% url 'produits:retirer_stock' %}?produit={{ produit.pk }}"
+                     class="btn-table-icon" title="Retirer du stock (dommage, perte, péremption…)">
+                    <i class="bi bi-box-arrow-up"></i>
+                  </a>
                 </form>
-              </td> -->
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -199,6 +205,35 @@
         </ul>
       {% else %}
         <p class="text-muted small mb-0">Aucun approvisionnement enregistré.</p>
+      {% endif %}
+    </div>
+
+    <!-- Derniers retraits de stock -->
+    <div class="card border-0 shadow-sm p-3 mt-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-semibold mb-0" style="color:#1B263B;">Derniers retraits de stock</h6>
+        {% if perte_30j %}
+          <span class="small text-muted">Pertes (30 j) : <strong style="color:#B5525F;">{{ perte_30j|floatformat:0 }} FCFA</strong></span>
+        {% endif %}
+      </div>
+      {% if retraits %}
+        <ul class="list-unstyled mb-0">
+          {% for r in retraits %}
+            <li class="d-flex justify-content-between align-items-center py-2
+                       {% if not forloop.last %}border-bottom{% endif %}">
+              <div>
+                <div class="fw-semibold small" style="color:#1B263B;">{{ r.produit.nom }}</div>
+                <div class="text-muted" style="font-size:11px;">
+                  {{ r.date_retrait|date:"d/m/Y" }} · {{ r.get_motif_display }}
+                  {% if r.note %} · {{ r.note|truncatechars:30 }}{% endif %}
+                </div>
+              </div>
+              <span class="badge" style="background-color:#F4DADD;color:#B5525F;">−{{ r.quantite }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted small mb-0">Aucun retrait enregistré.</p>
       {% endif %}
     </div>
   </div>
