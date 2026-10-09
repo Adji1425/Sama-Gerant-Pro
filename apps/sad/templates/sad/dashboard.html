@@ -128,6 +128,38 @@
   <p>Aperçu chiffré de votre activité, mis à jour à chaque visite.</p>
 </div>
 
+<!-- ══ ACCÈS RAPIDE ══════════════════════════════════════════════════════════ -->
+<section class="quick-actions fade-up">
+  <h3 class="quick-title">Accès rapide</h3>
+  <div class="quick-grid">
+    <a class="quick-card" href="{% url 'commandes:commandes_commercant' %}">
+      <span class="quick-icon"><i class="bi bi-bag-check"></i></span>
+      <span class="quick-body"><strong>Commandes</strong><small>{% if nb_commandes_attente %}{{ nb_commandes_attente }} en attente{% else %}Suivre et traiter{% endif %}</small></span>
+      <i class="bi bi-arrow-right quick-arrow"></i>
+    </a>
+    <a class="quick-card" href="{% url 'produits:gestion_produits' %}">
+      <span class="quick-icon"><i class="bi bi-box-seam"></i></span>
+      <span class="quick-body"><strong>Produits</strong><small>Ajouter et modifier</small></span>
+      <i class="bi bi-arrow-right quick-arrow"></i>
+    </a>
+    <a class="quick-card" href="{% url 'produits:gestion_stock' %}">
+      <span class="quick-icon"><i class="bi bi-boxes"></i></span>
+      <span class="quick-body"><strong>Stock</strong><small>Quantités et approvisionnement</small></span>
+      <i class="bi bi-arrow-right quick-arrow"></i>
+    </a>
+    <a class="quick-card" href="{% url 'produits:gestion_depenses' %}">
+      <span class="quick-icon"><i class="bi bi-wallet2"></i></span>
+      <span class="quick-body"><strong>Dépenses</strong><small>Suivre vos charges</small></span>
+      <i class="bi bi-arrow-right quick-arrow"></i>
+    </a>
+    <a class="quick-card" href="{% url 'messagerie:liste_conversations' %}">
+      <span class="quick-icon"><i class="bi bi-chat-dots"></i></span>
+      <span class="quick-body"><strong>Messages</strong><small>{% if nb_messages_non_lus %}{{ nb_messages_non_lus }} non lu{{ nb_messages_non_lus|pluralize }}{% else %}Échanger avec vos clients{% endif %}</small></span>
+      <i class="bi bi-arrow-right quick-arrow"></i>
+    </a>
+  </div>
+</section>
+
 <!-- ══ KPI ═══════════════════════════════════════════════════════════════════ -->
 <div class="kpi-grid fade-up fade-up-1">
   <div class="kpi-card kpi-primary kpi-toggle" tabindex="0" role="button" aria-expanded="false" aria-controls="pop-ca">

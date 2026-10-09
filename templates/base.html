@@ -42,6 +42,7 @@
 <body class="{% block body_class %}{% endblock %}">
 
 <!-- ══ NAVBAR ════════════════════════════════════════════════════════════════ -->
+{% block navbar %}
 <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
   <div class="container">
 
@@ -466,8 +467,10 @@
 
   </div>
 </nav>
+{% endblock %}
 
 <!-- ══ MESSAGES DJANGO ════════════════════════════════════════════════════════ -->
+{% block messages_block %}
 {% if messages %}
 <div class="django-messages-wrap">
   <div class="container">
@@ -480,6 +483,7 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
 
 <!-- ══ CONTENU ═══════════════════════════════════════════════════════════════ -->
 {% block full_content %}

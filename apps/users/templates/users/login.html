@@ -1,48 +1,101 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Connexion — Sama-Gérant Pro{% endblock %}
 
-{% block content %}
-<div class="auth-wrap">
-  <div class="auth-card">
+{% block navbar %}{% endblock %}
+{% block messages_block %}{% endblock %}
+{% block body_class %}auth-page{% endblock %}
 
-    <div class="auth-icon-circle">
-      <i class="bi bi-shop"></i>
+{% block full_content %}
+<div class="auth-split">
+
+  <!-- Panneau de marque -->
+  <aside class="auth-side">
+    <a href="{% url 'home' %}" class="auth-brand" aria-label="Sama-Gérant Pro — accueil">
+      <span class="auth-logo"><img src="{% static 'img/SGP-LOGO.png' %}" alt="Sama-Gérant Pro"></span>
+    </a>
+
+    <div class="auth-side-body">
+      <h1>La plateforme des commerçants du Sénégal.</h1>
+      <p>Connectez-vous pour commander, suivre vos achats ou piloter votre boutique.</p>
+      <ul class="auth-points">
+        <li><i class="bi bi-check-lg"></i>Catalogue, panier et suivi des commandes</li>
+        <li><i class="bi bi-check-lg"></i>Messagerie directe avec le commerçant</li>
+        <li><i class="bi bi-check-lg"></i>Tableau de bord et alertes de stock pour les commerçants</li>
+      </ul>
     </div>
-    <h2 class="auth-title">Connexion</h2>
-    <p class="auth-subtitle">Bienvenue sur Sama-Gérant Pro</p>
 
-    <form method="POST">
-      {% csrf_token %}
-      {% if next %}
-        <input type="hidden" name="next" value="{{ next }}">
+    <div class="auth-side-foot">© 2026 Sama-Gérant Pro</div>
+  </aside>
+
+  <!-- Formulaire -->
+  <section class="auth-main">
+    <div class="auth-card auth-form-box">
+
+      <a href="{% url 'home' %}" class="auth-back"><i class="bi bi-arrow-left"></i>Retour à l'accueil</a>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
       {% endif %}
 
-      <div class="form-group">
-        <label class="form-label">Nom d'utilisateur</label>
-        {{ form.username }}
-        {% if form.username.errors %}
-          <div class="form-error">{{ form.username.errors }}</div>
+      <h2 class="auth-title">Connexion</h2>
+      <p class="auth-subtitle">Bienvenue sur Sama-Gérant Pro</p>
+
+      <form method="POST">
+        {% csrf_token %}
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
         {% endif %}
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Mot de passe</label>
-        {{ form.password }}
-        {% if form.password.errors %}
-          <div class="form-error">{{ form.password.errors }}</div>
-        {% endif %}
-      </div>
+        <div class="form-group">
+          <label class="form-label">Nom d'utilisateur</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="form-error">{{ form.username.errors }}</div>
+          {% endif %}
+        </div>
 
-      <button type="submit" class="btn-auth-submit">
-        <i class="bi bi-box-arrow-in-right"></i>Se connecter
-      </button>
-    </form>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="auth-pw">
+            {{ form.password }}
+            <button type="button" class="auth-pw-toggle" aria-label="Afficher le mot de passe"><i class="bi bi-eye"></i></button>
+          </div>
+          {% if form.password.errors %}
+            <div class="form-error">{{ form.password.errors }}</div>
+          {% endif %}
+        </div>
 
-    <p class="auth-footer-text">
-      Pas encore de compte ?
-      <a href="{% url 'users:register' %}">S'inscrire</a>
-    </p>
+        <button type="submit" class="btn-auth-submit">
+          <i class="bi bi-box-arrow-in-right"></i>Se connecter
+        </button>
+      </form>
 
-  </div>
+      <p class="auth-footer-text">
+        Pas encore de compte ?
+        <a href="{% url 'users:register' %}">S'inscrire</a>
+      </p>
+
+    </div>
+  </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.auth-pw').forEach(function (box) {
+  var input = box.querySelector('input'), btn = box.querySelector('.auth-pw-toggle');
+  if (!input || !btn) return;
+  btn.addEventListener('click', function () {
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+  });
+});
+</script>
 {% endblock %}

@@ -9,7 +9,7 @@
 :root {
   --cream:       #F5F0E8;
   --cream-light: #FAF7F2;
-  --brown:       #3D1F0D;
+  --brown:       #522a11;
   --brown-mid:   #6B3A1F;
   --gold:        #C8956C;
   --gold-light:  #F0DDD0;
@@ -1993,7 +1993,7 @@ body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(200,149,108,0.10) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(230, 222, 216, 0.1) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
@@ -2103,3 +2103,94 @@ body.has-hero-navbar .navbar:not(.scrolled) .navbar-icons-sep {
 @media (max-width: 575px) {
   .auth-card { padding: 30px 22px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGES DE CONNEXION / INSCRIPTION — disposition en deux colonnes
+   (panneau de marque à gauche, formulaire à droite)
+   ═══════════════════════════════════════════════════════════════ */
+.auth-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); min-height: 100vh; }
+
+.auth-side {
+  position: sticky; top: 0; height: 100vh; overflow: hidden;
+  background: linear-gradient(160deg, var(--brown) 0%, #5C2E10 100%);
+  color: var(--cream); padding: 52px 56px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.auth-side::before, .auth-side::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 1px solid rgba(200,149,108,0.35); pointer-events: none;
+}
+.auth-side::before { width: 420px; height: 420px; right: -150px; bottom: -120px; }
+.auth-side::after  { width: 260px; height: 260px; right: -60px;  bottom: -30px; border-color: rgba(200,149,108,0.2); }
+
+.auth-brand { display: inline-block; position: relative; z-index: 1; }
+.auth-logo {
+  display: block; width: 100px; height: 100px; border-radius: 50%; background: #fff; overflow: hidden;
+  box-shadow: 0 0 0 4px rgba(200,149,108,.55), 0 12px 32px rgba(0,0,0,.30);
+}
+.auth-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.auth-side-body { position: relative; z-index: 1; }
+.auth-side-body h1 { font-family: 'Playfair Display', serif; font-size: 2.3rem; line-height: 1.2; font-weight: 700; margin-bottom: 16px; color: var(--cream); }
+.auth-side-body > p { color: rgba(245,240,232,.78); font-size: 15px; max-width: 420px; margin-bottom: 28px; }
+.auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.auth-points li { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--cream); }
+.auth-points li i {
+  width: 26px; height: 26px; border-radius: 50%; flex: none; background: rgba(200,149,108,.2);
+  color: var(--gold-light); display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.auth-side-foot { position: relative; z-index: 1; font-size: 12.5px; color: rgba(245,240,232,.5); }
+
+.auth-main { display: flex; align-items: center; justify-content: center; padding: 48px 24px; background: var(--cream-light); }
+.auth-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-bottom: 26px; }
+.auth-back:hover { color: var(--brown); }
+
+.auth-card.auth-form-box { max-width: 440px; background: transparent; border: 0; box-shadow: none; padding: 0; }
+.auth-card.auth-form-box.auth-form-wide { max-width: 540px; }
+.auth-form-box .auth-title, .auth-form-box .auth-subtitle { text-align: left; }
+.auth-form-box .auth-title { color: var(--brown); }
+.auth-split .btn-auth-submit { background: var(--brown); }
+.auth-split .btn-auth-submit:hover { background: var(--brown-mid); }
+/* Évite le fond bleu pâle imposé par le remplissage automatique du navigateur */
+.auth-split input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #fff inset; -webkit-text-fill-color: var(--text); }
+.auth-form-box .auth-title { font-size: 2rem; }
+.auth-form-box .auth-subtitle { margin-bottom: 26px; font-size: 14.5px; }
+
+.auth-pw { position: relative; }
+.auth-pw input { padding-right: 46px; }
+.auth-pw-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; color: var(--muted); padding: 6px 8px; font-size: 1.05rem; line-height: 1;
+}
+.auth-pw-toggle:hover { color: var(--brown); }
+
+@media (max-width: 991px) {
+  .auth-split { grid-template-columns: 1fr; }
+  .auth-side { position: relative; height: auto; padding: 24px; }
+  .auth-logo { width: 96px; height: 96px; }
+  .auth-side-body, .auth-side-foot { display: none; }
+  .auth-main { padding: 32px 20px 48px; align-items: flex-start; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLEAU DE BORD COMMERÇANT — accès rapide
+   ═══════════════════════════════════════════════════════════════ */
+.quick-actions { margin-bottom: 30px; }
+.quick-title { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--brown-mid); margin-bottom: 12px; font-family: 'Inter', sans-serif; }
+.quick-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.quick-card {
+  display: flex; align-items: center; gap: 12px; padding: 16px 16px;
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm); color: var(--text); text-decoration: none;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+.quick-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--gold); color: var(--text); }
+.quick-icon { width: 40px; height: 40px; border-radius: 50%; flex: none; background: var(--gold-light); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+.quick-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.quick-body strong { font-size: 14.5px; line-height: 1.2; }
+.quick-body small { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.quick-arrow { color: var(--muted); transition: transform .2s, color .2s; }
+.quick-card:hover .quick-arrow { transform: translateX(3px); color: var(--gold); }
+@media (max-width: 1199px) { .quick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px)  { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 479px)  { .quick-grid { grid-template-columns: 1fr; } }

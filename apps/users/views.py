@@ -106,7 +106,9 @@ def login_view(request):
 
             # Redirection selon le rôle
             if utilisateur.est_commercant():
-                return redirect('produits:gestion_produits')
+                # Le commerçant arrive sur son tableau de bord (SAD), d'où il
+                # accède aux commandes, produits, stock, dépenses et messages.
+                return redirect('sad:dashboard')
             elif utilisateur.est_admin():
                 return redirect('users:admin_dashboard')
             else:
