@@ -62,10 +62,12 @@
         <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
            href="{% url 'home' %}">Accueil</a>
       </li>
+      {% if not user.is_authenticated or user.role != 'commercant' %}
       <li class="nav-item">
         <a class="nav-link"
            href="{% url 'apropos' %}">Présentation</a>
       </li>
+      {% endif %}
 
       {% if user.role != 'commercant' %}
       <li class="nav-item">
@@ -76,7 +78,10 @@
     
       {% if user.is_authenticated and user.role == 'commercant' %}
       <li class="nav-item">
-        <a class="nav-link nav-badge-anchor" href="{% url 'commandes:commandes_commercant' %}">
+        <a class="nav-link {% if request.resolver_match.app_name == 'sad' %}active{% endif %}" href="{% url 'sad:dashboard' %}">Tableau de bord</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link nav-badge-anchor {% if request.resolver_match.app_name == 'commandes' %}active{% endif %}" href="{% url 'commandes:commandes_commercant' %}">
           Commandes
           {% if nb_commandes_attente %}
             <span class="nav-badge">{{ nb_commandes_attente }}</span>
@@ -84,10 +89,20 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'produits:gestion_produits' %}">Produits</a>
+        <a class="nav-link {% if '/dashboard/produit' in request.path %}active{% endif %}" href="{% url 'produits:gestion_produits' %}">Produits</a>
       </li>
-       <li class="nav-item">
-        <a class="nav-link" href="{% url 'sad:dashboard' %}">Dashboard </a>
+      <li class="nav-item dropdown">
+        <a class="nav-link {% if '/dashboard/stock' in request.path or '/dashboard/depense' in request.path or '/dashboard/approvisionnement' in request.path or request.resolver_match.app_name == 'messagerie' or request.resolver_match.app_name == 'evenements' %}active{% endif %}"
+           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Gestion <i class="bi bi-chevron-down" style="font-size:10px;"></i>
+          {% if nb_messages_non_lus %}<span class="nav-dot" title="Messages non lus"></span>{% endif %}
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{% url 'produits:gestion_stock' %}"><i class="bi bi-boxes me-2" style="color:var(--gold);"></i>Stock</a></li>
+          <li><a class="dropdown-item" href="{% url 'produits:gestion_depenses' %}"><i class="bi bi-wallet2 me-2" style="color:var(--gold);"></i>Dépenses</a></li>
+          <li><a class="dropdown-item" href="{% url 'messagerie:liste_conversations' %}"><i class="bi bi-chat-dots me-2" style="color:var(--gold);"></i>Messages{% if nb_messages_non_lus %} <span class="nav-badge-inline">{{ nb_messages_non_lus }}</span>{% endif %}</a></li>
+          <li><a class="dropdown-item" href="{% url 'evenements:agenda_commercant' %}"><i class="bi bi-calendar-event me-2" style="color:var(--gold);"></i>Agenda des événements</a></li>
+        </ul>
       </li>
       {% endif %}
 
@@ -210,7 +225,7 @@
             <li>
               <a class="dropdown-item" href="{% url 'sad:dashboard' %}">
                 <i class="bi bi-speedometer2 me-2" style="color:var(--gold);"></i>
-                Dashboard
+                Tableau de bord
               </a>
             </li>
             <li>
@@ -388,7 +403,7 @@
                  style="display:block;padding:10px 0;font-size:15px;
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">
-                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
               </a>
             </li>
             <li class="mb-1">
@@ -397,6 +412,22 @@
                         font-weight:500;color:var(--text);
                         border-bottom:1px solid var(--border);">
                 <i class="bi bi-box-seam me-2"></i>Mes produits
+              </a>
+            </li>
+            <li class="mb-1">
+              <a href="{% url 'produits:gestion_stock' %}"
+                 style="display:block;padding:10px 0;font-size:15px;
+                        font-weight:500;color:var(--text);
+                        border-bottom:1px solid var(--border);">
+                <i class="bi bi-boxes me-2"></i>Stock
+              </a>
+            </li>
+            <li class="mb-1">
+              <a href="{% url 'produits:gestion_depenses' %}"
+                 style="display:block;padding:10px 0;font-size:15px;
+                        font-weight:500;color:var(--text);
+                        border-bottom:1px solid var(--border);">
+                <i class="bi bi-wallet2 me-2"></i>Dépenses
               </a>
             </li>
             <li class="mb-1">
