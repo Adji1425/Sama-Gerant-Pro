@@ -4,8 +4,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db import transaction
-from django.db.models import F
 from .models import Panier, LignePanier, Commande, Region
 from apps.produits.models import Produit, Categorie
 from django.http import JsonResponse
@@ -164,7 +162,6 @@ def modifier_panier(request, ligne_id):
         else:
             ligne.quantite = quantite
             ligne.save()
-            messages.success(request, "Panier mis à jour.")
 
     return redirect('commandes:voir_panier')
 
@@ -304,26 +301,48 @@ def paiement(request):
         if erreur:
             messages.error(request, erreur)
         else:
-            region = Region.objects.filter(pk=infos['region_id']).first()
-            try:
-                commande, alertes = _creer_commande_atomique(
-                    client, panier, infos, region, mode_choisi
-                )
-            except CommandeImpossible as erreur_commande:
-                messages.error(request, f"{erreur_commande} Paiement annulé, vous n'avez pas été débité.")
-                request.session.pop('livraison_pending', None)
-                return redirect('commandes:voir_panier')
-
-            # Une fois la commande validée en base (hors transaction, pour ne
-            # pas garder les verrous pendant l'envoi des emails) : prévenir le
-            # commerçant. Ces envois ne doivent jamais faire échouer la commande.
-            for produit, ancienne_quantite in alertes:
-                try:
-                    verifier_stock_produit(produit, ancienne_quantite)
-                except Exception:
-                    logging.getLogger(__name__).exception(
-                        "Alerte stock bas impossible pour %s", produit
+            # Revalidation du stock : le panier a pu changer depuis le récap
+            # (ex: un autre client a acheté la dernière unité entre-temps).
+            for ligne in lignes:
+                if ligne.produit and ligne.quantite > ligne.produit.quantite:
+                    messages.error(
+                        request,
+                        f"Stock insuffisant pour {ligne.produit.nom}, "
+                        f"paiement annulé."
                     )
+                    request.session.pop('livraison_pending', None)
+                    return redirect('commandes:voir_panier')
+
+            region = Region.objects.filter(pk=infos['region_id']).first()
+
+            commande = Commande.objects.create(
+                client=client,
+                adresse_livraison_reel=infos['adresse'],
+                telephone=infos['telephone'],
+                region=region,
+                commune=infos['commune'],
+                statut='en_attente',
+                mode_paiement=mode_choisi,
+            )
+
+            for ligne in lignes:
+                ligne.commande = commande
+                ligne.save()
+
+                # Décrémenter le stock global du produit
+                if ligne.produit:
+                    ligne.produit.quantite -= ligne.quantite
+                    ligne.produit.save()
+                    # Stock devenu bas ? Prévenir tout de suite le commerçant
+                    # (notification + email). Ne doit jamais bloquer la commande.
+                    try:
+                        verifier_stock_produit(ligne.produit)
+                    except Exception:
+                        logging.getLogger(__name__).exception(
+                            "Alerte stock bas impossible pour %s", ligne.produit
+                        )
+
+            commande.calculer_montant()
             _notifier_commercant(commande)
 
             request.session.pop('livraison_pending', None)
@@ -342,83 +361,6 @@ def paiement(request):
         'mode_choisi': mode_choisi,
     }
     return render(request, 'commandes/paiement.html', context)
-
-
-class CommandeImpossible(Exception):
-    """Commande refusée au moment du paiement (stock insuffisant, panier vide...)."""
-
-
-def _creer_commande_atomique(client, panier, infos, region, mode_paiement):
-    """
-    Crée la commande ET décrémente le stock en UNE SEULE transaction, avec
-    verrous de ligne PostgreSQL. Garanties :
-      - deux clients qui paient la dernière unité en même temps : un seul
-        réussit, l'autre reçoit « stock insuffisant » (jamais de stock < 0) ;
-      - un double clic sur « Payer » ne crée qu'UNE commande (le panier est
-        verrouillé, la 2e requête le trouve déjà vidé) ;
-      - si une étape échoue, tout est annulé (pas de commande « à moitié »
-        créée, pas de stock perdu).
-    Retourne (commande, [(produit, ancienne_quantite), ...]).
-    """
-    with transaction.atomic():
-        # 1) Verrou sur le panier du client, puis relecture des lignes sous verrou
-        Panier.objects.select_for_update().get(pk=panier.pk)
-        lignes = list(LignePanier.objects.filter(panier=panier, commande=None))
-        if not lignes:
-            raise CommandeImpossible(
-                "Votre panier est vide ou cette commande vient déjà d'être enregistrée."
-            )
-
-        # 2) Quantité totale demandée par produit (un même produit peut être
-        #    présent dans plusieurs lignes : couleurs / tailles différentes)
-        demande = {}
-        for ligne in lignes:
-            if ligne.produit_id:
-                demande[ligne.produit_id] = demande.get(ligne.produit_id, 0) + ligne.quantite
-
-        # 3) Verrou sur les produits, TOUJOURS dans le même ordre (pk croissant)
-        #    pour éviter les blocages croisés entre deux commandes simultanées
-        produits = {
-            p.pk: p for p in
-            Produit.objects.select_for_update().filter(pk__in=demande).order_by('pk')
-        }
-
-        # 4) Validation sous verrou : le stock lu ici ne peut plus changer
-        for pk, quantite in demande.items():
-            produit = produits.get(pk)
-            if produit is None or produit.statut != 'actif':
-                nom = produit.nom if produit else "Un produit de votre panier"
-                raise CommandeImpossible(f"« {nom} » n'est plus disponible à la vente.")
-            if quantite > produit.quantite:
-                raise CommandeImpossible(
-                    f"Stock insuffisant pour « {produit.nom} » "
-                    f"(il en reste {produit.quantite}, vous en demandez {quantite})."
-                )
-
-        # 5) Création de la commande, rattachement des lignes, décrément du stock
-        commande = Commande.objects.create(
-            client=client,
-            adresse_livraison_reel=infos['adresse'],
-            telephone=infos['telephone'],
-            region=region,
-            commune=infos['commune'],
-            statut='en_attente',
-            mode_paiement=mode_paiement,
-        )
-        for ligne in lignes:
-            ligne.commande = commande
-            ligne.save()
-
-        alertes = []
-        for pk, quantite in demande.items():
-            produit = produits[pk]
-            ancienne = produit.quantite
-            produit.quantite = ancienne - quantite
-            produit.save()
-            alertes.append((produit, ancienne))
-
-        commande.calculer_montant()
-    return commande, alertes
 
 
 def _normaliser_numero_sn(brut):
@@ -721,44 +663,34 @@ def changer_statut(request, commande_id):
         return redirect('home')
 
     if request.method == 'POST':
-        get_object_or_404(Commande, pk=commande_id)
+        commande = get_object_or_404(Commande, pk=commande_id)
         nouveau_statut = request.POST.get('statut')
+
+        # Une commande livrée ou annulée est définitive : on bloque tout
+        # changement ultérieur (entre autres pour éviter un remboursement
+        # de stock en double si on annule plusieurs fois).
         statuts_finaux = ['livree', 'annulee']
+        if commande.statut in statuts_finaux:
+            messages.error(
+                request,
+                f"✗ Commande #{commande.id} : le statut « "
+                f"{commande.get_statut_display()} » est définitif et ne peut plus être modifié."
+            )
+            return redirect('commandes:commandes_commercant')
+
         statuts_valides = ['en_attente', 'en_preparation', 'livree', 'annulee']
-
-        # La commande est VERROUILLÉE pendant le changement : deux clics
-        # simultanés sur « Annuler » ne peuvent pas restituer le stock deux fois.
-        with transaction.atomic():
-            commande = Commande.objects.select_for_update().get(pk=commande_id)
-
-            # Une commande livrée ou annulée est définitive : on bloque tout
-            # changement ultérieur (entre autres pour éviter un remboursement
-            # de stock en double si on annule plusieurs fois).
-            if commande.statut in statuts_finaux:
-                messages.error(
-                    request,
-                    f"✗ Commande #{commande.id} : le statut « "
-                    f"{commande.get_statut_display()} » est définitif et ne peut plus être modifié."
-                )
-                return redirect('commandes:commandes_commercant')
-
-            statut_change = nouveau_statut in statuts_valides
+        if nouveau_statut in statuts_valides:
             ancien_statut = commande.statut
-            if statut_change:
-                commande.statut = nouveau_statut
-                commande.save()
+            commande.statut = nouveau_statut
+            commande.save()
 
-                # Annulation : on restitue le stock décrémenté à la commande
-                # (mise à jour atomique côté base : pas d'écrasement d'une vente
-                # ou d'un approvisionnement simultané)
-                if nouveau_statut == 'annulee':
-                    for ligne in commande.lignes.all():
-                        if ligne.produit_id:
-                            Produit.objects.filter(pk=ligne.produit_id).update(
-                                quantite=F('quantite') + ligne.quantite
-                            )
+            # Annulation : on restitue le stock décrémenté à la commande
+            if nouveau_statut == 'annulee' and ancien_statut != 'annulee':
+                for ligne in commande.lignes.select_related('produit').all():
+                    if ligne.produit:
+                        ligne.produit.quantite += ligne.quantite
+                        ligne.produit.save()
 
-        if statut_change:
             # Notifier le client
             try:
                 from apps.notifications.models import Notification
