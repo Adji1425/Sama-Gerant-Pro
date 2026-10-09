@@ -107,6 +107,7 @@
       {% endif %}
 
       {% if user.is_authenticated and user.role == 'admin' %}
+      
       <li class="nav-item">
         <a class="nav-link" href="{% url 'users:admin_dashboard' %}">Dashboard Admin</a>
       </li>
@@ -209,7 +210,7 @@
               </a>
             </li>
             {% endif %}
-      {% if user.is_authenticated and user.role != 'admin' %}
+      {% if user.is_authenticated and user.role != 'admin' and user.role != 'commercant'%}
             <li>
               <a class="dropdown-item" href="{% url 'messagerie:liste_conversations' %}">
                 <i class="bi bi-chat-dots me-2" style="color:var(--gold);"></i>
@@ -223,30 +224,9 @@
 
             {% if user.role == 'commercant' %}
             <li>
-              <a class="dropdown-item" href="{% url 'sad:dashboard' %}">
+              <a class="dropdown-item" href="{% url 'apropos' %}">
                 <i class="bi bi-speedometer2 me-2" style="color:var(--gold);"></i>
-                Tableau de bord
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'produits:gestion_produits' %}">
-                <i class="bi bi-box-seam me-2" style="color:var(--gold);"></i>
-                Mes produits
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'evenements:agenda_commercant' %}">
-                <i class="bi bi-calendar-event me-2" style="color:var(--gold);"></i>
-                Agenda des événements
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'commandes:commandes_commercant' %}">
-                <i class="bi bi-receipt me-2" style="color:var(--gold);"></i>
-                Commandes reçues
-                {% if nb_commandes_attente %}
-                  <span class="nav-badge-inline">{{ nb_commandes_attente }}</span>
-                {% endif %}
+                A propos de l'applis
               </a>
             </li>
             {% endif %}
