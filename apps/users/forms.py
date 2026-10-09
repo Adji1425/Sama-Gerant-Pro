@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Utilisateur, Client
+from apps.commandes.models import Region
 
 
 # Caractères spéciaux acceptés dans le mot de passe
@@ -46,12 +47,18 @@ class InscriptionForm(UserCreationForm):
             'maxlength': '9'
         })
     )
-    adresse_livraison = forms.CharField(
-        max_length=255,
-        label="Adresse de livraison",
+    region = forms.ModelChoiceField(
+    queryset=Region.objects.all(),
+    label="Région",
+    empty_label="Choisir une région",
+    widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    commune = forms.CharField(
+        max_length=100,
+        label="Commune / Quartier",
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Votre adresse habituelle'
+            'placeholder': 'Ex : Parcelles Assainies'
         })
     )
     password1 = forms.CharField(
@@ -67,6 +74,11 @@ class InscriptionForm(UserCreationForm):
             'class': 'form-control',
             'placeholder': '••••••••'
         })
+    )
+    photo_profile = forms.ImageField(
+        required=False,
+        label="Photo de profil",
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
 
     class Meta:

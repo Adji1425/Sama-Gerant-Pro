@@ -34,7 +34,6 @@ class Utilisateur(AbstractUser):
     def est_admin(self):
         return self.role == 'admin'
 
-
 class Client(models.Model):
     """Profil étendu pour les clients"""
     utilisateur = models.OneToOneField(
@@ -43,6 +42,14 @@ class Client(models.Model):
         related_name='client'
     )
     adresse_livraison = models.CharField(max_length=255, blank=True)
+    # Localité du client : sert à la répartition géographique du SAD
+    region = models.ForeignKey(
+        'commandes.Region',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='clients'
+    )
+    commune = models.CharField(max_length=100, blank=True)
 
     class Meta:
         verbose_name = "Client"
@@ -50,8 +57,7 @@ class Client(models.Model):
 
     def __str__(self):
         return f"Client : {self.utilisateur.get_full_name()}"
-
-
+    
 class Commercant(models.Model):
     """Profil étendu pour les commerçants"""
     utilisateur = models.OneToOneField(

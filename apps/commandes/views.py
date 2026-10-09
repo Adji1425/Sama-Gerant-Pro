@@ -198,9 +198,9 @@ def valider_commande(request):
     if request.method == 'POST':
         adresse = request.POST.get('adresse_livraison', client.adresse_livraison)
         telephone = request.POST.get('telephone', request.user.telephone)
-        commune = request.POST.get('commune', '').strip()
-        region_id = request.POST.get('region')
-        region = Region.objects.filter(pk=region_id).first() if region_id else None
+        # Localité : reprise du profil client (renseignée à l'inscription)
+        region = client.region
+        commune = client.commune
 
         if not adresse or not telephone:
             messages.error(
@@ -210,8 +210,11 @@ def valider_commande(request):
             return redirect('commandes:voir_panier')
 
         if not region:
-            messages.error(request, "Veuillez sélectionner votre région de livraison.")
-            return redirect('commandes:voir_panier')
+            messages.error(
+                request,
+                "Veuillez renseigner votre région et votre commune dans votre profil."
+            )
+            return redirect('users:modifier_profil')
 
         for ligne in lignes:
             if ligne.produit and ligne.quantite > ligne.produit.quantite:
@@ -233,12 +236,25 @@ def valider_commande(request):
         }
         return redirect('commandes:paiement')
 
+    if not client.region:
+        messages.info(
+            request,
+            "Avant de commander, indiquez votre région et votre commune dans votre profil."
+        )
+        return redirect('users:modifier_profil')
+
+    # Adresse préremplie : celle déjà enregistrée, sinon "commune, région"
+    adresse_defaut = client.adresse_livraison or (
+        f"{client.commune}, {client.region.nom}" if client.commune
+        else client.region.nom
+    )
+
     context = {
         'panier': panier,
         'lignes': lignes,
         'total': sum(l.sous_total() for l in lignes),
         'client': client,
-        'regions': Region.objects.all(),
+        'adresse_defaut': adresse_defaut,
     }
     return render(request, 'commandes/recap_commande.html', context)
 

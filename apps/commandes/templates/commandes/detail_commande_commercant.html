@@ -55,8 +55,8 @@
       <div class="detail-panel-title"><i class="bi bi-person"></i>Client</div>
       <div class="client-info-line">{{ commande.client.utilisateur.get_full_name }}</div>
       <div class="client-info-line"><i class="bi bi-telephone"></i>{{ commande.client.utilisateur.telephone }}</div>
-      <div class="client-info-line"><i class="bi bi-geo-alt"></i>{{ commande.adresse_livraison_reel }}
-        {% if commande.region %}— {{ commande.commune }}, {{ commande.region.nom }}{% endif %}
+      <div class="client-info-line"><i class="bi bi-geo-alt"></i>
+        {% if commande.region %} {{ commande.commune }}, {{ commande.region.nom }}{% endif %}
       </div>
       <div class="client-info-line"><i class="bi bi-credit-card"></i>Paiement : {{ commande.get_mode_paiement_display }}</div>
     </div>

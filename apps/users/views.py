@@ -32,18 +32,22 @@ def register(request):
         return redirect('home')
 
     if request.method == 'POST':
-        form = InscriptionForm(request.POST)
+        form = InscriptionForm(request.POST, request.FILES)
         if form.is_valid():
             # Créer l'utilisateur
             utilisateur = form.save(commit=False)
             utilisateur.role = 'client'
             utilisateur.telephone = form.cleaned_data['telephone']
+            if form.cleaned_data.get('photo_profile'):
+              utilisateur.photo_profile = form.cleaned_data['photo_profile']
             utilisateur.save()
 
             # Créer le profil Client associé
+            
             Client.objects.create(
                 utilisateur=utilisateur,
-                adresse_livraison=form.cleaned_data['adresse_livraison']
+                region=form.cleaned_data['region'],
+                commune=form.cleaned_data['commune']
             )
 
             # Connecter directement après inscription

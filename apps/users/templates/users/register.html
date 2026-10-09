@@ -96,8 +96,18 @@
         </div>
   
         <div class="form-group">
-          <label class="form-label">Adresse de livraison</label>
-          {{ form.adresse_livraison }}
+          <label class="form-label">Région</label>
+          {{ form.region }}
+          {% if form.region.errors %}
+            <div class="form-error">{{ form.region.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Commune / Quartier</label>
+          {{ form.commune }}
+          {% if form.commune.errors %}
+            <div class="form-error">{{ form.commune.errors }}</div>
+          {% endif %}
         </div>
   
         <div class="form-group">
@@ -108,6 +118,14 @@
           </div>
           {% if form.password1.errors %}
             <div class="form-error">{{ form.password1.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Photo de profil <span style="text-transform:none;font-weight:400;">(facultatif)</span></label>
+          {{ form.photo_profile }}
+          {% if form.photo_profile.errors %}
+            <div class="form-error">{{ form.photo_profile.errors }}</div>
           {% endif %}
         </div>
   
