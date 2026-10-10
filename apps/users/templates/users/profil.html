@@ -103,9 +103,8 @@
       <ul class="profil-infos">
         <li><i class="bi bi-envelope"></i>{{ utilisateur.email }}</li>
         <li><i class="bi bi-telephone"></i>{{ utilisateur.telephone|default:"Non renseigné" }}</li>
-        <li><i class="bi bi-geo-alt"></i>{{ utilisateur.adresse|default:"Non renseignée" }}</li>
         {% if client %}
-          <li><i class="bi bi-truck"></i>{{ client.adresse_livraison|default:"Non renseignée" }}</li>
+          <li><i class="bi bi-geo-alt"></i>{% if client.region %}{% if client.commune %}{{ client.commune }}, {% endif %}{{ client.region.nom }}{% else %}Non renseignée{% endif %}</li>
         {% endif %}
       </ul>
 
@@ -138,7 +137,7 @@
           <div class="table-responsive">
             <table class="profil-table">
               <thead>
-                <tr><th>Numero</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>
+                <tr><th>#</th><th>Date</th><th>Montant</th><th>Statut</th><th></th></tr>
               </thead>
               <tbody>
                 {% for commande in commandes_recentes %}

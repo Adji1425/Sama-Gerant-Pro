@@ -16,8 +16,8 @@
   </div>
   <div class="col-6 col-md-4">
     <div class="dash-kpi-card">
-      <div class="dash-kpi-label">Administrateurs</div>
-      <div class="dash-kpi-value">{{ stats.total_admins }}</div>
+      <div class="dash-kpi-label">Utilisateurs (clients + commerçant)</div>
+      <div class="dash-kpi-value">{{ stats.total_utilisateurs }}</div>
     </div>
   </div>
   <div class="col-12 col-md-4">
@@ -36,8 +36,8 @@
 
 <!-- ══ ACTIONS ═══════════════════════════════════════════════════════════════ -->
 <div class="d-flex flex-wrap gap-2 mb-4">
-  <a href="{% url 'users:liste_clients' %}" class="filter-pill">
-    <i class="bi bi-people me-2"></i>Tous les clients
+  <a href="{% url 'users:liste_utilisateurs' %}" class="filter-pill">
+    <i class="bi bi-people me-2"></i>Liste des utilisateurs
   </a>
   <a href="{% url 'evenements:liste_evenements' %}" class="filter-pill">
     <i class="bi bi-calendar-event me-2"></i>Calendrier des événements
@@ -50,9 +50,6 @@
       <i class="bi bi-shop"></i>Créer le commerçant
     </a>
   {% endif %}
-  <a href="{% url 'users:register_admin' %}" class="btn-table-action">
-    <i class="bi bi-person-plus"></i>Inscrire un administrateur
-  </a>
 </div>
 
 <!-- ══ LE COMMERÇANT ═════════════════════════════════════════════════════════ -->

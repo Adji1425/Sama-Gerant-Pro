@@ -48,10 +48,10 @@ class InscriptionForm(UserCreationForm):
         })
     )
     region = forms.ModelChoiceField(
-    queryset=Region.objects.all(),
-    label="Région",
-    empty_label="Choisir une région",
-    widget=forms.Select(attrs={'class': 'form-control'})
+        queryset=Region.objects.all(),
+        label="Région",
+        empty_label="Choisir une région",
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
     commune = forms.CharField(
         max_length=100,
@@ -60,6 +60,11 @@ class InscriptionForm(UserCreationForm):
             'class': 'form-control',
             'placeholder': 'Ex : Parcelles Assainies'
         })
+    )
+    photo_profile = forms.ImageField(
+        required=False,
+        label="Photo de profil",
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
     password1 = forms.CharField(
         label="Mot de passe",
@@ -74,11 +79,6 @@ class InscriptionForm(UserCreationForm):
             'class': 'form-control',
             'placeholder': '••••••••'
         })
-    )
-    photo_profile = forms.ImageField(
-        required=False,
-        label="Photo de profil",
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
 
     class Meta:
@@ -480,13 +480,12 @@ class ModifierProfilForm(forms.ModelForm):
     class Meta:
         model = Utilisateur
         fields = ['first_name', 'last_name', 'email',
-                  'telephone', 'adresse', 'photo_profile']
+                  'telephone', 'photo_profile']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control'}),
-            'adresse': forms.TextInput(attrs={'class': 'form-control'}),
             'photo_profile': forms.FileInput(attrs={'class': 'form-control'}),
         }
         labels = {
@@ -494,7 +493,6 @@ class ModifierProfilForm(forms.ModelForm):
             'last_name': 'Nom',
             'email': 'Email',
             'telephone': 'Téléphone',
-            'adresse': 'Adresse',
             'photo_profile': 'Photo de profil',
         }
 

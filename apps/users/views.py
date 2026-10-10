@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.conf import settings
@@ -11,6 +12,7 @@ from .forms import (
     ConnexionForm, ModifierProfilForm, ChangerMotDePasseForm
 )
 from .models import Client, Commercant, Administrateur, Utilisateur
+from apps.commandes.models import Region
 
 
 # ── Décorateur administrateur ───────────────────────────────────────────────
@@ -39,15 +41,14 @@ def register(request):
             utilisateur.role = 'client'
             utilisateur.telephone = form.cleaned_data['telephone']
             if form.cleaned_data.get('photo_profile'):
-              utilisateur.photo_profile = form.cleaned_data['photo_profile']
+                utilisateur.photo_profile = form.cleaned_data['photo_profile']
             utilisateur.save()
 
             # Créer le profil Client associé
-            
             Client.objects.create(
                 utilisateur=utilisateur,
                 region=form.cleaned_data['region'],
-                commune=form.cleaned_data['commune']
+                commune=form.cleaned_data['commune'],
             )
 
             # Connecter directement après inscription
@@ -100,6 +101,10 @@ def login_view(request):
         if form.is_valid():
             utilisateur = form.get_user()
             login(request, utilisateur)
+            messages.success(
+                request,
+                f"Bon retour, {utilisateur.first_name} !"
+            )
             # Priorité à la page d'origine (next), si elle est présente et
             # sûre (évite les redirections vers un autre site : "open
             # redirect"). Sinon, on retombe sur la redirection par rôle.
@@ -110,9 +115,7 @@ def login_view(request):
 
             # Redirection selon le rôle
             if utilisateur.est_commercant():
-                # Le commerçant arrive sur son tableau de bord (SAD), d'où il
-                # accède aux commandes, produits, stock, dépenses et messages.
-                return redirect('sad:dashboard')
+                return redirect('produits:gestion_produits')
             elif utilisateur.est_admin():
                 return redirect('users:admin_dashboard')
             else:
@@ -131,7 +134,6 @@ def login_view(request):
 def logout_view(request):
     """Déconnexion"""
     logout(request)
-    messages.info(request, "Vous avez été déconnecté.")
     return redirect('users:login')
 
 
@@ -191,10 +193,12 @@ def modifier_profil(request):
             form.save()
             # Mettre à jour l'adresse de livraison si client
             if hasattr(request.user, 'client'):
-                adresse = request.POST.get('adresse_livraison', '')
-                if adresse:
-                    request.user.client.adresse_livraison = adresse
-                    request.user.client.save()
+                region = Region.objects.filter(
+                    pk=request.POST.get('region') or None).first()
+                if region:
+                    request.user.client.region = region
+                request.user.client.commune = request.POST.get('commune', '').strip()
+                request.user.client.save()
             # Mettre à jour le nom de la boutique (+ logo) si commerçant
             if hasattr(request.user, 'commercant'):
                 nouveau_nom = request.POST.get('nom_boutique', '').strip()
@@ -210,7 +214,10 @@ def modifier_profil(request):
     else:
         form = ModifierProfilForm(instance=request.user)
 
-    return render(request, 'users/modifier_profil.html', {'form': form})
+    return render(request, 'users/modifier_profil.html', {
+        'form': form,
+        'regions': Region.objects.all(),
+    })
 
 
 @login_required
@@ -240,13 +247,23 @@ def admin_dashboard(request):
 
     stats = {
         'total_clients': Client.objects.count(),
-        'total_admins': Administrateur.objects.count(),
+        'total_utilisateurs': Client.objects.count() + Commercant.objects.count(),
     }
 
     return render(request, 'users/admin_dashboard.html', {
         'commercant': commercant,
         'stats': stats,
     })
+
+
+def _retour_admin(request):
+    """Retour à la page d'où vient l'admin (liste ou dashboard), sinon la liste."""
+    retour = request.META.get('HTTP_REFERER')
+    if retour and url_has_allowed_host_and_scheme(
+        retour, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(retour)
+    return redirect('users:liste_utilisateurs')
 
 
 @admin_required
@@ -263,7 +280,7 @@ def toggle_actif_commercant(request, pk):
             request,
             f"Le compte de « {commercant.nom_boutique} » a été {statut}."
         )
-    return redirect('users:admin_dashboard')
+    return _retour_admin(request)
 
 
 @admin_required
@@ -281,7 +298,7 @@ def toggle_actif_client(request, pk):
             request,
             f"Le compte de « {client.utilisateur.get_full_name()} » a été {statut}."
         )
-    return redirect('users:liste_clients')
+    return _retour_admin(request)
 
 
 @admin_required
@@ -310,7 +327,7 @@ def reinitialiser_mot_de_passe(request, pk):
                 f"Nous vous recommandons de le changer dès votre prochaine "
                 f"connexion, depuis votre espace profil."
             ),
-            from_email=settings.EMAIL_HOST_USER or None,
+            from_email=settings.EMAIL_FROM,
             recipient_list=[utilisateur.email],
             fail_silently=True,
         ))
@@ -331,42 +348,6 @@ def reinitialiser_mot_de_passe(request, pk):
         )
 
     return redirect(request.META.get('HTTP_REFERER', 'users:admin_dashboard'))
-
-
-@admin_required
-def register_admin(request):
-    """
-    Un administrateur crée le compte d'un AUTRE administrateur
-    (ex: un autre étudiant de l'équipe qui doit gérer la plateforme).
-    Ne connecte PAS la personne créée : c'est un tiers qui se connectera
-    lui-même ensuite avec les identifiants transmis.
-    """
-    if request.method == 'POST':
-        form = InscriptionAdminForm(request.POST)
-        if form.is_valid():
-            utilisateur = form.save(commit=False)
-            utilisateur.role = 'admin'
-            utilisateur.telephone = form.cleaned_data['telephone']
-            utilisateur.is_staff = True
-            utilisateur.save()
-
-            Administrateur.objects.create(utilisateur=utilisateur)
-
-            messages.success(
-                request,
-                f"Le compte administrateur « {utilisateur.username} » a été créé. "
-                f"Transmettez-lui ses identifiants."
-            )
-            return redirect('users:admin_dashboard')
-        else:
-            messages.error(
-                request,
-                "Veuillez corriger les erreurs dans le formulaire."
-            )
-    else:
-        form = InscriptionAdminForm()
-
-    return render(request, 'users/register_admin.html', {'form': form})
 
 
 @admin_required
@@ -418,23 +399,39 @@ def creer_commercant(request):
 
 
 @admin_required
-def liste_clients(request):
-    """Vue d'ensemble : tous les clients de la plateforme"""
-    recherche = request.GET.get('q', '')
+def liste_utilisateurs(request):
+    """Vue d'ensemble : tous les utilisateurs (clients et commerçant)"""
+    recherche = request.GET.get('q', '').strip()
+    role = request.GET.get('role', '')
 
-    clients = Client.objects.select_related('utilisateur').order_by(
-        '-utilisateur__date_joined'
-    )
+    # On se base sur le profil réellement existant (Client / Commercant),
+    # pas sur le champ "role" : un compte admin créé en ligne de commande
+    # a role='client' par défaut mais n'a pas de profil Client.
+    utilisateurs = Utilisateur.objects.filter(
+        Q(client__isnull=False) | Q(commercant__isnull=False)
+    ).select_related(
+        'client__region', 'commercant'
+    ).order_by('-date_joined')
+
+    nb_clients = utilisateurs.filter(client__isnull=False).count()
+    nb_commercants = utilisateurs.filter(commercant__isnull=False).count()
+
+    if role == 'client':
+        utilisateurs = utilisateurs.filter(client__isnull=False)
+    elif role == 'commercant':
+        utilisateurs = utilisateurs.filter(commercant__isnull=False)
     if recherche:
-        clients = clients.filter(
-            utilisateur__first_name__icontains=recherche
-        ) | clients.filter(
-            utilisateur__last_name__icontains=recherche
-        ) | clients.filter(
-            utilisateur__email__icontains=recherche
+        utilisateurs = utilisateurs.filter(
+            Q(first_name__icontains=recherche)
+            | Q(last_name__icontains=recherche)
+            | Q(email__icontains=recherche)
+            | Q(telephone__icontains=recherche)
         )
 
-    return render(request, 'users/liste_clients.html', {
-        'clients': clients,
+    return render(request, 'users/liste_utilisateurs.html', {
+        'utilisateurs': utilisateurs,
         'recherche': recherche,
+        'role_filtre': role,
+        'nb_clients': nb_clients,
+        'nb_commercants': nb_commercants,
     })

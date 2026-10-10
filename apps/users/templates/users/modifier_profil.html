@@ -24,14 +24,22 @@
         {% endfor %}
 
         {% if request.user.est_client %}
-        <div class="mb-3">
-          <label class="form-label fw-semibold small">
-            Adresse de livraison
-          </label>
-          <input type="text" name="adresse_livraison"
-                 class="form-control"
-                 value="{{ request.user.client.adresse_livraison }}"
-                 placeholder="Votre adresse de livraison">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Région</label>
+            <select name="region" class="form-select" required>
+              <option value="" disabled {% if not request.user.client.region %}selected{% endif %}>Choisir une région</option>
+              {% for r in regions %}
+                <option value="{{ r.id }}" {% if request.user.client.region_id == r.id %}selected{% endif %}>{{ r.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Commune / Quartier</label>
+            <input type="text" name="commune" class="form-control" required
+                   value="{{ request.user.client.commune }}"
+                   placeholder="Ex : Parcelles Assainies">
+          </div>
         </div>
         {% endif %}
 
