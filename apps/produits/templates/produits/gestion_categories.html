@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Mes produits — Sama-Gérant Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media (max-width:991px){.cat-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:575px){.cat-grid{grid-template-columns:1fr;}}
+
+  .cat-card{position:relative;display:block;height:240px;border-radius:var(--r-md);
+    overflow:hidden;text-decoration:none;box-shadow:var(--shadow-sm);
+    transition:transform .3s, box-shadow .3s;}
+  .cat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+  .cat-card-img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
+  .cat-card:hover .cat-card-img{transform:scale(1.06);}
+  .cat-card-placeholder{width:100%;height:100%;background:var(--cream);
+    display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:40px;}
+  .cat-card-overlay{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(61,31,13,0) 35%,rgba(61,31,13,.85) 100%);}
+  .cat-card-body{position:absolute;left:0;right:0;bottom:0;padding:16px 20px;color:var(--white);}
+  .cat-card-body h5{font-family:'Playfair Display',serif;font-size:1.2rem;margin:0 0 3px;
+    text-transform:capitalize;}
+  .cat-card-body span{font-size:12.5px;color:rgba(255,255,255,.8);}
+  .cat-card-alert{position:absolute;top:12px;right:12px;background:#FAF0F2;color:#C47B8A;
+    font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0" style="color:#1B263B;">
+    <i class="bi bi-box-seam me-2"></i>Mes produits
+  </h4>
+</div>
+{% if en_alerte %}
+  <div class="alert alert-warning small">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    <strong>{{ en_alerte|length }}</strong> produit{{ en_alerte|length|pluralize }}
+    en stock bas :
+    {% for p in en_alerte %}{{ p.nom }}{% if not forloop.last %}, {% endif %}{% endfor %}
+  </div>
+{% endif %}
+
+<!-- Accès direct : tous les produits + recherche -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+  <a href="{% url 'produits:liste_produits' %}" class="filter-pill">
+    <i class="bi bi-list-ul me-2"></i>Tous les produits
+  </a>
+  <form method="GET" action="{% url 'produits:liste_produits' %}"
+        class="d-flex gap-2 align-items-center" style="max-width:340px;">
+    <div class="position-relative" style="width:230px;">
+      <i class="bi bi-search"
+         style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8A8A8A;font-size:13px;"></i>
+      <input type="text" name="q" placeholder="Rechercher un produit"
+             class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
+    </div>
+    <button type="submit" class="btn btn-sm fw-semibold"
+            style="background-color:#1B263B;color:white;"><i class="bi bi-search"></i></button>
+  </form>
+</div>
+
+<!-- Catégories -->
+{% if cartes %}
+  <div class="cat-grid">
+    {% for c in cartes %}
+      <a href="{% url 'produits:liste_produits' %}{% if c.id %}?categorie={{ c.id }}{% endif %}" class="cat-card">
+        {% if c.photo %}
+          <img src="{{ c.photo.image.url }}" class="cat-card-img" alt="{{ c.nom }}">
+        {% else %}
+          <div class="cat-card-placeholder"><i class="bi bi-grid"></i></div>
+        {% endif %}
+        {% if c.nb_alertes %}
+          <span class="cat-card-alert"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ c.nb_alertes }} en alerte</span>
+        {% endif %}
+        <div class="cat-card-overlay"></div>
+        <div class="cat-card-body">
+          <h5>{{ c.nom }}</h5>
+          <span>
+            {{ c.nb_actifs }} actif{{ c.nb_actifs|pluralize }}
+            {% if c.nb_archives %} · {{ c.nb_archives }} archivé{{ c.nb_archives|pluralize }}{% endif %}
+          </span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-box-seam fs-1 d-block mb-3"></i>
+    <h5>Aucun produit pour l'instant</h5>
+    <p>Commencez par ajouter votre premier produit.</p>
+    <a href="{% url 'produits:ajouter_produit' %}" class="btn fw-semibold px-4"
+       style="background-color:#1B263B;color:white;">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter un produit
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}

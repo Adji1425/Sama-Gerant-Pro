@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -6,6 +7,7 @@ from django.db.models import Q
 from .models import Produit, Categorie, ImageProd, Depense, Approvisionnement, Favori, RetraitStock
 from .forms import ProduitForm, ProduitModifierForm, DepenseForm, ApprovisionnementForm, RetraitStockForm
 from urllib.parse import urlencode
+from django.utils.http import url_has_allowed_host_and_scheme
 
 # ── Décorateur commerçant ──────────────────────────────────────────────────────
 def commercant_required(view_func):
@@ -113,6 +115,56 @@ def fiche_produit(request, pk):
 # ── GESTION PRODUITS (Commerçant) ─────────────────────────────────────────────
 @commercant_required
 def gestion_produits(request):
+    """Page d'entrée "Mes produits" : les produits du commerçant rangés par
+    catégorie (comme la page Catégories côté client). Un clic sur une
+    catégorie mène à la liste de ses produits (liste_produits)."""
+    commercant = request.user.commercant
+    produits = Produit.objects.filter(
+        commercant=commercant
+    ).exclude(statut='supprime').select_related('categorie').prefetch_related('images')
+
+    total_actifs = produits.filter(statut='actif').count()
+    total_archives = produits.filter(statut='archive').count()
+    en_alerte = [p for p in produits if p.est_en_alerte()]
+
+    cartes = {}
+    for p in produits:
+        cat = p.categorie
+        cle = cat.pk if cat else 0
+        carte = cartes.setdefault(cle, {
+            'id': cle,
+            'nom': cat.nom if cat else 'Sans catégorie',
+            'nb_actifs': 0, 'nb_archives': 0, 'nb_alertes': 0, 'photo': None,
+        })
+        if p.statut == 'actif':
+            carte['nb_actifs'] += 1
+            if carte['photo'] is None and p.image_principale:
+                carte['photo'] = p.image_principale
+        else:
+            carte['nb_archives'] += 1
+        if p.est_en_alerte():
+            carte['nb_alertes'] += 1
+
+    return render(request, 'produits/gestion_categories.html', {
+        'cartes': sorted(cartes.values(), key=lambda c: c['nom'].lower()),
+        'total_actifs': total_actifs,
+        'total_archives': total_archives,
+        'en_alerte': en_alerte,
+    })
+
+
+def _retour_liste(request):
+    """Retour à la liste d'où vient le commerçant (catégorie + filtres)."""
+    retour = request.META.get('HTTP_REFERER')
+    if retour and url_has_allowed_host_and_scheme(
+        retour, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(retour)
+    return redirect('produits:gestion_produits')
+
+
+@commercant_required
+def liste_produits(request):
     commercant = request.user.commercant
     produits = Produit.objects.filter(
         commercant=commercant
@@ -147,7 +199,12 @@ def gestion_produits(request):
         extra_params['categorie'] = categorie_filtre
     extra_qs = urlencode(extra_params)
 
-    return render(request, 'produits/gestion_produits.html', {
+    categorie_courante = None
+    if categorie_filtre.isdigit():
+        categorie_courante = Categorie.objects.filter(pk=categorie_filtre).first()
+
+    return render(request, 'produits/liste_produits.html', {
+        'categorie_courante': categorie_courante,
         'produits': produits,
         'total_actifs': total_actifs,
         'total_archives': total_archives,
@@ -183,7 +240,11 @@ def ajouter_produit(request):
                 )
 
             messages.success(request, f"✓ Produit '{produit.nom}' ajouté avec succès !")
-            return redirect('produits:gestion_produits')
+            if produit.categorie_id:
+                return redirect(
+                    f"{reverse('produits:liste_produits')}?categorie={produit.categorie_id}"
+                )
+            return redirect('produits:liste_produits')
         else:
             messages.error(request, "Veuillez corriger les erreurs.")
     else:
@@ -251,7 +312,7 @@ def archiver_produit(request, pk):
         produit.statut = 'actif'
         messages.success(request, f"'{produit.nom}' réactivé.")
     produit.save()
-    return redirect('produits:gestion_produits')
+    return _retour_liste(request)
 
 
 @commercant_required
@@ -271,7 +332,7 @@ def supprimer_produit(request, pk):
     produit.statut = 'supprime'
     produit.save()
     messages.success(request, f"'{produit.nom}' a été supprimé du catalogue.")
-    return redirect('produits:gestion_produits')
+    return _retour_liste(request)
 
 
 # ── STOCK ─────────────────────────────────────────────────────────────────────

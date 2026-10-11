@@ -13,6 +13,7 @@ urlpatterns = [
     path('produit/<int:pk>/favori/', views.toggle_favori, name='toggle_favori'),
     # Commerçant
     path('dashboard/produits/', views.gestion_produits, name='gestion_produits'),
+    path('dashboard/produits/liste/', views.liste_produits, name='liste_produits'),
     path('dashboard/produit/ajouter/', views.ajouter_produit, name='ajouter_produit'),
     path('dashboard/produit/<int:pk>/modifier/', views.modifier_produit, name='modifier_produit'),
     path('dashboard/produit/image/<int:pk>/supprimer/', views.supprimer_image_produit, name='supprimer_image_produit'),

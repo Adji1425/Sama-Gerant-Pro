@@ -4,9 +4,14 @@
 {% block content %}
 
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-  <h4 class="fw-bold mb-0" style="color:#1B263B;">
-    <i class="bi bi-box-seam me-2"></i>Mes produits
-  </h4>
+  <div>
+    <a href="{% url 'produits:gestion_produits' %}" class="btn-back-pill mb-2">
+      <i class="bi bi-arrow-left"></i>Catégories
+    </a>
+    <h4 class="fw-bold mb-0" style="color:#1B263B;">
+      <i class="bi bi-box-seam me-2"></i>{% if categorie_courante %}{{ categorie_courante.nom|capfirst }}{% else %}Tous les produits{% endif %}
+    </h4>
+  </div>
   <a href="{% url 'produits:ajouter_produit' %}"
      class="btn fw-semibold px-4"
      style="background-color:#1B263B;color:white;">
@@ -49,7 +54,7 @@
     </div>
   </div>
 </div>
-{% if en_alerte %}
+{% if en_alerte and not categorie_filtre %}
   <div class="alert alert-warning small">
     <i class="bi bi-exclamation-triangle me-1"></i>
     <strong>{{ en_alerte|length }}</strong> produit{{ en_alerte|length|pluralize }}
@@ -62,7 +67,7 @@
 
   <!-- Filtres par statut (à gauche) -->
   <div class="d-flex gap-2 flex-wrap">
-    <a href="{% url 'produits:gestion_produits' %}{% if extra_qs %}?{{ extra_qs }}{% endif %}"
+    <a href="{% url 'produits:liste_produits' %}{% if extra_qs %}?{{ extra_qs }}{% endif %}"
        class="filter-pill {% if not statut_filtre %}active{% endif %}">
       Tous
     </a>
@@ -89,7 +94,9 @@
              class="form-control form-control-sm" style="border-radius:50px;padding-left:32px;">
     </div>
 
-    {% if categories %}
+    {% if categorie_courante %}
+      <input type="hidden" name="categorie" value="{{ categorie_courante.id }}">
+    {% elif categories %}
       <select name="categorie" class="form-select form-select-sm" style="max-width:160px;"
               onchange="this.form.submit()">
         <option value="">Toutes catégories</option>
@@ -107,7 +114,7 @@
     </button>
 
     {% if recherche or categorie_filtre %}
-      <a href="?statut={{ statut_filtre }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
+      <a href="?{% if categorie_courante %}categorie={{ categorie_courante.id }}&{% endif %}statut={{ statut_filtre }}" class="btn btn-outline-secondary btn-sm" title="Réinitialiser">
         <i class="bi bi-x-lg"></i>
       </a>
     {% endif %}

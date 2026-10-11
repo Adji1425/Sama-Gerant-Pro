@@ -242,17 +242,38 @@ def changer_mot_de_passe(request):
 
 @admin_required
 def admin_dashboard(request):
-    """Vue d'ensemble : le commerçant unique de la plateforme + statistiques"""
+    """Espace administrateur : liste des utilisateurs (clients et commerçant)
+    avec filtres, recherche, blocage et réinitialisation du mot de passe."""
     commercant = Commercant.objects.select_related('utilisateur').first()
+    recherche = request.GET.get('q', '').strip()
+    role = request.GET.get('role', '')
 
-    stats = {
-        'total_clients': Client.objects.count(),
-        'total_utilisateurs': Client.objects.count() + Commercant.objects.count(),
-    }
+    # On se base sur le profil réellement existant (Client / Commercant),
+    # pas sur le champ "role" : un compte admin créé en ligne de commande
+    # a role='client' par défaut mais n'a pas de profil Client.
+    utilisateurs = Utilisateur.objects.filter(
+        Q(client__isnull=False) | Q(commercant__isnull=False)
+    ).select_related(
+        'client__region', 'commercant'
+    ).order_by('-date_joined')
+
+    if role == 'client':
+        utilisateurs = utilisateurs.filter(client__isnull=False)
+    elif role == 'commercant':
+        utilisateurs = utilisateurs.filter(commercant__isnull=False)
+    if recherche:
+        utilisateurs = utilisateurs.filter(
+            Q(first_name__icontains=recherche)
+            | Q(last_name__icontains=recherche)
+            | Q(email__icontains=recherche)
+            | Q(telephone__icontains=recherche)
+        )
 
     return render(request, 'users/admin_dashboard.html', {
         'commercant': commercant,
-        'stats': stats,
+        'utilisateurs': utilisateurs,
+        'recherche': recherche,
+        'role_filtre': role,
     })
 
 
@@ -263,7 +284,7 @@ def _retour_admin(request):
         retour, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):
         return redirect(retour)
-    return redirect('users:liste_utilisateurs')
+    return redirect('users:admin_dashboard')
 
 
 @admin_required
@@ -396,42 +417,3 @@ def creer_commercant(request):
         form = InscriptionCommercantForm()
 
     return render(request, 'users/creer_commercant.html', {'form': form})
-
-
-@admin_required
-def liste_utilisateurs(request):
-    """Vue d'ensemble : tous les utilisateurs (clients et commerçant)"""
-    recherche = request.GET.get('q', '').strip()
-    role = request.GET.get('role', '')
-
-    # On se base sur le profil réellement existant (Client / Commercant),
-    # pas sur le champ "role" : un compte admin créé en ligne de commande
-    # a role='client' par défaut mais n'a pas de profil Client.
-    utilisateurs = Utilisateur.objects.filter(
-        Q(client__isnull=False) | Q(commercant__isnull=False)
-    ).select_related(
-        'client__region', 'commercant'
-    ).order_by('-date_joined')
-
-    nb_clients = utilisateurs.filter(client__isnull=False).count()
-    nb_commercants = utilisateurs.filter(commercant__isnull=False).count()
-
-    if role == 'client':
-        utilisateurs = utilisateurs.filter(client__isnull=False)
-    elif role == 'commercant':
-        utilisateurs = utilisateurs.filter(commercant__isnull=False)
-    if recherche:
-        utilisateurs = utilisateurs.filter(
-            Q(first_name__icontains=recherche)
-            | Q(last_name__icontains=recherche)
-            | Q(email__icontains=recherche)
-            | Q(telephone__icontains=recherche)
-        )
-
-    return render(request, 'users/liste_utilisateurs.html', {
-        'utilisateurs': utilisateurs,
-        'recherche': recherche,
-        'role_filtre': role,
-        'nb_clients': nb_clients,
-        'nb_commercants': nb_commercants,
-    })
