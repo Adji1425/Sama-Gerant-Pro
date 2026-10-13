@@ -128,7 +128,8 @@ def ajouter_panier(request, produit_id):
                 '✓ {} ajouté au panier ! '
                 '<a href="{}" class="alert-link-right">Voir le panier <i class="bi bi-arrow-right"></i></a>',
                 libelle, reverse('commandes:voir_panier')
-            )
+            ), 
+            extra_tags='keep'
         )
         return redirect('produits:fiche_produit', pk=produit_id)
 
