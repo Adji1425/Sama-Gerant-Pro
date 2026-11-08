@@ -687,6 +687,7 @@ def changer_statut(request, commande_id):
         # changement ultérieur (entre autres pour éviter un remboursement
         # de stock en double si on annule plusieurs fois).
         statuts_finaux = ['livree', 'annulee']
+       
         if commande.statut in statuts_finaux:
             messages.error(
                 request,
@@ -696,9 +697,24 @@ def changer_statut(request, commande_id):
             return redirect('commandes:commandes_commercant')
 
         statuts_valides = ['en_attente', 'en_preparation', 'livree', 'annulee']
+       
         if nouveau_statut in statuts_valides:
             ancien_statut = commande.statut
+
+            # Annuler une commande exige une raison (affichée au client)
+            motif = request.POST.get('motif_annulation', '').strip()
+            if nouveau_statut == 'annulee' and not motif:
+                messages.error(
+                    request,
+                    " Merci d'indiquer la raison de l'annulation."
+                )
+                return redirect(
+                    'commandes:detail_commande_commercant', commande.id
+                )
+
             commande.statut = nouveau_statut
+            if nouveau_statut == 'annulee':
+                commande.motif_annulation = motif
             commande.save()
 
             # Annulation : on restitue le stock décrémenté à la commande

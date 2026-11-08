@@ -31,7 +31,12 @@
       {{ commande.get_statut_display }}
     </span>
   </div>
-
+  {% if commande.statut == 'annulee' and commande.motif_annulation %}
+    <div class="alert alert-danger">
+      <strong>Commande annulée par le commerçant.</strong><br>
+      Raison : {{ commande.motif_annulation }}
+    </div>
+  {% endif %}
   {% if commande.statut != 'annulee' %}
   <div class="position-relative mb-4" style="padding: 0 20px;">
 

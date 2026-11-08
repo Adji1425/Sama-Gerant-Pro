@@ -73,10 +73,16 @@
             Commande <strong>{{ commande.get_statut_display }}</strong> — statut définitif, non modifiable.
           </span>
         </div>
+        {% if commande.statut == 'annulee' and commande.motif_annulation %}
+          <p class="small text-muted mt-2 mb-0">
+            <strong>Raison de l'annulation :</strong> {{ commande.motif_annulation }}
+          </p>
+        {% endif %}
       {% else %}
-        <form method="POST" action="{% url 'commandes:changer_statut' commande.id %}">
+        <form method="POST" id="form-statut" action="{% url 'commandes:changer_statut' commande.id %}">
           {% csrf_token %}
-          <select name="statut" class="status-update-select">
+          <input type="hidden" name="motif_annulation" id="motif-hidden">
+          <select name="statut" id="select-statut" class="status-update-select">
             {% for code, label in commande.STATUT_CHOICES %}
               <option value="{{ code }}" {% if commande.statut == code %}selected{% endif %}>
                 {{ label }}
@@ -100,4 +106,59 @@
 
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<div class="modal fade" id="modalAnnulation" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Annuler la commande {{ commande.id }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <label for="motif-texte" class="form-label">Pourquoi annulez-vous cette commande ?</label>
+        <textarea id="motif-texte" class="form-control" rows="4" maxlength="500"
+                  placeholder="Ex : produit en rupture de stock, client injoignable…"></textarea>
+        <div class="text-danger small mt-2 d-none" id="motif-erreur">La raison est obligatoire.</div>
+        <p class="text-muted small mt-2 mb-0">Cette raison sera visible par le client. L'annulation est définitive.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Retour</button>
+        <button type="button" class="btn btn-danger" id="btn-confirmer-annulation">Confirmer l'annulation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('form-statut');
+  if (!form) return;
+  var select = document.getElementById('select-statut');
+  var hidden = document.getElementById('motif-hidden');
+  var texte = document.getElementById('motif-texte');
+  var erreur = document.getElementById('motif-erreur');
+  var modalEl = document.getElementById('modalAnnulation');
+  var modal = new bootstrap.Modal(modalEl);
+
+  form.addEventListener('submit', function (e) {
+    if (select.value === 'annulee' && !hidden.value) {
+      e.preventDefault();
+      modal.show();
+    }
+  });
+
+  document.getElementById('btn-confirmer-annulation').addEventListener('click', function () {
+    var motif = texte.value.trim();
+    if (!motif) { erreur.classList.remove('d-none'); return; }
+    hidden.value = motif;
+    form.submit();
+  });
+
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    if (!hidden.value) erreur.classList.add('d-none');
+  });
+})();
+</script>
 {% endblock %}

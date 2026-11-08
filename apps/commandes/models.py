@@ -144,7 +144,9 @@ class Commande(models.Model):
         blank=True,
         related_name='commandes',
     )
-    commune = models.CharField(max_length=100, blank=True)
+    commune = models.CharField(max_length=100, blank=True)   
+    # Raison donnée par le commerçant quand il annule la commande.
+    motif_annulation = models.TextField(blank=True)
 
     class Meta:
         verbose_name = "Commande"
