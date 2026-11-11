@@ -1,8 +1,14 @@
+
 from django import forms
 from .models import ConfigurationClimatique
 
 
 class ConfigurationClimatiqueForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['icone'].disabled = True
+
     class Meta:
         model = ConfigurationClimatique
         fields = ['nom', 'code', 'icone', 'conseil', 'actif']
@@ -17,10 +23,13 @@ class ConfigurationClimatiqueForm(forms.ModelForm):
                 'placeholder': 'Ex : bi-cloud-rain-heavy'
             }),
             'conseil': forms.Textarea(attrs={
-                'class': 'form-control', 'rows': 3,
+                'class': 'form-control',
+                'rows': 3,
                 'placeholder': 'Conseil affiché au commerçant durant cette saison...'
             }),
-            'actif': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'actif': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
         help_texts = {
             'code': "La saison est détectée automatiquement via l'API météo "

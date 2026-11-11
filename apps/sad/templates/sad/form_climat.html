@@ -33,11 +33,19 @@
           de dates à définir ici. Ce texte s'affichera au commerçant
           quand cette saison sera détectée.
         </p>
-
+<!-- 
         <div class="mb-3">
           <label class="form-label fw-semibold small">Icône (Bootstrap Icons)</label>
           {{ form.icone }}
           {% if form.icone.errors %}<div class="text-danger small">{{ form.icone.errors }}</div>{% endif %}
+        </div> -->
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Icône (Bootstrap Icons)</label>
+            {{ form.icone }}
+            {% if form.icone.errors %}
+             <div class="text-danger small">{{ form.icone.errors }}</div>
+            {% endif %}
         </div>
 
         {% if form.non_field_errors %}
