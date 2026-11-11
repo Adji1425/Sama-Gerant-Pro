@@ -23,7 +23,7 @@ class EvenementSAD(models.Model):
     def __str__(self):
         return self.nom_evenement
 
-    def est_proche(self, jours=21):
+    def est_proche(self, jours=30):
         """True si l'événement arrive dans moins de X jours"""
         today = timezone.now().date()
         return today <= self.date_debut <= today + timedelta(days=jours)
