@@ -11,15 +11,19 @@
     <div class="hero-content fade-up">
       {% if user.is_authenticated and user.role == 'commercant' %}
         <span class="hero-label">Sama-Gérant Pro</span>
-        <h1>Gérez votre boutique<br>intelligemment</h1>
-        <p>Suivez vos ventes, votre stock et vos performances<br>
-           en un coup d'œil.</p>
+        <h1>Prenez le contrôle total de votre commerce facilement.</h1>
+        <p>
+          Suivez vos ventes, gérez vos stocks, surveillez vos dépenses 
+          et analysez vos performances en temps réel. 
+               </p>
         <a href="{% url 'sad:dashboard' %}" class="btn-hero">
           MON TABLEAU DE BORD &nbsp;→
-        </a>
+        </a> 
+        <br>
+        <br>
       {% else %}
         <span class="hero-label">Sama-Gérant Pro</span>
-        <h1>Trouvez ce qu'il vous faut,<br>livré vite</h1>
+        <h1>Tout ce dont vous avez besoin, au même endroit.</h1>
         <p>Découvrez nos produits de qualité, livrés rapidement<br>
            partout au Sénégal.</p>
         <a href="{% url 'produits:catalogue' %}" class="btn-hero">
