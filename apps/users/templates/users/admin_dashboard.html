@@ -75,17 +75,17 @@
         {% for u in utilisateurs %}
         <tr>
           <td>
-            {% if u.photo_profile %}
+            <!-- {% if u.photo_profile %}
               <img src="{{ u.photo_profile.url }}" class="dash-table-thumb" style="border-radius:50%;">
             {% elif u.commercant and u.commercant.logo %}
               <img src="{{ u.commercant.logo.url }}" class="dash-table-thumb" style="border-radius:50%;">
-            {% else %}
+            {% else %} -->
               <span class="d-inline-flex align-items-center justify-content-center fw-bold me-3"
                     style="width:40px;height:40px;border-radius:50%;background:var(--gold-light);
                            color:var(--brown);font-family:'Playfair Display',serif;vertical-align:middle;">
                 {{ u.first_name|first|upper }}
               </span>
-            {% endif %}
+            <!-- {% endif %} -->
             <span class="fw-semibold">{{ u.get_full_name }}</span>
             {% if u.commercant %}
               <div class="text-muted small" style="margin-left:52px;margin-top:-4px;">{{ u.commercant.nom_boutique }}</div>
